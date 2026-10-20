@@ -1,4 +1,6 @@
 import { getT } from "@/i18n/server";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Link } from "@/i18n/client";
@@ -19,6 +21,8 @@ const steps = [
 ];
 
 export default async function SendToAssiutPage() {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("sendToAssiut"))) return <SectionClosed title="ابعت لأهلك في أسيوط" />;
   const t = await getT();
   const sf = await getLocalizedStorefront();
   const heroImage = sf.packages.find((p) => p.slug === "get-well-soon")?.images[0];

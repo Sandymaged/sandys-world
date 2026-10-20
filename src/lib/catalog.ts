@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Locale } from "@/i18n/config";
 import { DEFAULT_SETTINGS, type StoreSettings } from "./settings";
 import { loadCatalogData } from "./db/catalog-store";
+import { getSiteSettings } from "./site-settings";
 import * as seed from "./seed-data";
 import { publicClient, supabaseConfigured } from "./supabase/public";
 import type {
@@ -57,7 +58,8 @@ async function loadFromSupabase(): Promise<Catalog> {
     if (r.error) throw r.error;
   }
   const overrides = Object.fromEntries(
-    (settings.data ?? []).map((s: any) => [s.key, s.value]),
+    // "site" إعدادات شكل الموقع (site-settings.ts)، مش من إعدادات المتجر
+    (settings.data ?? []).filter((s: any) => s.key !== "site").map((s: any) => [s.key, s.value]),
   );
   return {
     products: (products.data ?? []).map(
@@ -208,6 +210,11 @@ async function getCatalog(): Promise<Catalog> {
   return loadFromSupabase();
 }
 
+/** كل المناسبات (حتى المخفية) — للوحة التحكم */
+export async function getAllOccasions(): Promise<Occasion[]> {
+  return (await getCatalog()).occasions;
+}
+
 export interface Storefront {
   products: Product[];
   brands: Brand[];
@@ -228,16 +235,18 @@ export interface Storefront {
 export async function getStorefront(): Promise<Storefront> {
   "use cache";
   cacheLife("minutes");
-  cacheTag("catalog");
-  const c = await getCatalog();
+  cacheTag("catalog", "site");
+  const [c, site] = await Promise.all([getCatalog(), getSiteSettings()]);
   const now = Date.now();
+  // التصنيفات اللي اتقفلت من اللوحة: منتجاتها بتختفي (ومعاها أي باكدج فيه منتج منها)
+  const hiddenCategories = new Set(site.hiddenCategories);
   // اسم البراند على كل منتج من سجل الشركاء
   const partnerById = new Map(c.partners.map((b) => [b.id, b]));
   const withBrand = (p: Product): Product => {
     const b = p.partnerId ? partnerById.get(p.partnerId) : undefined;
     return b ? { ...p, brand: b.name, brandSlug: b.slug, en: p.en || b.en?.name ? { ...p.en, brand: b.en?.name } : undefined } : { ...p, brand: null, brandSlug: null };
   };
-  const products = c.products.map(withBrand);
+  const products = c.products.map(withBrand).map((p) => (hiddenCategories.has(p.category) ? { ...p, isAvailable: false } : p));
   const byId = new Map(products.map((p) => [p.id, p]));
 
   const seasonOpen = (s: Season) =>
@@ -280,11 +289,12 @@ export async function getStorefront(): Promise<Storefront> {
     products: available,
     brands,
     packages,
-    kits: c.kits.filter((k) => k.isAvailable),
+    // الكيتات بتتقفل مع قسمها (ورشة مع الصحاب أو العروسة)
+    kits: c.kits.filter((k) => k.isAvailable && (k.category === "bridal" ? site.sections.bride : site.sections.kits)),
     activeSeason,
     boxSizes: c.boxSizes,
     zones: c.zones,
-    occasions: c.occasions,
+    occasions: c.occasions.filter((o) => !site.hiddenOccasions.includes(o.slug)),
     settings: c.settings,
   };
 }

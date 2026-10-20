@@ -3,6 +3,7 @@ import { Link } from "@/i18n/client";
 import { STORE_NAME } from "@/lib/settings";
 import { Bow } from "./decor";
 import { Logo } from "./logo";
+import { getSiteSettings, linkVisible } from "@/lib/site-settings";
 import { Icon } from "./icons";
 import { Pill } from "./scrapbook";
 
@@ -41,7 +42,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
  * اللوجو وجملة عن المتجر، وعواميد اللينكات، وتحتهم سطر الحقوق.
  */
 export async function SiteFooter() {
-  const t = await getT();
+  const [t, site] = await Promise.all([getT(), getSiteSettings()]);
   const name = t(STORE_NAME);
   return (
     <footer className="mt-24">
@@ -89,7 +90,7 @@ export async function SiteFooter() {
           <div>
             <p className="mb-4 font-heading text-lg text-white">{t("تسوّق")}</p>
             <ul className="space-y-2.5">
-              {shop.map((l) => (
+              {shop.filter((l) => linkVisible(l.href, site)).map((l) => (
                 <FooterLink key={l.href} href={l.href}>
                   {t(l.label)}
                 </FooterLink>
@@ -99,7 +100,7 @@ export async function SiteFooter() {
           <div>
             <p className="mb-4 font-heading text-lg text-white">{t("المناسبات")}</p>
             <ul className="space-y-2.5">
-              {occasions.map((l) => (
+              {occasions.filter((l) => linkVisible(l.href, site)).map((l) => (
                 <FooterLink key={l.href} href={l.href}>
                   {t(l.label)}
                 </FooterLink>

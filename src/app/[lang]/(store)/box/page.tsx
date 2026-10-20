@@ -1,4 +1,6 @@
 import { getT } from "@/i18n/server";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import { Link } from "@/i18n/client";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -12,6 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BoxPage({ searchParams }: PageProps<"/[lang]/box">) {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("box"))) return <SectionClosed title="اعمل البوكس بنفسك" />;
   const t = await getT();
   return (
     <>

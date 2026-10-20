@@ -15,6 +15,8 @@ import { Pill, Quote, ScrapTitle } from "@/components/scrapbook";
 import { Link } from "@/i18n/client";
 import { getT } from "@/i18n/server";
 import { getLocalizedStorefront } from "@/lib/catalog";
+import { getLocale } from "@/i18n/server";
+import { getSiteSettings, type QuoteSlot } from "@/lib/site-settings";
 import { egp } from "@/lib/format";
 import { STORE_NAME } from "@/lib/settings";
 
@@ -42,7 +44,13 @@ const steps = [
 
 export default async function HomePage() {
   const t = await getT();
-  const sf = await getLocalizedStorefront();
+  const [sf, site, locale] = await Promise.all([getLocalizedStorefront(), getSiteSettings(), getLocale()]);
+  const on = site.sections;
+  // الاقتباسات من إعدادات الموقع، وبالإنجليزي لو الصفحة إنجليزي ومكتوبلها نسخة
+  const quote = (slot: QuoteSlot) => {
+    const q = site.quotes[slot];
+    return locale === "en" ? { text: q.textEn || q.text, sub: q.subEn || q.sub } : { text: q.text, sub: q.sub };
+  };
   const season = sf.activeSeason;
   const seasonPackages = season ? sf.packages.filter((p) => p.seasonId === season.id) : [];
   const featured = sf.packages.filter((p) => !p.seasonId);
@@ -62,6 +70,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-16 overflow-x-clip pb-4 sm:space-y-24">
       <Hero
+        showBox={on.box}
         images={heroImages}
         seasonName={season?.name ?? null}
         seasonHref={season?.occasionSlug ? `/occasions/${season.occasionSlug}` : "/shop"}
@@ -87,7 +96,11 @@ export default async function HomePage() {
       </section>
 
       <section className="container-x">
-        <Quote tone="red">{t("الهدية مش بتمنها… الهدية إن حد افتكرك.")}</Quote>
+        {quote("red").text && (
+          <Quote tone="red" by={quote("red").sub || undefined}>
+            {quote("red").text}
+          </Quote>
+        )}
       </section>
 
       {/* المناسبات */}
@@ -184,31 +197,33 @@ export default async function HomePage() {
       </section>
 
       {/* كارت الهدية: لما تبقى مش عارف تجيب إيه */}
-      <section className="container-x">
-        <div className="panel grid items-center gap-10 overflow-hidden border border-line bg-paper px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-2">
-          <div className="relative mx-auto w-full max-w-md py-4">
-            <div className="animate-float">
-              <GiftCardArt
-                design="classic"
-                title={t("كارت هدية")}
-                storeName={t(STORE_NAME)}
-                className="[transform:perspective(1000px)_rotateY(-16deg)_rotate(-8deg)]"
-              />
+      {on.giftCard && (
+        <section className="container-x">
+          <div className="panel grid items-center gap-10 overflow-hidden border border-line bg-paper px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-2">
+            <div className="relative mx-auto w-full max-w-md py-4">
+              <div className="animate-float">
+                <GiftCardArt
+                  design="classic"
+                  title={t("كارت هدية")}
+                  storeName={t(STORE_NAME)}
+                  className="[transform:perspective(1000px)_rotateY(-16deg)_rotate(-8deg)]"
+                />
+              </div>
+              <div className="mx-auto mt-4 h-5 w-2/3 rounded-full bg-ink/10 blur-md" aria-hidden />
             </div>
-            <div className="mx-auto mt-4 h-5 w-2/3 rounded-full bg-ink/10 blur-md" aria-hidden />
+            <div className="reveal">
+              <Pill>{t("كارت هدية")}</Pill>
+              <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("لما تبقى مش عارف تجيبله إيه… خليه هو يختار.")}</h2>
+              <p className="mt-4 text-lg leading-8 text-ink-2">
+                {t("ابعتله كارت هدية بالمبلغ اللي تحبه، بيوصله على واتساب برسالتك، ويختار بيه اللي يعجبه من الموقع كله.")}
+              </p>
+              <Link href="/gift-card" className="btn-primary mt-7">
+                {t("اشتري كارت هدية")}
+              </Link>
+            </div>
           </div>
-          <div className="reveal">
-            <Pill>{t("كارت هدية")}</Pill>
-            <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("لما تبقى مش عارف تجيبله إيه… خليه هو يختار.")}</h2>
-            <p className="mt-4 text-lg leading-8 text-ink-2">
-              {t("ابعتله كارت هدية بالمبلغ اللي تحبه، بيوصله على واتساب برسالتك، ويختار بيه اللي يعجبه من الموقع كله.")}
-            </p>
-            <Link href="/gift-card" className="btn-primary mt-7">
-              {t("اشتري كارت هدية")}
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* اكتب كارتك */}
       <section className="container-x">
@@ -225,29 +240,35 @@ export default async function HomePage() {
       </section>
 
       <section className="container-x">
-        <Quote tone="blue">{t("كلمة حلوة في كارت… ممكن تفضل محفوظة في درج سنين.")}</Quote>
+        {quote("blue").text && (
+          <Quote tone="blue" by={quote("blue").sub || undefined}>
+            {quote("blue").text}
+          </Quote>
+        )}
       </section>
 
       {/* البراندات المحلية */}
-      <section className="container-x">
-        <ScrapTitle
-          kicker={t("ورا كل هدية حد عملها بحب")}
-          title={t("براندات من أسيوط")}
-          subtitle={t("كل منتج عندنا جاي من براند محلي صغير. اعرف مين عمله، واشتري منه أو اعمل هديتك كلها من منتجاته.")}
-        />
-        <div className="mt-10">
-          <Rail>
-            {sf.brands.slice(0, 8).map((b) => (
-              <BrandCard key={b.id} brand={b} />
-            ))}
-          </Rail>
-        </div>
-        <div className="mt-8 text-center">
-          <Link href="/brands" className="btn border border-ink/15 bg-paper text-ink hover:border-brand hover:text-brand">
-            {t("كل البراندات")}
-          </Link>
-        </div>
-      </section>
+      {on.brands && (
+        <section className="container-x">
+          <ScrapTitle
+            kicker={t("ورا كل هدية حد عملها بحب")}
+            title={t("براندات من أسيوط")}
+            subtitle={t("كل منتج عندنا جاي من براند محلي صغير. اعرف مين عمله، واشتري منه أو اعمل هديتك كلها من منتجاته.")}
+          />
+          <div className="mt-10">
+            <Rail>
+              {sf.brands.slice(0, 8).map((b) => (
+                <BrandCard key={b.id} brand={b} />
+              ))}
+            </Rail>
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/brands" className="btn border border-ink/15 bg-paper text-ink hover:border-brand hover:text-brand">
+              {t("كل البراندات")}
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* العروسة + ورشة مع الصحاب: صفحتين جنب بعض */}
       <section className="container-x grid gap-6 md:grid-cols-2">
@@ -272,7 +293,9 @@ export default async function HomePage() {
             body: "كيتات جاهزة بكل الأدوات، تعملوا بيها حاجة بإيديكم في قعدة حلوة.",
             cta: "كل الكيتات",
           },
-        ].map((c) => (
+        ]
+          .filter((c) => (c.href === "/bride" ? on.bride : on.kits))
+          .map((c) => (
           <Link key={c.href} href={c.href} className={`reveal panel group flex flex-col overflow-hidden ${c.tone}`}>
             {c.img && (
               <div className="relative aspect-[16/9] overflow-hidden">
@@ -308,7 +331,11 @@ export default async function HomePage() {
       </section>
 
       <section className="container-x">
-        <Quote>{t("أحلى حاجة في الهدية… الوش اللي بيتفتح وهو بيفكها.")}</Quote>
+        {quote("paper").text && (
+          <Quote by={quote("paper").sub || undefined}>
+            {quote("paper").text}
+          </Quote>
+        )}
         <div className="mt-8 text-center">
           <Link href="/shop" className="btn-primary px-10">
             {t("يلا نبدأ")}

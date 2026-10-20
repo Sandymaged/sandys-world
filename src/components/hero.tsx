@@ -38,11 +38,14 @@ export function Hero({
   seasonName,
   seasonHref,
   deadline,
+  showBox = true,
 }: {
   images: HeroImage[];
   seasonName: string | null;
   seasonHref: string;
   deadline: string | null;
+  /** لو قسم البوكس اتقفل من اللوحة، زراره بيختفي */
+  showBox?: boolean;
 }) {
   const t = useT();
   const reduce = useReducedMotion();
@@ -89,9 +92,11 @@ export function Hero({
               <Link href={seasonHref} className="btn-primary">
                 {t("اختار هديتك")}
               </Link>
-              <Link href="/box" className="btn border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
-                {t("اعمل البوكس بنفسك")}
-              </Link>
+              {showBox && (
+                <Link href="/box" className="btn border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
+                  {t("اعمل البوكس بنفسك")}
+                </Link>
+              )}
             </div>
             <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-ink-2">
               {["توصيل في نفس اليوم في أسيوط", "صورة الهدية قبل ما تخرج", "كارت برسالتك مع كل هدية"].map((x) => (

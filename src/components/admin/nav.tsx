@@ -9,6 +9,7 @@ const items = [
   { href: "/admin/payments", label: "مدفوعات مستنية" },
   { href: "/admin/today", label: "شغل التجهيز والتوصيل" },
   { href: "/admin/catalog/products", label: "المنتجات والبراندات" },
+  { href: "/admin/settings", label: "إعدادات الموقع" },
 ];
 
 export function AdminNav() {

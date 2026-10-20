@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Grid, PackageCard, ProductCard, SectionHeading } from "@/components/cards";
@@ -31,6 +33,8 @@ export default function BrandPage({ params }: PageProps<"/[lang]/brands/[slug]">
 }
 
 async function Content({ params }: { params: Promise<{ slug: string }> }) {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("brands"))) return <SectionClosed title="البراندات المحلية" />;
   const t = await getT();
   const { slug } = await params;
   const sf = await getLocalizedStorefront();

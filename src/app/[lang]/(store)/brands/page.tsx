@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import { BrandCard } from "@/components/brand-card";
 import { PageHeader } from "@/components/scrapbook";
 import { Reveal } from "@/components/motion/reveal";
@@ -14,6 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BrandsPage() {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("brands"))) return <SectionClosed title="البراندات المحلية" />;
   const t = await getT();
   const sf = await getLocalizedStorefront();
   return (

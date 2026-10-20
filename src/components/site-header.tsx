@@ -5,6 +5,7 @@ import { AssistantHeaderButton } from "./assistant-promo";
 import { CartButton } from "./cart-button";
 import { LangSwitch } from "./lang-switch";
 import { Logo } from "./logo";
+import { getSiteSettings, linkVisible } from "@/lib/site-settings";
 import { Icon } from "./icons";
 
 const nav = [
@@ -44,7 +45,7 @@ async function SearchForm({ className = "" }: { className?: string }) {
 }
 
 export async function SiteHeader() {
-  const t = await getT();
+  const [t, site] = await Promise.all([getT(), getSiteSettings()]);
   return (
     <header className="sticky top-0 z-30 bg-bg">
       <div className="group overflow-hidden bg-brand text-white" aria-label={announcements.map((a) => t(a)).join(t("، "))}>
@@ -75,7 +76,7 @@ export async function SiteHeader() {
           </div>
         </div>
         <nav className="container-x hidden h-12 items-center gap-1 text-[15px] font-medium text-ink-2 md:flex">
-          {nav.map((n) => (
+          {nav.filter((n) => linkVisible(n.href, site)).map((n) => (
             <Link key={n.href} href={n.href} className="rounded-full px-3 py-1.5 transition-colors hover:bg-paper hover:text-brand">
               {t(n.label)}
             </Link>

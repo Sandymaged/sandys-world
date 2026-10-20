@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import Image from "next/image";
 import { GiftRibbon } from "@/components/decor";
 import { Reveal, Tilt } from "@/components/motion/reveal";
@@ -26,6 +28,8 @@ const roles: { id: BridalRole; label: string; kicker: string; tone: string }[] =
 ];
 
 export default async function BridePage() {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("bride"))) return <SectionClosed title="العروسة والإشبينات" />;
   const t = await getT();
   const sf = await getLocalizedStorefront();
   const sets = sf.kits.filter((k) => k.category === "bridal");

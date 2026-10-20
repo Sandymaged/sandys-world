@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { SectionClosed } from "@/components/closed-screens";
+import { sectionOpen } from "@/lib/site-settings";
 import { GiftCardForm } from "@/components/gift-card-form";
 import { Breadcrumbs } from "@/components/product-info";
 import { getT } from "@/i18n/server";
@@ -13,6 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** كارت الهدية: لما تبقى مش عارف تجيب إيه، خليه هو يختار */
 export default async function GiftCardPage() {
+  // القسم ده ممكن يتقفل من إعدادات الموقع في اللوحة
+  if (!(await sectionOpen("giftCard"))) return <SectionClosed title="كارت هدية" />;
   const t = await getT();
   return (
     <div className="container-x py-6 sm:py-10">

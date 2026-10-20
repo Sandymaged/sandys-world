@@ -15,7 +15,8 @@ const items: { href: string; label: string; icon: IconName }[] = [
 ];
 
 /** تنقل الموبايل: ثابت تحت عشان الإيد توصله بسهولة */
-export function BottomNav() {
+/** showBox: لو قسم البوكس اتقفل من اللوحة، الزرار بتاعه بيختفي */
+export function BottomNav({ showBox = true }: { showBox?: boolean }) {
   const t = useT();
   const path = usePathname();
   const count = useCart((s) => s.gifts.length);
@@ -27,8 +28,8 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-dashed border-line bg-bg md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="grid h-16 grid-cols-4">
-        {items.map((it) => {
+      <ul className={`grid h-16 ${showBox ? "grid-cols-4" : "grid-cols-3"}`}>
+        {items.filter((it) => showBox || it.href !== "/box").map((it) => {
           const on = it.href === "/" ? path === "/" : path.startsWith(it.href);
           return (
             <li key={it.href}>
