@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ActionForm } from "@/components/admin/action-form";
+import { OrderChat } from "@/components/order-chat";
+import { markStoreRead, sendStoreMessage } from "@/lib/chat-actions";
 import { PaymentPanel, StatusButtons } from "@/components/admin/order-actions";
 import { StatusBadge, money } from "@/components/admin/ui";
 import { GiftCardArt } from "@/components/gift-card-art";
@@ -9,6 +12,7 @@ import { paymentLabel, waLink, waMessages } from "@/lib/admin-format";
 import { getStorefront } from "@/lib/catalog";
 import { repo } from "@/lib/db";
 import { periodLabel } from "@/lib/delivery";
+import { addRefundAction } from "@/lib/finance-actions";
 import { formatDay } from "@/lib/format";
 import { giftCardDesigns } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
@@ -16,6 +20,8 @@ import { STORE_NAME } from "@/lib/settings";
 export const instant = false;
 
 export const metadata = { title: "تفاصيل الأوردر" };
+
+const refundLabel = { refund: "فلوس رجعت", compensation: "تعويض", return: "مرتجع" } as const;
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" }).format(new Date(iso));
@@ -98,6 +104,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                   <li key={it.productId} className="flex justify-between gap-3">
                     <span>
                       {it.name} {it.quantity > 1 && <span className="tabular text-muted">× {it.quantity}</span>}
+                      {it.optionsText && <span className="mt-0.5 block text-xs font-semibold text-lilac">{it.optionsText}</span>}
                       {it.isAddon && <span className="text-xs text-lilac"> (إضافة)</span>}
                       {it.customization && <span className="mt-0.5 block rounded bg-butter-soft px-2 text-butter">✎ {it.customization}</span>}
                     </span>
@@ -128,6 +135,14 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
         </div>
 
         <aside className="space-y-6">
+          <OrderChat
+            messages={order.messages ?? []}
+            side="store"
+            send={sendStoreMessage.bind(null, order.id)}
+            markRead={markStoreRead.bind(null, order.id)}
+            title="الشات مع العميل"
+            placeholder="اكتبي للعميل (مثلاً: تحبي الكارت بخط عربي ولا إنجليزي؟)"
+          />
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">الحالة</h2>
             <StatusButtons id={order.id} status={order.status} />
@@ -156,7 +171,36 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
           </section>
 
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
+            <h2 className="text-xl text-brand">مرتجع أو تعويض</h2>
+            <p className="mt-1 text-xs text-muted">لو فلوس رجعت للعميل، أو اتعوّض عن حاجة، أو هدية رجعت. بيتخصم من المكسب في التقارير.</p>
+            {(order.refunds ?? []).length > 0 && (
+              <ul className="mt-3 space-y-1.5 text-sm">
+                {order.refunds!.map((r, i) => (
+                  <li key={i} className="flex justify-between gap-3 rounded-lg bg-brand-soft/50 px-3 py-2">
+                    <span>
+                      <b>{refundLabel[r.kind]}</b>: {r.reason}
+                    </span>
+                    <span className="tabular shrink-0 font-semibold text-brand">− {money(r.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <ActionForm action={addRefundAction.bind(null, order.id)} submitLabel="سجّلي" doneLabel="اتسجل ✓" resetOnSuccess className="mt-3 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <select name="kind" className="field" defaultValue="refund" aria-label="النوع">
+                  <option value="refund">فلوس رجعت للعميل</option>
+                  <option value="compensation">تعويض</option>
+                  <option value="return">مرتجع</option>
+                </select>
+                <input name="amount" inputMode="numeric" placeholder="المبلغ" className="field tabular" aria-label="المبلغ" />
+              </div>
+              <input name="reason" placeholder="السبب (مثلاً: الورد وصل دبلان)" className="field" aria-label="السبب" />
+            </ActionForm>
+          </section>
+
+          <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">المرسل</h2>
+            {order.source && <p className="mt-1 text-xs text-muted">عرفنا من: {order.source}</p>}
             <p className="mt-1 text-sm font-semibold">{order.sender.name}</p>
             <p className="tabular text-sm" dir="ltr">{order.sender.phone}</p>
             {order.sender.email && <p className="text-sm text-muted" dir="ltr">{order.sender.email}</p>}

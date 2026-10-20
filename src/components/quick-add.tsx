@@ -32,6 +32,7 @@ export function QuickAdd({ pkg }: { pkg: PackageView }) {
             customizable: p.isCustomizable,
             maxChars: p.customizationMaxChars,
             customization: "",
+            options: p.options?.length ? p.options : undefined,
           })),
           addons: [],
           prepDays: pkg.prepDays,

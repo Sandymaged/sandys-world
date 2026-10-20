@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unreadForStore } from "@/lib/chat";
 import { statusLabel, statusTone } from "@/lib/admin-format";
 import type { OrderRecord, OrderStatus } from "@/lib/db/types";
 
@@ -34,6 +35,9 @@ export function OrderRow({ o }: { o: OrderRecord }) {
           {dates && <> · <span className="tabular">{dates}</span></>}
         </span>
       </span>
+      {unreadForStore(o) > 0 && (
+        <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-semibold text-white">💬 {unreadForStore(o)} رسالة جديدة</span>
+      )}
       <span className="tabular text-sm font-semibold">{money(o.totals.total)}</span>
       <StatusBadge status={o.status} />
     </Link>

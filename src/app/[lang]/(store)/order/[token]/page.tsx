@@ -6,6 +6,8 @@ import { Suspense } from "react";
 import { Icon } from "@/components/icons";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { CopyButton, ProofForm } from "@/components/order-client";
+import { OrderChat } from "@/components/order-chat";
+import { markCustomerRead, sendCustomerMessage } from "@/lib/chat-actions";
 import { PageHeader, StickyNote } from "@/components/scrapbook";
 import { getLocale, getT } from "@/i18n/server";
 import { getStorefront } from "@/lib/catalog";
@@ -213,6 +215,15 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
               </div>
             </section>
           )}
+          {/* الشات مع المتجر */}
+          <OrderChat
+            messages={order.messages ?? []}
+            side="customer"
+            send={sendCustomerMessage.bind(null, order.token, locale)}
+            markRead={markCustomerRead.bind(null, order.token)}
+            title={t("كلمنا عن طلبك")}
+            placeholder={t("اكتب سؤالك أو أي حاجة عايز تغيّرها…")}
+          />
         </div>
 
         {/* الهدايا والإجمالي */}
@@ -235,7 +246,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           {order.gifts.map((g) => (
             <div key={g.id} className={`card p-4 pt-5`}>
               <p className="font-heading text-xl text-brand">{g.title}</p>
-              <p className="text-xs text-muted">{g.items.map((it) => (it.quantity > 1 ? `${it.name} × ${it.quantity}` : it.name)).join(" · ")}</p>
+              <p className="text-xs text-muted">{g.items.map((it) => `${it.name}${it.optionsText ? ` (${it.optionsText})` : ""}${it.quantity > 1 ? ` × ${it.quantity}` : ""}`).join(" · ")}</p>
               <p className="mt-2 text-sm">
                 {t("لـ {name}", { name: g.recipient.name })} · {g.recipient.zoneName}
               </p>

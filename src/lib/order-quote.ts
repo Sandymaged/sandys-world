@@ -6,6 +6,7 @@ import { hasCustomization, isValidPhone } from "./cart";
 import type { Storefront } from "./catalog";
 import { cairoNow, earliestDeliveryDate, periodsForDate, type CairoNow } from "./delivery";
 import { translator, type T } from "@/i18n/t";
+import { describeChoices, optionsPrice, valueAvailable, type OptionChoice } from "./options";
 import { couponDiscount, kitTotal, packagingFee, type CouponRule } from "./pricing";
 
 export interface OrderInput {
@@ -13,6 +14,8 @@ export interface OrderInput {
   sender: { name: string; phone: string; email: string; isRecipient: boolean };
   couponCode: string;
   paymentMethod: "instapay" | "cod";
+  /** العميل عرفنا منين (اختياري) */
+  source?: string;
 }
 
 export interface QuotedItem {
@@ -21,6 +24,9 @@ export interface QuotedItem {
   unitPrice: number; // السعر وقت الطلب — بيتسجل في سطر الهدية
   customization: string | null;
   isAddon: boolean;
+  /** اللون/المقاس/الريحة اللي اتختار، ونص مقروء للوحة */
+  choices: OptionChoice[];
+  optionsText: string | null;
 }
 
 export interface QuotedGift {
@@ -30,6 +36,7 @@ export interface QuotedGift {
   packaging: number;
   deliveryFee: number;
   subtotal: number; // الهدية + التغليف (من غير التوصيل)
+  wrapping: { id: string; name: string; price: number } | null;
 }
 
 export interface Quote {
@@ -64,7 +71,7 @@ export function quoteOrder(
     let basePrice = 0;
     let prepDays = 0;
 
-    const takeProduct = (productId: string, qty: number, priced: boolean, isAddon: boolean, customization?: string) => {
+    const takeProduct = (productId: string, qty: number, priced: boolean, isAddon: boolean, customization?: string, choices?: OptionChoice[]) => {
       const p = products.get(productId);
       if (!p) {
         errors.push(t("{tag}: فيها منتج مبقاش متاح", { tag }));
@@ -75,7 +82,23 @@ export function quoteOrder(
       if (p.isCustomizable && !text) errors.push(t("{tag}: ناقص نص التخصيص لـ {name}", { tag, name: p.name }));
       if (p.customizationMaxChars && text.length > p.customizationMaxChars) errors.push(t("{tag}: نص التخصيص أطول من المسموح", { tag }));
       prepDays = Math.max(prepDays, p.prepDays);
-      items.push({ productId, quantity: qty, unitPrice: priced ? p.price : 0, customization: text || null, isAddon });
+      // الاختيارات: لازم كل اختيار يكون متختار وموجود ولسه متاح (الإضافات ملهاش اختيار في الصفحة، فبتتساب)
+      const opts = isAddon ? [] : (p.options ?? []);
+      const picked = (choices ?? []).filter((c) => opts.some((o) => o.id === c.optionId));
+      for (const o of opts) {
+        const v = o.values.find((x) => x.id === picked.find((c) => c.optionId === o.id)?.valueId);
+        if (!v) errors.push(t("{tag}: اختار {option} لـ {name}", { tag, option: o.name, name: p.name }));
+        else if (!valueAvailable(v)) errors.push(t("{tag}: {value} من {name} خلص", { tag, value: v.label, name: p.name }));
+      }
+      items.push({
+        productId,
+        quantity: qty,
+        unitPrice: priced ? p.price + optionsPrice(opts, picked) : 0,
+        customization: text || null,
+        isAddon,
+        choices: picked,
+        optionsText: describeChoices(opts, picked) || null,
+      });
     };
 
     if (g.kind === "kit") {
@@ -97,8 +120,8 @@ export function quoteOrder(
         return;
       }
       basePrice = pkg.price;
-      const custom = new Map(g.lines.map((l) => [l.productId, l.customization]));
-      for (const p of pkg.products) takeProduct(p.id, p.quantity, false, false, custom.get(p.id));
+      const custom = new Map(g.lines.map((l) => [l.productId, l]));
+      for (const p of pkg.products) takeProduct(p.id, p.quantity, false, false, custom.get(p.id)?.customization, custom.get(p.id)?.choices);
       for (const a of g.addons) {
         if (!products.get(a.productId)?.isAddon) errors.push(t("{tag}: إضافة مش متاحة", { tag }));
         else takeProduct(a.productId, a.quantity, true, true);
@@ -114,7 +137,7 @@ export function quoteOrder(
       if (count === 0 || count > size.maxItems) errors.push(t("{tag}: عدد المنتجات مش مناسب لحجم البوكس", { tag }));
       for (const l of g.lines) {
         if (products.get(l.productId)?.boxEligible === false) errors.push(t("{tag}: {name} مينفعش يتحط في بوكس", { tag, name: l.name }));
-        takeProduct(l.productId, l.quantity, true, false, l.customization);
+        takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices);
       }
     } else {
       const l = g.lines[0];
@@ -122,11 +145,14 @@ export function quoteOrder(
         errors.push(t("{tag}: بيانات غلط", { tag }));
         return;
       }
-      takeProduct(l.productId, l.quantity, true, false, l.customization);
+      takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices);
     }
 
     const lines = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-    const packaging = g.kind === "box" ? packagingFee(basePrice + lines, sf.settings.packaging) : 0;
+    // اختيار التغليف (لو العميل اختار حاجة غير العادي) بيتحسب على الهدية
+    const wrap = g.wrapping ? sf.settings.wrappings.find((w) => w.id === g.wrapping) : undefined;
+    if (g.wrapping && !wrap) errors.push(t("{tag}: التغليف ده مبقاش متاح", { tag }));
+    const packaging = (g.kind === "box" ? packagingFee(basePrice + lines, sf.settings.packaging) : 0) + (wrap?.price ?? 0);
 
     // المستلم والتوصيل
     const r = g.recipient;
@@ -151,10 +177,22 @@ export function quoteOrder(
       items,
       basePrice,
       packaging,
-      deliveryFee: zone?.fee ?? 0,
+      // الطلب لشخص واحد: رسوم التوصيل بتتحسب مرة واحدة (على أول هدية)
+      deliveryFee: gi === 0 ? (zone?.fee ?? 0) : 0,
       subtotal: basePrice + lines + packaging,
+      wrapping: wrap ? { id: wrap.id, name: wrap.name, price: wrap.price } : null,
     });
   });
+
+  // كل الهدايا لازم تروح لنفس الشخص ونفس العنوان في نفس الميعاد
+  const first = input.gifts[0];
+  const sameDelivery = (g: CartGift) =>
+    g.recipient.phone.trim() === first.recipient.phone.trim() &&
+    g.recipient.zoneId === first.recipient.zoneId &&
+    g.recipient.address.trim() === first.recipient.address.trim() &&
+    g.delivery.date === first.delivery.date &&
+    g.delivery.period === first.delivery.period;
+  if (first && !input.gifts.every(sameDelivery)) errors.push(t("الطلب الواحد بيروح لشخص واحد في ميعاد واحد. لو عايز تبعت لحد تاني اعمل طلب تاني."));
 
   const itemsTotal = out.reduce((s, g) => s + g.subtotal - g.packaging, 0);
   const packagingTotal = out.reduce((s, g) => s + g.packaging, 0);

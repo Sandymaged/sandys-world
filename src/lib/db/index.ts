@@ -1,5 +1,6 @@
 import "server-only";
 import { addDays, cairoNow } from "../delivery";
+import { orderStockLines, returnStock } from "../stock";
 import { fileRepo } from "./file-store";
 import { supabaseRepo } from "./supabase-store";
 import type { OrderRecord, Repo } from "./types";
@@ -26,10 +27,18 @@ export async function expireUnpaid(): Promise<number> {
   );
   for (const o of due) {
     await r.update(o.id, { status: "cancelled" }, { status: "cancelled", note: "اتلغى تلقائياً: الدفع متأكدش في المهلة" });
-    for (const g of o.gifts) await r.releaseSlot(g.deliveryDate, g.deliveryPeriod);
+    for (const s of uniqueSlots(o.gifts)) await r.releaseSlot(s.date, s.period);
     if (o.giftCardUse) await r.restoreGiftCard(o.giftCardUse.code, o.giftCardUse.ref);
+    await returnStock(orderStockLines(o.gifts));
   }
   return due.length;
+}
+
+/** مواعيد التوصيل اللي الطلب حاجزها (الهدايا اللي في نفس الميعاد حاجزة مكان واحد) */
+export function uniqueSlots(gifts: OrderRecord["gifts"]) {
+  const seen = new Map<string, { date: string; period: OrderRecord["gifts"][number]["deliveryPeriod"] }>();
+  for (const g of gifts) seen.set(`${g.deliveryDate}|${g.deliveryPeriod}`, { date: g.deliveryDate, period: g.deliveryPeriod });
+  return [...seen.values()];
 }
 
 export const today = () => cairoNow().date;

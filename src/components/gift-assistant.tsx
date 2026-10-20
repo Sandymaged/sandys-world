@@ -45,6 +45,7 @@ function SuggestionCard({ s, index }: { s: Suggestion; index: number }) {
         customizable: it.isCustomizable,
         maxChars: it.maxChars,
         customization: "",
+        options: it.options?.length ? it.options : undefined,
       })),
       addons: [],
       prepDays: Math.max(0, ...s.items.map((it) => it.prepDays)),

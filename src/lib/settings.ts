@@ -7,8 +7,21 @@ export const STORE_NAME = "Sandy's World";
 
 export const TIMEZONE = "Africa/Cairo";
 
+/** اختيار تغليف بيختاره العميل لكل هدية (فوق تغليف البوكس العادي) */
+export interface WrappingOption {
+  id: string;
+  name: string;
+  en?: string;
+  /** زيادة على الهدية (صفر = من غير زيادة) */
+  price: number;
+  image?: string | null;
+  description?: string;
+  descriptionEn?: string;
+}
+
 export interface StoreSettings {
   packaging: { rate: number; min: number; max: number };
+  wrappings: WrappingOption[];
   sameDayCutoffHour: number;
   defaultSlotCapacity: number;
   periods: { id: DeliveryPeriod; label: string; from: number; to: number }[];
@@ -22,6 +35,7 @@ export interface StoreSettings {
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   packaging: { rate: 0.08, min: 40, max: 200 },
+  wrappings: [{ id: "standard", name: "تغليف عادي", en: "Standard wrap", price: 0, description: "ورق وشريطة على ذوق المناسبة" }],
   sameDayCutoffHour: 13,
   defaultSlotCapacity: 8,
   periods: [

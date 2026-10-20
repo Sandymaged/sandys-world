@@ -46,6 +46,8 @@ export interface Partner {
 /** البراند زي ما بيتعرض للعميل (من غير العمولة) */
 export type Brand = Omit<Partner, "commissionRate"> & { productCount: number };
 
+import type { ProductOption } from "./options";
+
 export interface Product {
   en?: Localized;
   id: string;
@@ -67,6 +69,10 @@ export interface Product {
   isAvailable: boolean;
   isAddon: boolean;
   boxEligible: boolean;
+  /** اختيارات زي اللون والمقاس والريحة (اختياري) */
+  options?: ProductOption[];
+  /** العدد في المخزن للمنتج اللي ملوش اختيارات؛ فاضي = مفتوح */
+  stock?: number | null;
 }
 
 export interface PackageItem {
@@ -146,6 +152,10 @@ export interface BoxSize {
   price: number;
   maxItems: number;
   sort: number;
+  /** صورة شكل البوكس ووصف قصير (من اللوحة) */
+  image?: string | null;
+  description?: string;
+  isActive?: boolean;
 }
 
 export interface Zone {

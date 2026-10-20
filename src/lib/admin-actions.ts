@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { checkPassword, endSession, requireAdmin, startSession } from "./admin-auth";
-import { repo } from "./db";
+import { repo, uniqueSlots } from "./db";
 import type { OrderStatus } from "./db/types";
 import { GIFT_CARD_VALID_MONTHS } from "./gift-card";
+import { orderStockLines, returnStock } from "./stock";
 
 export async function adminLogin(_: unknown, form: FormData): Promise<{ error: string } | void> {
   const pass = String(form.get("password") ?? "");
@@ -30,8 +31,10 @@ export async function setOrderStatus(id: string, status: OrderStatus, note?: str
   if (!order || order.status === status) return;
   await db.update(id, { status }, { status, note, by: "admin" });
   if (status === "cancelled" && order.status !== "cancelled") {
-    for (const g of order.gifts) await db.releaseSlot(g.deliveryDate, g.deliveryPeriod);
+    for (const s of uniqueSlots(order.gifts)) await db.releaseSlot(s.date, s.period);
     if (order.giftCardUse) await db.restoreGiftCard(order.giftCardUse.code, order.giftCardUse.ref);
+    await returnStock(orderStockLines(order.gifts));
+    updateTag("catalog");
   }
   revalidatePath("/[lang]/admin", "layout");
 }

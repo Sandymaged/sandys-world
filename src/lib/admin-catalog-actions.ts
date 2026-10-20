@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "./admin-auth";
 import { mutateCatalog, saveMedia, type ProductRecord } from "./db/catalog-store";
+import { normalizeOptions, type ProductOption } from "./options";
 import type { BridalRole, GiftPackage, Kit, KitCategory, Localized, PackageTier, Partner, RecipientTag } from "./types";
 
 export type SaveResult = { ok: true; id: string } | { ok: false; error: string };
@@ -70,6 +71,12 @@ export async function saveProduct(id: string | null, f: FormData): Promise<SaveR
   if (!(cost >= 0)) return { ok: false, error: "التكلفة لازم تكون رقم" };
   const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `p-${Date.now().toString(36)}`;
   const customizable = bool(f, "isCustomizable");
+  let options: ProductOption[] = [];
+  try {
+    options = normalizeOptions(JSON.parse(str(f, "options") || "[]"));
+  } catch {
+    return { ok: false, error: "في مشكلة في الاختيارات، راجعيها" };
+  }
 
   return mutateCatalog(async (d) => {
     if (d.products.some((p) => p.slug === slug && p.id !== id)) return { ok: false as const, error: "الرابط ده مستخدم لمنتج تاني" };
@@ -97,6 +104,8 @@ export async function saveProduct(id: string | null, f: FormData): Promise<SaveR
       isAvailable: bool(f, "isAvailable"),
       isAddon: bool(f, "isAddon"),
       boxEligible: bool(f, "boxEligible"),
+      options: options.length ? options : undefined,
+      stock: str(f, "stock") === "" ? null : Math.max(0, Math.round(num(f, "stock"))),
       en: en({ name: str(f, "nameEn"), description: str(f, "descriptionEn"), category: str(f, "categoryEn") }),
     };
     if (existing) Object.assign(existing, rec);

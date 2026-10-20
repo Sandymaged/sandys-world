@@ -9,7 +9,9 @@ export function packagingFee(
 ): number {
   if (base <= 0) return 0;
   const fee = Math.round(base * rule.rate);
-  return Math.min(rule.max, Math.max(rule.min, fee));
+  const floored = Math.max(rule.min, fee);
+  // الحد الأقصى صفر = من غير حد
+  return rule.max > 0 ? Math.min(rule.max, floored) : floored;
 }
 
 export interface CouponRule {

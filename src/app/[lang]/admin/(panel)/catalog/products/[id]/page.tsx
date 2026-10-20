@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OptionsEditor } from "@/components/admin/options-editor";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
 import { CatalogForm, Check, ChecksGroup, Field, ImageField, Row, Section, Select, TextArea } from "@/components/admin/form";
@@ -67,6 +68,10 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
           <Field label="الاهتمامات" name="interests" defaultValue={p?.interests.join("، ")} hint="مفصولة بفاصلة: قهوة، ديكور، قراية" />
         </Section>
 
+        <Section title="الألوان والمقاسات والريحة">
+          <OptionsEditor initial={p?.options ?? []} />
+        </Section>
+
         <Section title="الإعدادات">
           <div className="grid gap-3 sm:grid-cols-2">
             <Check label="متاح للبيع (لو اتشال، المنتج وكل باكدج فيه بيختفوا)" name="isAvailable" defaultChecked={p?.isAvailable ?? true} />
@@ -74,7 +79,16 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
             <Check label="إضافة على الباكدجات (ورد، بالونة…)" name="isAddon" defaultChecked={p?.isAddon ?? false} />
             <Check label="بيتكتب عليه اسم أو جملة" name="isCustomizable" defaultChecked={p?.isCustomizable ?? false} />
           </div>
-          <Field label="أقصى عدد حروف للتخصيص" name="customizationMaxChars" type="number" defaultValue={p?.customizationMaxChars ?? 25} />
+          <Row>
+            <Field label="أقصى عدد حروف للتخصيص" name="customizationMaxChars" type="number" defaultValue={p?.customizationMaxChars ?? 25} />
+            <Field
+              label="العدد في المخزن"
+              name="stock"
+              type="number"
+              defaultValue={p?.stock ?? ""}
+              hint="للمنتج اللي ملوش اختيارات. سيبيه فاضي لو مش عايزة تعدّي. بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيبان «خلص»."
+            />
+          </Row>
         </Section>
       </CatalogForm>
       {p && <DeleteButton action={deleteProduct.bind(null, p.id)} backTo={back} what="المنتج" />}

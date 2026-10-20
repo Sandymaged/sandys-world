@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CatalogTabs } from "@/components/admin/catalog-ui";
 import { Empty } from "@/components/admin/ui";
 import { GiftArt } from "@/components/gift-art";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -16,7 +15,7 @@ export default async function AdminBrands() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <CatalogTabs />
+        <h1 className="text-3xl text-brand">البراندات المحلية</h1>
         <Link href="/admin/catalog/brands/new" className="btn-primary btn-sm ms-auto">+ براند جديد</Link>
       </div>
       {d.partners.length === 0 ? (

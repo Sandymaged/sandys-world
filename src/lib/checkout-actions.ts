@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { updateTag } from "next/cache";
 import { isLocale } from "@/i18n/config";
 import { translator } from "@/i18n/t";
 import { getStorefront, localizeStorefront } from "@/lib/catalog";
@@ -12,6 +13,7 @@ import type { GiftRecord } from "@/lib/db/types";
 import { cairoNow, periodLabel } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
 import { normalizeGiftCardCode } from "@/lib/gift-card";
+import { orderStockLines, takeStock } from "@/lib/stock";
 import type { DeliveryPeriod } from "@/lib/types";
 import { adminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/public";
@@ -71,7 +73,9 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   // حجز فترات التوصيل (FR-52): لو فترة اتملت، نفك اللي اتحجز ونقول للعميل
   const capacity = raw.settings.defaultSlotCapacity;
   const reserved: { date: string; period: DeliveryPeriod }[] = [];
-  for (const g of quote.gifts) {
+  // الطلب لشخص واحد في ميعاد واحد: بنحجز الميعاد مرة واحدة بس
+  const slots = new Map(quote.gifts.map((g) => [`${g.source.delivery.date}|${g.source.delivery.period}`, g]));
+  for (const g of slots.values()) {
     const { date, period } = g.source.delivery as { date: string; period: DeliveryPeriod };
     if (!(await db.reserveSlot(date, period, capacity))) {
       for (const r of reserved) await db.releaseSlot(r.date, r.period);
@@ -130,6 +134,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
       wantsDeliveryPhoto: c.wantsDeliveryPhoto,
       people: c.people ?? null,
       names: c.names ?? null,
+      wrapping: g.wrapping,
       items: g.items.map((it) => {
         const p = products.get(it.productId);
         return {
@@ -141,6 +146,8 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
           customization: it.customization,
           partnerId: p?.partnerId ?? null,
           commissionRate: null,
+          choices: it.choices,
+          optionsText: it.optionsText,
         };
       }),
     };
@@ -155,6 +162,15 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   const hours = sameDay ? raw.settings.sameDayPaymentWindowHours : raw.settings.paymentWindowHours;
   const needsDesign = gifts.some((g) => g.items.some((it) => it.customization));
 
+  // المخزون بيقل دلوقتي، ولو حاجة خلصت أو الكمية مش كفاية الطلب ميكملش
+  const stock = await takeStock(orderStockLines(gifts));
+  if (!stock.ok) {
+    await releaseAll();
+    if (giftCardUse) await db.restoreGiftCard(giftCardUse.code, giftCardUse.ref);
+    const name = products.get(stock.productId)?.name ?? "";
+    return { ok: false, errors: [t("للأسف {name} خلص أو الكمية دي مش متاحة. شيله من السلة أو قلل الكمية.", { name })] };
+  }
+
   const order = await db.createOrder({
     locale: lang,
     sender: { name: input.sender.name.trim(), phone: input.sender.phone.trim(), email: input.sender.email.trim() },
@@ -168,6 +184,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
     paymentRejectionReason: null,
     couponCode: coupon ? couponCode : null,
     giftCardUse,
+    source: input.source?.trim().slice(0, 40) || null,
     totals: {
       items: quote.itemsTotal,
       packaging: quote.packagingTotal,
@@ -179,5 +196,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
     gifts,
   });
   if (coupon) await db.useCoupon(couponCode);
+  // عشان «خلص» يظهر على طول لو المخزون وصل صفر
+  updateTag("catalog");
   return { ok: true, token: order.token, number: order.number };
 }

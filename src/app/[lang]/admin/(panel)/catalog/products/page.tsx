@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CatalogTabs } from "@/components/admin/catalog-ui";
 import { Empty, money } from "@/components/admin/ui";
 import { GiftArt } from "@/components/gift-art";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -16,7 +15,7 @@ export default async function AdminProducts() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <CatalogTabs />
+        <h1 className="text-3xl text-brand">المنتجات</h1>
         <Link href="/admin/catalog/products/new" className="btn-primary btn-sm ms-auto">+ منتج جديد</Link>
       </div>
       {d.products.length === 0 ? (

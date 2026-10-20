@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { CartLine } from "@/lib/cart";
 import { egp } from "@/lib/format";
+import { missingOptions, optionsPrice, type OptionChoice } from "@/lib/options";
 import type { PackageView, Product } from "@/lib/types";
 import { useCart } from "@/store/cart";
 import { GiftArt } from "./gift-art";
 import { Icon } from "./icons";
+import { OptionPicker } from "./option-picker";
 
 function CustomizationInput({
   product,
@@ -76,8 +78,10 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
   const addGift = useCart((s) => s.addGift);
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [picked, setPicked] = useState<Record<string, number>>({});
+  const [choices, setChoices] = useState<Record<string, OptionChoice[]>>({});
 
   const customizable = pkg.products.filter((p) => p.isCustomizable);
+  const withOptions = pkg.products.filter((p) => p.options?.length);
   const addonTotal = addons.reduce((s, a) => s + (picked[a.id] ?? 0) * a.price, 0);
 
   function add() {
@@ -89,6 +93,8 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
       customizable: p.isCustomizable,
       maxChars: p.customizationMaxChars,
       customization: custom[p.id] ?? "",
+      options: p.options?.length ? p.options : undefined,
+      choices: choices[p.id] ?? [],
     }));
     const addonLines: CartLine[] = addons
       .filter((a) => picked[a.id])
@@ -109,6 +115,24 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
 
   return (
     <div className="space-y-7">
+      {withOptions.length > 0 && (
+        <section className="space-y-5">
+          <h2 className="text-sm font-semibold">{t("اختار اللي يناسبك")}</h2>
+          {withOptions.map((p) => (
+            <div key={p.id} className="space-y-2">
+              {withOptions.length > 1 && <p className="text-sm text-muted">{p.name}</p>}
+              <OptionPicker
+                options={p.options!}
+                choices={choices[p.id] ?? []}
+                onChange={(next) => setChoices((c) => ({ ...c, [p.id]: next }))}
+                showPrices={false}
+                size="sm"
+              />
+            </div>
+          ))}
+        </section>
+      )}
+
       {customizable.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-sm font-semibold">{t("التخصيص")}</h2>
@@ -185,8 +209,12 @@ export function AddProduct({ product }: { product: Product }) {
   const addGift = useCart((s) => s.addGift);
   const [custom, setCustom] = useState("");
   const [qty, setQty] = useState(1);
+  const [choices, setChoices] = useState<OptionChoice[]>([]);
+  const missing = missingOptions(product.options, choices);
+  const unit = product.price + optionsPrice(product.options, choices);
 
   function add() {
+    if (missing.length) return;
     addGift({
       kind: "product",
       title: product.name,
@@ -203,6 +231,8 @@ export function AddProduct({ product }: { product: Product }) {
           customizable: product.isCustomizable,
           maxChars: product.customizationMaxChars,
           customization: custom,
+          options: product.options?.length ? product.options : undefined,
+          choices,
         },
       ],
       addons: [],
@@ -213,6 +243,7 @@ export function AddProduct({ product }: { product: Product }) {
 
   return (
     <div className="space-y-6">
+      {product.options?.length ? <OptionPicker options={product.options} choices={choices} onChange={setChoices} /> : null}
       {product.isCustomizable && <CustomizationInput product={product} value={custom} onChange={setCustom} />}
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">{t("الكمية")}</span>
@@ -228,13 +259,15 @@ export function AddProduct({ product }: { product: Product }) {
       </div>
       <BuyBar>
         <div className="grid gap-2">
-          <button onClick={add} disabled={added} className={`btn-primary w-full ${added ? "!bg-success !opacity-100" : ""}`}>
+          <button onClick={add} disabled={added || missing.length > 0} className={`btn-primary w-full ${added ? "!bg-success !opacity-100" : ""}`}>
             {added ? (
               <AddedLabel />
+            ) : missing.length ? (
+              t("اختار {name} الأول", { name: t.locale === "en" ? missing[0].en || missing[0].name : missing[0].name })
             ) : (
               <>
                 {t("ابعته هدية")}
-                <span className="tabular opacity-90">· {egp(product.price * qty, t)}</span>
+                <span className="tabular opacity-90">· {egp(unit * qty, t)}</span>
               </>
             )}
           </button>

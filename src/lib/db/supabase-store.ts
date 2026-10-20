@@ -39,6 +39,11 @@ function toOrder(r: any): OrderRecord {
     couponCode: r.coupon_code,
     giftCard: r.gift_card ?? null,
     giftCardUse: r.gift_card_use ?? null,
+    source: r.source ?? null,
+    refunds: r.refunds ?? [],
+    messages: r.messages ?? [],
+    storeReadAt: r.store_read_at ?? null,
+    customerReadAt: r.customer_read_at ?? null,
     totals: {
       items: Number(r.items_total),
       packaging: Number(r.packaging_total),
@@ -72,6 +77,11 @@ function toRow(o: Partial<OrderRecord>): Record<string, unknown> {
   if (o.couponCode !== undefined) row.coupon_code = o.couponCode;
   if (o.giftCard !== undefined) row.gift_card = o.giftCard;
   if (o.giftCardUse !== undefined) row.gift_card_use = o.giftCardUse;
+  if (o.source !== undefined) row.source = o.source;
+  if (o.refunds !== undefined) row.refunds = o.refunds;
+  if (o.messages !== undefined) row.messages = o.messages;
+  if (o.storeReadAt !== undefined) row.store_read_at = o.storeReadAt;
+  if (o.customerReadAt !== undefined) row.customer_read_at = o.customerReadAt;
   if (o.totals) {
     row.items_total = o.totals.items;
     row.packaging_total = o.totals.packaging;
@@ -232,6 +242,11 @@ export const supabaseRepo: Repo = {
   async redeemGiftCard(code, amount, ref) {
     const r = await db().rpc("redeem_gift_card", { p_code: code, p_amount: amount, p_ref: ref });
     return Boolean(check(r));
+  },
+
+  async giftCardBalances() {
+    const r = await db().from("gift_cards").select("balance").gt("expires_at", new Date().toISOString()).gt("balance", 0);
+    return (check(r) ?? []).reduce((s: number, c: any) => s + Number(c.balance), 0);
   },
 
   async restoreGiftCard(code, ref) {

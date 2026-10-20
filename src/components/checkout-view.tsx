@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { checkCoupon, submitOrder } from "@/lib/checkout-actions";
 import { checkGiftCard } from "@/lib/gift-card-actions";
-import { giftProblems, giftTotals, hasCustomization } from "@/lib/cart";
+import { deliveryProblems, giftProblems, giftTotals, hasCustomization, orderSources, withDelivery } from "@/lib/cart";
 import { periodLabel } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
 import { couponDiscount, type CouponRule } from "@/lib/pricing";
@@ -17,7 +17,8 @@ import { useCart } from "@/store/cart";
 export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: StoreSettings }) {
   const t = useT();
   const hydrated = useHydrated();
-  const { gifts, sender, setSender, couponCode, setCoupon, clear } = useCart();
+  const { gifts, delivery, sender, setSender, couponCode, setCoupon, clear } = useCart();
+  const [source, setSource] = useState("");
   const router = useRouter();
   const href = useHref();
   const [coupon, setCouponRule] = useState<CouponRule | null>(null);
@@ -32,7 +33,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
-  if (gifts.length === 0 || gifts.some((g) => giftProblems(g, settings).length)) {
+  if (gifts.length === 0 || gifts.some((g) => giftProblems(g, settings).length) || deliveryProblems(delivery).length) {
     return (
       <div className="card p-8 text-center">
         <p className="font-bold">{gifts.length ? t("فيه بيانات ناقصة في السلة") : t("السلة فاضية")}</p>
@@ -43,20 +44,18 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
     );
   }
 
-  const zone = (id: string) => zones.find((z) => z.id === id);
+  // الطلب كله لشخص واحد: رسوم توصيل واحدة
+  const zone = zones.find((z) => z.id === delivery.recipient.zoneId);
   const totals = gifts.map((g) => giftTotals(g, settings));
   const items = totals.reduce((s, t) => s + t.items, 0);
   const packaging = totals.reduce((s, t) => s + t.packaging, 0);
-  const delivery = gifts.reduce((s, g) => s + (zone(g.recipient.zoneId)?.fee ?? 0), 0);
+  const deliveryFee = zone?.fee ?? 0;
   const discount = coupon ? couponDiscount(items + packaging, coupon) : 0;
-  const beforeCard = items + packaging + delivery - discount;
+  const beforeCard = items + packaging + deliveryFee - discount;
   const gcApplied = gcCard ? Math.min(gcCard.balance, beforeCard) : 0;
   const total = beforeCard - gcApplied;
 
-  const codAllowed =
-    sender.isRecipient &&
-    gifts.every((g) => !hasCustomization(g)) &&
-    gifts.every((g) => zone(g.recipient.zoneId)?.kind !== "governorate");
+  const codAllowed = sender.isRecipient && gifts.every((g) => !hasCustomization(g)) && zone?.kind !== "governorate";
   const payMethod = codAllowed ? method : "instapay";
 
   function applyCoupon() {
@@ -88,7 +87,10 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   function submit() {
     setErrors([]);
     start(async () => {
-      const r = await submitOrder({ gifts, sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "" }, t.locale);
+      const r = await submitOrder(
+        { gifts: withDelivery(gifts, delivery), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
+        t.locale,
+      );
       if (!r.ok) {
         setErrors(r.errors);
         return;
@@ -123,6 +125,19 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
             <input type="checkbox" className="size-5 accent-ink" checked={sender.isRecipient} onChange={(e) => setSender({ isRecipient: e.target.checked })} />
             {t("أنا نفسي اللي هستلم الهدية")}
           </label>
+          <div>
+            <label className="label" htmlFor="src">
+              {t("عرفتنا منين؟")} <span className="font-normal text-muted">{t("(اختياري)")}</span>
+            </label>
+            <select id="src" className="field" value={source} onChange={(e) => setSource(e.target.value)}>
+              <option value="">{t("اختار")}</option>
+              {orderSources.map((o) => (
+                <option key={o} value={o}>
+                  {t(o)}
+                </option>
+              ))}
+            </select>
+          </div>
         </section>
 
         <section className="card space-y-3 p-4">
@@ -151,17 +166,18 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
 
         <section className="card p-4">
           <h2 className="mb-3 font-semibold">{t("الهدايا")}</h2>
+          {/* التوصيل مرة واحدة للطلب كله */}
+          <p className="mb-3 rounded-xl bg-bg p-3 text-sm leading-6">
+            {t("لـ {name}", { name: delivery.recipient.name })} · {zone?.name}
+            <br />
+            <span className="text-muted">
+              {formatDay(delivery.date, t)} · {delivery.period && periodLabel(delivery.period, settings, t)}
+            </span>
+          </p>
           <ul className="divide-y divide-line">
             {gifts.map((g, i) => (
               <li key={g.id} className="flex justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0">
-                <div>
-                  <p className="font-semibold">{g.title}</p>
-                  <p className="text-xs leading-5 text-muted">
-                    {t("لـ {name}", { name: g.recipient.name })} · {zone(g.recipient.zoneId)?.name}
-                    <br />
-                    {formatDay(g.delivery.date, t)} · {g.delivery.period && periodLabel(g.delivery.period, settings, t)}
-                  </p>
-                </div>
+                <p className="font-semibold">{g.title}</p>
                 <span className="tabular shrink-0">{egp(totals[i].total, t)}</span>
               </li>
             ))}
@@ -213,7 +229,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
         <dl className="space-y-1.5 border-t border-line pt-3 text-sm">
           <div className="flex justify-between"><dt className="text-muted">{t("الهدايا")}</dt><dd className="tabular">{egp(items, t)}</dd></div>
           {packaging > 0 && <div className="flex justify-between"><dt className="text-muted">{t("تغليف وتنسيق")}</dt><dd className="tabular">{egp(packaging, t)}</dd></div>}
-          <div className="flex justify-between"><dt className="text-muted">{t("التوصيل")}</dt><dd className="tabular">{egp(delivery, t)}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted">{t("التوصيل")}</dt><dd className="tabular">{egp(deliveryFee, t)}</dd></div>
           {discount > 0 && <div className="flex justify-between text-success"><dt>{t("الخصم")}</dt><dd className="tabular">− {egp(discount, t)}</dd></div>}
           {gcApplied > 0 && <div className="flex justify-between text-success"><dt>{t("كارت هدية")}</dt><dd className="tabular">− {egp(gcApplied, t)}</dd></div>}
           <div className="flex justify-between border-t border-line pt-2 text-lg font-bold">

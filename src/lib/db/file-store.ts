@@ -181,6 +181,11 @@ export const fileRepo: Repo = {
       return true;
     }),
 
+  giftCardBalances: async () =>
+    Object.values((await load()).giftCards ?? {})
+      .filter((c) => Date.parse(c.expiresAt) > Date.now())
+      .reduce((s, c) => s + c.balance, 0),
+
   restoreGiftCard: (code, ref) =>
     tx((d) => {
       const c = d.giftCards?.[code];

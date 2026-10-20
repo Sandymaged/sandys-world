@@ -48,6 +48,7 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
               {g.items.map((it) => (
                 <li key={it.productId}>
                   {it.name} × <span className="tabular">{it.quantity}</span>
+                  {it.optionsText && <span> ({it.optionsText})</span>}
                   {it.customization && <b> — يتكتب: «{it.customization}»</b>}
                 </li>
               ))}

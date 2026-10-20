@@ -76,6 +76,8 @@ export function BoxBuilder({
         customizable: p.isCustomizable,
         maxChars: p.customizationMaxChars,
         customization: "",
+        // الاختيارات (لون/مقاس/ريحة) بتتختار في السلة
+        options: p.options?.length ? p.options : undefined,
       })),
       addons: [],
       prepDays: Math.max(0, ...chosen.map((p) => p.prepDays)),
@@ -96,9 +98,14 @@ export function BoxBuilder({
                 aria-pressed={s.id === sizeId}
                 className={`relative rounded-2xl border-2 bg-paper p-3 text-center transition ${s.id === sizeId ? "-rotate-2 border-brand bg-brand-soft" : "border-line hover:border-brand"}`}
               >
+                {s.image && (
+                  // eslint-disable-next-line @next/next/no-img-element -- صورة شكل البوكس من اللوحة (أي لينك)
+                  <img src={s.image} alt="" className="mx-auto mb-2 aspect-square w-full max-w-24 rounded-xl object-cover" />
+                )}
                 <span className="block font-heading text-xl text-brand">{s.name}</span>
                 <span className="tabular block text-sm">{egp(s.price, t)}</span>
                 <span className="tabular block text-xs text-muted">{t("لحد {n} حاجات", { n: s.maxItems })}</span>
+                {s.description && <span className="mt-1 block text-[11px] leading-4 text-muted">{s.description}</span>}
               </button>
             ))}
           </div>

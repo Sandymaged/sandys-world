@@ -14,7 +14,7 @@ export default async function CartPage() {
   const sf = await getLocalizedStorefront();
   return (
     <>
-      <PageHeader tone="lilac" kicker={t("قربنا!")} title={t("السلة")} subtitle={t("لكل هدية مستلم وعنوان وميعاد ورسالة كارت.")} />
+      <PageHeader tone="lilac" kicker={t("قربنا!")} title={t("السلة")} subtitle={t("رتّب هداياك، وبعدين قولنا هتروح لمين وإمتى.")} />
       <div className="container-x py-10">
         <CartView zones={sf.zones} settings={sf.settings} />
       </div>

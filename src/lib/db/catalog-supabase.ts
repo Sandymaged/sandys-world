@@ -38,6 +38,8 @@ const productRow = (p: ProductRecord) => ({
   is_available: p.isAvailable,
   is_addon: p.isAddon,
   box_eligible: p.boxEligible,
+  options: p.options ?? [],
+  stock: p.stock ?? null,
   en: p.en ?? null,
 });
 
@@ -118,6 +120,8 @@ export async function loadCatalogFromSupabase(): Promise<CatalogData> {
         isAvailable: r.is_available,
         isAddon: r.is_addon,
         boxEligible: r.box_eligible,
+        options: r.options ?? [],
+        stock: r.stock,
       }),
     ),
     partners: (check(partners) ?? []).map(

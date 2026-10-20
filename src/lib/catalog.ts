@@ -3,7 +3,9 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Locale } from "@/i18n/config";
 import { DEFAULT_SETTINGS, type StoreSettings } from "./settings";
 import { loadCatalogData } from "./db/catalog-store";
+import { allOptionsSoldOut } from "./options";
 import { getSiteSettings } from "./site-settings";
+import { localStoreConfig } from "./store-config";
 import * as seed from "./seed-data";
 import { publicClient, supabaseConfigured } from "./supabase/public";
 import type {
@@ -34,16 +36,25 @@ interface Catalog {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- صفوف قاعدة البيانات */
+const PRODUCT_COLUMNS =
+  "id, slug, name, description, images, price, category, partner_id, brand, occasions, recipients, interests, is_customizable, customization_max_chars, prep_days, is_available, is_addon, box_eligible, en";
+
+/**
+ * المنتجات بالأعمدة المسموحة للعامة بس (التكلفة مخفية بـ column grants).
+ * لو migration الاختيارات والمخزون لسه ما اتشغلش، بنقرا من غيرهم بدل ما الموقع يقع.
+ */
+async function loadPublicProducts(db: ReturnType<typeof publicClient>) {
+  const full = await db.from("products").select(`${PRODUCT_COLUMNS}, options, stock`);
+  if (!full.error) return full;
+  if (full.error.code === "42703" || full.error.code === "42501") return db.from("products").select(PRODUCT_COLUMNS);
+  return full;
+}
+
 async function loadFromSupabase(): Promise<Catalog> {
   const db = publicClient();
   const [products, partners, packages, kits, seasons, boxSizes, zones, occasions, settings] =
     await Promise.all([
-      // التكلفة مخفية عن القراءة العامة (column grants)، فبنطلب الأعمدة المسموحة بس
-      db
-        .from("products")
-        .select(
-          "id, slug, name, description, images, price, category, partner_id, brand, occasions, recipients, interests, is_customizable, customization_max_chars, prep_days, is_available, is_addon, box_eligible, en",
-        ),
+      loadPublicProducts(db),
       db.from("partners").select("id, slug, name, tagline, story, city, instagram, cover, en").eq("is_public", true),
       // نفس ترتيب المتغيرات اللي فوق بالظبط (packages قبل kits)
       db.from("packages").select("*, package_items(product_id, quantity)"),
@@ -83,6 +94,8 @@ async function loadFromSupabase(): Promise<Catalog> {
         isAvailable: r.is_available,
         isAddon: r.is_addon,
         boxEligible: r.box_eligible,
+        options: r.options ?? [],
+        stock: r.stock,
       }),
     ),
     packages: (packages.data ?? []).map(
@@ -164,6 +177,9 @@ async function loadFromSupabase(): Promise<Catalog> {
         price: Number(r.price),
         maxItems: r.max_items,
         sort: r.sort,
+        image: r.image ?? null,
+        description: r.description ?? "",
+        isActive: r.is_active ?? true,
       }),
     ),
     zones: (zones.data ?? []).map(
@@ -190,7 +206,7 @@ async function getCatalog(): Promise<Catalog> {
   cacheTag("catalog");
   if (!supabaseConfigured) {
     // المخزن المحلي (اللي لوحة التحكم بتعدّل فيه)، والتكلفة بتتشال قبل ما توصل لأي صفحة
-    const data = await loadCatalogData();
+    const [data, local] = await Promise.all([loadCatalogData(), localStoreConfig()]);
     return {
       products: data.products.map((p) => {
         const { cost, ...pub } = p;
@@ -201,10 +217,14 @@ async function getCatalog(): Promise<Catalog> {
       packages: data.packages,
       kits: data.kits,
       seasons: seed.seasons,
-      boxSizes: seed.boxSizes,
+      boxSizes: local.boxSizes ?? seed.boxSizes,
       zones: seed.zones,
       occasions: seed.occasions,
-      settings: DEFAULT_SETTINGS,
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...(local.packaging ? { packaging: local.packaging } : {}),
+        ...(local.wrappings ? { wrappings: local.wrappings } : {}),
+      },
     };
   }
   return loadFromSupabase();
@@ -246,7 +266,11 @@ export async function getStorefront(): Promise<Storefront> {
     const b = p.partnerId ? partnerById.get(p.partnerId) : undefined;
     return b ? { ...p, brand: b.name, brandSlug: b.slug, en: p.en || b.en?.name ? { ...p.en, brand: b.en?.name } : undefined } : { ...p, brand: null, brandSlug: null };
   };
-  const products = c.products.map(withBrand).map((p) => (hiddenCategories.has(p.category) ? { ...p, isAvailable: false } : p));
+  // المنتج بيبان «خلص» لو تصنيفه مقفول، أو عدده في المخزن خلص، أو كل قيم اختيار فيه خلصت
+  const soldOut = (p: Product) => (p.options?.length ? allOptionsSoldOut(p.options) : p.stock != null && p.stock <= 0);
+  const products = c.products
+    .map(withBrand)
+    .map((p) => (hiddenCategories.has(p.category) || soldOut(p) ? { ...p, isAvailable: false } : p));
   const byId = new Map(products.map((p) => [p.id, p]));
 
   const seasonOpen = (s: Season) =>
@@ -292,7 +316,7 @@ export async function getStorefront(): Promise<Storefront> {
     // الكيتات بتتقفل مع قسمها (ورشة مع الصحاب أو العروسة)
     kits: c.kits.filter((k) => k.isAvailable && (k.category === "bridal" ? site.sections.bride : site.sections.kits)),
     activeSeason,
-    boxSizes: c.boxSizes,
+    boxSizes: c.boxSizes.filter((b) => b.isActive !== false),
     zones: c.zones,
     occasions: c.occasions.filter((o) => !site.hiddenOccasions.includes(o.slug)),
     settings: c.settings,

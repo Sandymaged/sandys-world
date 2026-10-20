@@ -1,5 +1,6 @@
 // شكل السلة وحساباتها. الأسعار هنا للعرض بس؛ السيرفر بيعيد حسابها من الكتالوج وقت الطلب.
 
+import { missingOptions, optionsPrice, type OptionChoice, type ProductOption } from "./options";
 import { packagingFee } from "./pricing";
 import type { StoreSettings } from "./settings";
 import type { DeliveryPeriod } from "./types";
@@ -14,7 +15,13 @@ export interface CartLine {
   customization?: string;
   customizable?: boolean;
   maxChars?: number | null;
+  /** اختيارات المنتج وقت الإضافة (للعرض والاختيار في السلة)، واللي العميل اختاره */
+  options?: ProductOption[];
+  choices?: OptionChoice[];
 }
+
+/** سعر القطعة بعد فرق الاختيارات (محتويات الباكدج سعرها صفر وفرق الاختيار مش بيتحسب عليها) */
+export const linePrice = (l: CartLine) => (l.unitPrice > 0 ? l.unitPrice + optionsPrice(l.options, l.choices) : 0);
 
 export interface GiftRecipient {
   name: string;
@@ -44,6 +51,21 @@ export interface CartGift {
   hidePrice: boolean;
   surprise: boolean;
   wantsDeliveryPhoto: boolean;
+  /** اختيار التغليف (id من إعدادات المتجر) */
+  wrapping?: string;
+}
+
+/**
+ * التوصيل للطلب كله (الطلب بيروح لشخص واحد): المستلم والعنوان والميعاد مرة واحدة،
+ * وكل الهدايا بتروح مع بعض برسوم توصيل واحدة.
+ */
+export interface OrderDelivery {
+  recipient: GiftRecipient;
+  date: string;
+  period: DeliveryPeriod | "";
+  hidePrice: boolean;
+  surprise: boolean;
+  wantsDeliveryPhoto: boolean;
 }
 
 export const emptyRecipient: GiftRecipient = {
@@ -55,6 +77,32 @@ export const emptyRecipient: GiftRecipient = {
   locationUrl: "",
 };
 
+/** العميل عرفنا منين (بيظهر في التقارير عشان نعرف أنهي إعلان بيجيب طلبات) */
+export const orderSources = ["إنستجرام", "فيسبوك", "تيك توك", "واتساب", "صاحب أو قريب", "جوجل", "طلبت قبل كده", "حاجة تانية"];
+
+export const emptyDelivery = (): OrderDelivery => ({
+  recipient: { ...emptyRecipient },
+  date: "",
+  period: "",
+  hidePrice: true,
+  surprise: false,
+  wantsDeliveryPhoto: true,
+});
+
+/** الهدايا زي ما بتتبعت للسيرفر: كل هدية واخدة بيانات توصيل الطلب */
+export const withDelivery = (gifts: CartGift[], d: OrderDelivery): CartGift[] =>
+  gifts.map((g) => ({
+    ...g,
+    recipient: { ...d.recipient },
+    delivery: { date: d.date, period: d.period },
+    hidePrice: d.hidePrice,
+    surprise: d.surprise,
+    wantsDeliveryPhoto: d.wantsDeliveryPhoto,
+  }));
+
+/** أكبر مدة تجهيز في الطلب (أقرب يوم توصيل بيتحسب منها) */
+export const orderPrepDays = (gifts: CartGift[]) => Math.max(0, ...gifts.map((g) => g.prepDays));
+
 export function hasCustomization(g: CartGift) {
   return g.lines.some((l) => l.customizable);
 }
@@ -65,12 +113,16 @@ export interface GiftTotals {
   total: number;
 }
 
+/** سعر اختيار التغليف للهدية (صفر لو مفيش أو العادي) */
+export const wrappingPrice = (g: Pick<CartGift, "wrapping">, settings: StoreSettings) =>
+  settings.wrappings.find((w) => w.id === g.wrapping)?.price ?? 0;
+
 export function giftTotals(g: CartGift, settings: StoreSettings): GiftTotals {
-  const lines = g.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
-  const addons = g.addons.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  const lines = g.lines.reduce((s, l) => s + linePrice(l) * l.quantity, 0);
+  const addons = g.addons.reduce((s, l) => s + linePrice(l) * l.quantity, 0);
   const items = g.basePrice + lines + addons;
   const packaging =
-    g.kind === "box" ? packagingFee(g.basePrice + lines, settings.packaging) : 0;
+    (g.kind === "box" ? packagingFee(g.basePrice + lines, settings.packaging) : 0) + wrappingPrice(g, settings);
   return { items, packaging, total: items + packaging };
 }
 
@@ -79,18 +131,26 @@ const PHONE_RE = /^(\+?\d[\d\s-]{7,16})$/;
 export const isValidPhone = (s: string) => PHONE_RE.test(s.trim());
 
 /** الحاجات الناقصة في الهدية قبل الدفع */
-export function giftProblems(g: CartGift, settings: StoreSettings): string[] {
+/** الناقص في بيانات التوصيل (مرة واحدة للطلب كله) */
+export function deliveryProblems(d: OrderDelivery): string[] {
   const out: string[] = [];
-  const r = g.recipient;
+  const r = d.recipient;
   if (!r.name.trim()) out.push("اسم المستلم");
   if (!isValidPhone(r.phone)) out.push("رقم موبايل المستلم");
   if (!r.zoneId) out.push("المنطقة");
   if (!r.address.trim()) out.push("العنوان");
-  if (!g.delivery.date) out.push("يوم التوصيل");
-  if (!g.delivery.period) out.push("فترة التوصيل");
+  if (!d.date) out.push("يوم التوصيل");
+  if (!d.period) out.push("فترة التوصيل");
+  return out;
+}
+
+/** الناقص في الهدية نفسها (التخصيص والاختيارات والكارت) */
+export function giftProblems(g: CartGift, settings: StoreSettings): string[] {
+  const out: string[] = [];
   if (g.cardMessage.length > settings.maxCardMessage) out.push("رسالة الكارت أطول من المسموح");
   for (const l of g.lines) {
     if (l.customizable && !l.customization?.trim()) out.push("نص التخصيص");
   }
+  if (g.lines.some((l) => missingOptions(l.options, l.choices).length)) out.push("اختيارات المنتجات (لون/مقاس/ريحة)");
   return out;
 }

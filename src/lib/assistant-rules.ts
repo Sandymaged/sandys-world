@@ -3,6 +3,7 @@
 
 import type { Locale } from "@/i18n/config";
 import type { Storefront } from "./catalog";
+import type { ProductOption } from "./options";
 import { packagingFee } from "./pricing";
 import type { BoxSize, Product, RecipientTag } from "./types";
 
@@ -20,6 +21,7 @@ export interface SuggestionItem {
   isCustomizable: boolean;
   maxChars: number | null;
   prepDays: number;
+  options?: ProductOption[];
 }
 
 export interface Suggestion {
@@ -75,6 +77,7 @@ export function priceSuggestion(
       isCustomizable: p.isCustomizable,
       maxChars: p.customizationMaxChars,
       prepDays: p.prepDays,
+      options: p.options?.length ? p.options : undefined,
     })),
     box: { id: box.id, name: box.name, price: box.price },
     packaging,

@@ -16,6 +16,18 @@ const paths = {
   minus: "M5 12h14",
   pin: "M12 21s7-6.2 7-11.5a7 7 0 1 0-14 0C5 14.8 12 21 12 21Zm0-9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
   pen: "m4 20 4.5-1L19 8.5 15.5 5 5 15.5 4 20Z",
+  // للوحة التحكم
+  store: "M4 10 5.5 5h13L20 10M4 10v10h16V10M4 10h16M9 20v-5h6v5",
+  box: "M4 8.5 12 4l8 4.5v8L12 21l-8-4.5v-8Zm0 0 8 4.5m0 0 8-4.5M12 13v8",
+  layers: "m12 4 8 4-8 4-8-4 8-4Zm-8 8 8 4 8-4M4 16l8 4 8-4",
+  sliders: "M4 7h9m4 0h3M4 17h3m4 0h9M15 5v4M9 15v4",
+  menu: "M4 7h16M4 12h16M4 17h16",
+  close: "M6 6l12 12M18 6 6 18",
+  external: "M14 4h6v6m0-6-9 9m7 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5",
+  logout: "M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3m7-4 4-4-4-4m4 4H9",
+  chart: "M4 20h16M7 16v-5m5 5V7m5 9v-3",
+  receipt: "M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6m-6 4h6",
+  route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12-10a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a3 3 0 0 1 3-3h4m5 3v6a3 3 0 0 1-3 3h-4",
 } as const;
 
 export type IconName = keyof typeof paths;
