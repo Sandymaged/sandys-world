@@ -1,0 +1,295 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import type { SaveResult } from "@/lib/admin-catalog-actions";
+
+/** فورم بيحفظ بـ server action، وبعد الحفظ بيرجع للقايمة */
+export function CatalogForm({
+  action,
+  backTo,
+  children,
+}: {
+  action: (f: FormData) => Promise<SaveResult>;
+  backTo: string;
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <form
+      action={(f) =>
+        start(async () => {
+          setError(null);
+          const r = await action(f);
+          if (r.ok) router.push(backTo);
+          else setError(r.error);
+        })
+      }
+      className="space-y-6"
+    >
+      {children}
+      {error && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
+      <div className="sticky bottom-0 z-10 -mx-4 flex gap-2 border-t border-dashed border-line bg-[#fbf7f2]/95 px-4 py-3 backdrop-blur">
+        <button disabled={pending} className="btn-primary">{pending ? "بيتحفظ…" : "حفظ"}</button>
+        <button type="button" onClick={() => router.push(backTo)} className="btn-outline">إلغاء</button>
+      </div>
+    </form>
+  );
+}
+
+export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-4 bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
+      <h2 className="text-xl text-brand">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+export function Row({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
+}
+
+export function Field({
+  label,
+  name,
+  defaultValue,
+  type = "text",
+  hint,
+  dir,
+  required,
+  placeholder,
+  step,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string | number | null;
+  type?: string;
+  hint?: string;
+  dir?: "ltr" | "rtl";
+  required?: boolean;
+  placeholder?: string;
+  step?: string;
+}) {
+  return (
+    <div>
+      <label className="label" htmlFor={name}>{label}</label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        step={step}
+        dir={dir}
+        required={required}
+        placeholder={placeholder}
+        defaultValue={defaultValue ?? ""}
+        className={`field ${type === "number" ? "tabular" : ""}`}
+      />
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  );
+}
+
+export function TextArea({ label, name, defaultValue, rows = 3, dir, hint }: { label: string; name: string; defaultValue?: string | null; rows?: number; dir?: "ltr" | "rtl"; hint?: string }) {
+  return (
+    <div>
+      <label className="label" htmlFor={name}>{label}</label>
+      <textarea id={name} name={name} rows={rows} dir={dir} defaultValue={defaultValue ?? ""} className="field h-auto py-3" />
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  );
+}
+
+export function Check({ label, name, defaultChecked }: { label: string; name: string; defaultChecked?: boolean }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="size-5 accent-brand" />
+      {label}
+    </label>
+  );
+}
+
+export function ChecksGroup({ label, name, options, selected }: { label: string; name: string; options: { value: string; label: string }[]; selected: string[] }) {
+  return (
+    <fieldset>
+      <legend className="label">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <label key={o.value} className="cursor-pointer">
+            <input type="checkbox" name={name} value={o.value} defaultChecked={selected.includes(o.value)} className="peer sr-only" />
+            <span className="chip border-line bg-white text-ink-2 peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand">
+              {o.label}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+export function Select({ label, name, options, defaultValue }: { label: string; name: string; options: { value: string; label: string }[]; defaultValue?: string | null }) {
+  return (
+    <div>
+      <label className="label" htmlFor={name}>{label}</label>
+      <select id={name} name={name} defaultValue={defaultValue ?? ""} className="field">
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** صورة: رفع ملف أو لينك، مع معاينة */
+export function ImageField({ current }: { current?: string | null }) {
+  const [preview, setPreview] = useState<string | null>(current ?? null);
+  return (
+    <div className="flex flex-wrap items-start gap-4">
+      <div className="polaroid w-32 shrink-0 -rotate-2">
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element -- معاينة قبل الحفظ
+          <img src={preview} alt="" className="aspect-square w-full object-cover" />
+        ) : (
+          <div className="grid aspect-square w-full place-items-center bg-surface text-xs text-muted">مفيش صورة</div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1 space-y-3">
+        <div>
+          <label className="label" htmlFor="imageFile">ارفعي صورة</label>
+          <input
+            id="imageFile"
+            name="imageFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="block w-full text-sm file:me-3 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-white"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setPreview(URL.createObjectURL(f));
+            }}
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="imageUrl">أو لينك صورة</label>
+          <input id="imageUrl" name="imageUrl" dir="ltr" defaultValue={current ?? ""} placeholder="https://..." className="field" onBlur={(e) => e.target.value && setPreview(e.target.value)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export interface PickerProduct {
+  id: string;
+  name: string;
+  price: number;
+  cost: number;
+  available: boolean;
+}
+
+/**
+ * محتويات الباكدج: اختيار المنتجات والكميات، والنظام بيحسب التكلفة ويقترح سعر ويعرض الهامش (FR-111)،
+ * وبينبّه لو الهامش أقل من الحد (FR-112)
+ */
+export function PackageItemsPicker({
+  products,
+  initial,
+  initialPrice,
+  minMargin,
+}: {
+  products: PickerProduct[];
+  initial: { productId: string; quantity: number }[];
+  initialPrice: number;
+  minMargin: number;
+}) {
+  const [items, setItems] = useState(initial);
+  const [price, setPrice] = useState(initialPrice || 0);
+  const [pick, setPick] = useState("");
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const cost = items.reduce((s, i) => s + (byId.get(i.productId)?.cost ?? 0) * i.quantity, 0);
+  const retail = items.reduce((s, i) => s + (byId.get(i.productId)?.price ?? 0) * i.quantity, 0);
+  // سعر مقترح: التكلفة + هامش 45% + 40 ج.م تغليف، متقرّب لأقرب 10
+  const suggested = cost ? Math.ceil((cost / (1 - 0.45) + 40) / 10) * 10 : 0;
+  const margin = price > 0 ? (price - cost) / price : 0;
+  const low = price > 0 && items.length > 0 && margin < minMargin;
+
+  return (
+    <div className="space-y-4">
+      <input type="hidden" name="items" value={JSON.stringify(items)} />
+      <div className="flex gap-2">
+        <select value={pick} onChange={(e) => setPick(e.target.value)} className="field" aria-label="اختاري منتج">
+          <option value="">اختاري منتج تضيفيه…</option>
+          {products
+            .filter((p) => !items.some((i) => i.productId === p.id))
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} — {p.price} ج.م {p.available ? "" : "(مش متاح)"}
+              </option>
+            ))}
+        </select>
+        <button
+          type="button"
+          disabled={!pick}
+          onClick={() => {
+            setItems((s) => [...s, { productId: pick, quantity: 1 }]);
+            setPick("");
+          }}
+          className="btn-outline btn-sm h-12 shrink-0"
+        >
+          ضيفي
+        </button>
+      </div>
+
+      {items.length > 0 && (
+        <ul className="divide-y divide-dashed divide-line border border-dashed border-line">
+          {items.map((i) => {
+            const p = byId.get(i.productId);
+            return (
+              <li key={i.productId} className="flex items-center gap-3 px-3 py-2 text-sm">
+                <span className="min-w-0 flex-1 truncate">{p?.name ?? "منتج اتمسح"}</span>
+                <span className="tabular text-xs text-muted">تكلفة {p?.cost ?? 0}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={i.quantity}
+                  onChange={(e) => setItems((s) => s.map((x) => (x.productId === i.productId ? { ...x, quantity: Math.max(1, Number(e.target.value) || 1) } : x)))}
+                  className="field tabular h-9 w-16 px-2"
+                  aria-label="الكمية"
+                />
+                <button type="button" onClick={() => setItems((s) => s.filter((x) => x.productId !== i.productId))} className="text-xs text-brand underline">
+                  شيلي
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="grid gap-3 rounded-xl bg-surface p-4 text-sm sm:grid-cols-4">
+        <div>
+          <p className="text-muted">التكلفة</p>
+          <p className="tabular font-semibold">{cost} ج.م</p>
+        </div>
+        <div>
+          <p className="text-muted">لو اتباعوا لوحدهم</p>
+          <p className="tabular font-semibold">{retail} ج.م</p>
+        </div>
+        <div>
+          <p className="text-muted">سعر مقترح</p>
+          <button type="button" onClick={() => setPrice(suggested)} className="tabular font-semibold text-brand underline" disabled={!suggested}>
+            {suggested} ج.م
+          </button>
+        </div>
+        <div>
+          <p className="text-muted">الهامش</p>
+          <p className={`tabular font-semibold ${low ? "text-brand" : "text-success"}`}>{price ? `${Math.round(margin * 100)}%` : "—"}</p>
+        </div>
+      </div>
+      <div>
+        <label className="label" htmlFor="price">سعر الباكدج (شامل التغليف)</label>
+        <input id="price" name="price" type="number" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} className="field tabular" required />
+        {low && <p className="mt-2 rounded-xl bg-butter-soft p-3 text-sm text-butter">الهامش أقل من {Math.round(minMargin * 100)}%. راجعي السعر أو المحتويات.</p>}
+      </div>
+    </div>
+  );
+}

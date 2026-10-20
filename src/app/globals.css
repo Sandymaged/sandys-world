@@ -1,0 +1,416 @@
+@import "tailwindcss";
+
+/*
+ * نظام التصميم: دفتر الهدايا
+ * ورق كريمي دافي، أحمر غامق للأكشن، أزرق باهت وبينك هادي، وأقسام كبيرة بحواف مدورة.
+ * El Messiri للعناوين (شيك وواضح)، رقعة للاقتباسات والكلام المكتوب باليد، وIBM Plex للقراية.
+ * الخط كبير والتباين عالي عشان يبقى مريح لكل الأعمار.
+ */
+@theme {
+  --color-bg: #f5efe7;
+  --color-surface: #ede5da;
+  --color-line: #e3d8cb;
+  --color-ink: #2e2421;
+  --color-ink-2: #55473f;
+  --color-muted: #85776d;
+  --color-brand: #a3212c;
+  --color-brand-dark: #841a24;
+  --color-brand-soft: #f6e0e0;
+  --color-blush: #f6dfe3;
+  --color-candy: #b9506a;
+  --color-lilac: #3e5d92;
+  --color-lilac-soft: #e2e9f5;
+  --color-periwinkle: #8eaad8;
+  --color-butter: #8a6510;
+  --color-butter-soft: #fbefc6;
+  --color-gold: #e0b43a;
+  /* الأزرق الباهت والورق الأبيض */
+  --color-blue: #6d8fc7;
+  --color-blue-soft: #e2e9f5;
+  --color-blue-deep: #3e5d92;
+  --color-paper: #fffdf9;
+  --color-maroon: #6b1822;
+  --color-maroon-ink: #f8ece4;
+  --color-olive: #7c7a2b;
+  --color-olive-soft: #ecead0;
+  --color-pink-mid: #f2c4ce;
+  --color-sky: #dfe7f4;
+  --color-success: #5d7a26;
+  --color-success-soft: #edf2db;
+  --color-warn: #8a6510;
+  --color-warn-soft: #fbefc6;
+
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-heading: var(--font-head), "Times New Roman", serif;
+  --font-script: var(--font-hand), var(--font-head), serif;
+  --font-logo: var(--font-logo-face), cursive;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.875rem;
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-drop-in: drop-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-paper-in: paper-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-draw: draw 1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  --animate-page-in: page-in 0.35s ease-out backwards;
+  --animate-ken-burns: ken-burns 14s ease-out both;
+  --animate-pop-in: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-wiggle: wiggle 5s ease-in-out 1;
+  --animate-pop: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-bump: bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-spin-slow: spin 90s linear infinite;
+
+  --animate-sway: sway 5s ease-in-out 2;
+  --animate-twinkle: twinkle 2.6s ease-in-out 2;
+  --animate-stripes: stripes 60s linear infinite;
+
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  @keyframes twinkle {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(0.55) rotate(25deg); opacity: 0.55; }
+  }
+  @keyframes stripes {
+    to { background-position: 104px 0; }
+  }
+  /* حركات الدخول بـ CSS: بتشتغل أول ما الصفحة تفتح من غير ما تستنى الجافاسكريبت */
+  @keyframes drop-in {
+    0% { opacity: 0; transform: translateY(-60px) rotate(calc(var(--r, 0deg) * 4)) scale(1.06); }
+    60% { opacity: 1; transform: translateY(6px) rotate(calc(var(--r, 0deg) * -0.6)); }
+    100% { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
+  }
+  @keyframes paper-in {
+    0% { opacity: 0; transform: translateY(40px) rotate(-6deg); }
+    70% { opacity: 1; transform: translateY(-4px) rotate(0deg); }
+    100% { opacity: 1; transform: translateY(0) rotate(var(--r, -1.5deg)); }
+  }
+  @keyframes draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  /* الأقسام وهي بتظهر مع السكرول: طالعة ومكبّرة سنة */
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(48px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+  /* ورقة متثبتة على اللوحة: بتتنطط وتستقر على ميلها */
+  @keyframes pop-note {
+    0% { opacity: 0; transform: scale(0.55) rotate(calc(var(--r, 0deg) - 16deg)); }
+    70% { opacity: 1; transform: scale(1.05) rotate(calc(var(--r, 0deg) + 2deg)); }
+    100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); }
+  }
+  /* الفيونكة وهي بتتربط */
+  @keyframes ribbon-drop {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+  @keyframes bow-tail {
+    from { transform: scaleY(0) rotate(-12deg); }
+    to { transform: none; }
+  }
+  @keyframes bow-loop {
+    0% { transform: scale(0) rotate(-25deg); }
+    70% { transform: scale(1.12) rotate(4deg); }
+    100% { transform: none; }
+  }
+  @keyframes bow-knot {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.35); }
+    100% { transform: none; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes page-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes ken-burns {
+    from { transform: scale(1.12); }
+    to { transform: scale(1); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+    to { opacity: 1; transform: scale(1) rotate(-6deg); }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes wiggle {
+    0%, 86%, 100% { transform: rotate(-6deg); }
+    90% { transform: rotate(4deg) scale(1.06); }
+    94% { transform: rotate(-10deg); }
+    97% { transform: rotate(-4deg); }
+  }
+  @keyframes bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+  }
+  /* الاتجاه عربي: الشريط بيتحرك من الشمال لليمين */
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(50%); }
+  }
+  @keyframes marquee-ltr {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  --shadow-soft: 0 1px 2px rgb(28 26 30 / 0.04), 0 8px 24px -12px rgb(28 26 30 / 0.12);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  --font-head: var(--font-head-ar);
+  --font-hand: var(--font-hand-ar);
+}
+/* خطوط الإنجليزي: نفس الإحساس بخطوط لاتيني */
+html[lang="en"] {
+  --font-head: var(--font-head-en);
+  --font-hand: var(--font-hand-en);
+}
+html[lang="en"] h1,
+html[lang="en"] h2 {
+  font-weight: 600;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+h1,
+h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-synthesis: none;
+  text-wrap: balance;
+}
+h3 {
+  text-wrap: balance;
+}
+
+/* مساحة لشريط التنقل اللي تحت في الموبايل */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* الخانات ليها حالة تركيز خاصة بيها (utility field)، فالإطار ده للزراير واللينكات */
+:focus-visible:not(input, textarea, select) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* الأرقام والأسعار تبقى واضحة ومتساوية العرض */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility btn {
+  @apply inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-base font-semibold transition-colors active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-white hover:bg-brand-dark;
+}
+@utility btn-outline {
+  @apply btn border border-ink/15 bg-white text-ink hover:border-ink;
+}
+@utility btn-dark {
+  @apply btn bg-ink text-white hover:bg-ink-2;
+}
+@utility btn-sm {
+  @apply h-10 px-4 text-sm;
+}
+/* ورقة كريمي بظل ورق (الإطار بيتلوّن لما الكارت يتختار) */
+@utility card {
+  @apply relative rounded-2xl border border-line bg-paper shadow-[0_18px_36px_-28px_rgb(60_30_20/0.45)];
+}
+/* قسم كبير بحواف مدورة زي صفحة في دفتر */
+@utility panel {
+  @apply rounded-[2rem] sm:rounded-[2.5rem];
+}
+/* شريطة كاروهات حمرا (توقيع الهوية) */
+@utility ribbon {
+  background-color: #fff8f6;
+  background-image:
+    linear-gradient(90deg, rgb(194 31 44 / 0.62) 50%, transparent 50%),
+    linear-gradient(rgb(194 31 44 / 0.62) 50%, transparent 50%);
+  background-size: 12px 12px;
+  /* ضل خفيف على الطرفين عشان تبان شريطة قماش مش خط */
+  box-shadow:
+    inset 2px 0 0 rgb(122 13 22 / 0.35),
+    inset -2px 0 0 rgb(122 13 22 / 0.35),
+    0 4px 10px -4px rgb(60 10 15 / 0.35);
+}
+@utility chip {
+  @apply inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-sm whitespace-nowrap transition-colors;
+}
+@utility field {
+  @apply h-12 w-full rounded-[var(--radius-control)] border border-line bg-white px-3.5 text-base outline-none transition placeholder:text-muted/70 focus:border-ink focus:ring-4 focus:ring-ink/5;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-ink-2;
+}
+@utility container-x {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6;
+}
+@utility scroll-x {
+  @apply -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-6 sm:px-6;
+}
+@utility eyebrow {
+  @apply text-xs font-semibold tracking-wide text-muted;
+}
+
+/* الأقسام والكروت بتطلع وإنت بتعمل سكرول (CSS بس). المتصفح اللي مش بيدعمها بيعرضها عادي */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+  .reveal-pop {
+    animation: pop-note linear both;
+    animation-timeline: view();
+    animation-range: entry 5% entry 85%;
+  }
+  .reveal-draw {
+    animation: draw linear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 35%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal,
+  .reveal-draw,
+  .reveal-pop,
+  .ribbon-drop,
+  .bow-tie * {
+    animation: none !important;
+  }
+}
+
+/* خطوط حلوى زي ورق الدعوات */
+@utility bg-stripes {
+  background-color: var(--color-blush);
+}
+@utility bg-stripes-thin {
+  background-color: var(--color-brand);
+}
+
+/* في الإنجليزي (من الشمال لليمين) الشريط بيلف في الاتجاه العكسي */
+[dir="ltr"] .animate-marquee,
+[dir="ltr"] .marquee {
+  animation-name: marquee-ltr;
+}
+
+/* ───── أنماط ورق الـ scrapbook ───── */
+@utility bg-gingham {
+  background-color: #fdf3f4;
+  background-image:
+    linear-gradient(90deg, rgb(236 132 162 / 0.07) 50%, transparent 50%),
+    linear-gradient(rgb(236 132 162 / 0.07) 50%, transparent 50%);
+  background-size: 40px 40px;
+}
+@utility bg-gingham-lilac {
+  background-color: #f5f5fc;
+  background-image:
+    linear-gradient(90deg, rgb(150 162 226 / 0.07) 50%, transparent 50%),
+    linear-gradient(rgb(150 162 226 / 0.07) 50%, transparent 50%);
+  background-size: 40px 40px;
+}
+@utility bg-grid-paper {
+  background-color: var(--color-bg);
+}
+@utility bg-grid-olive {
+  background-color: var(--color-olive);
+}
+@utility bg-dots {
+  background-color: var(--color-maroon);
+}
+/* الفيونكة بتتربط أول ما الصفحة تفتح (بعد ما الشريطة تنزل) */
+.ribbon-drop {
+  transform-origin: top;
+  animation: ribbon-drop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.bow-tie .tail,
+.bow-tie .loop,
+.bow-tie .knot {
+  transform-box: fill-box;
+}
+.bow-tie .tail {
+  transform-origin: 50% 0;
+  animation: bow-tail 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.bow-tie .tail-l { animation-delay: 0.55s; }
+.bow-tie .tail-r { animation-delay: 0.65s; }
+.bow-tie .loop { animation: bow-loop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.bow-tie .loop-l { transform-origin: 100% 60%; animation-delay: 0.8s; }
+.bow-tie .loop-r { transform-origin: 0% 60%; animation-delay: 0.95s; }
+.bow-tie .knot {
+  transform-origin: 50% 50%;
+  animation: bow-knot 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 1.25s both;
+}
+/* ورقة على اللوحة: ميلها من --r */
+.reveal-pop {
+  transform: rotate(var(--r, 0deg));
+}
+/* حواف مخرّمة (scalloped) من كل الجهات */
+@utility scallop {
+  --sc: 9px;
+  padding: var(--sc);
+  mask:
+    radial-gradient(var(--sc), #000 98%, #0000) round 0 0 / calc(2 * var(--sc)) calc(2 * var(--sc)),
+    linear-gradient(#000 0 0) content-box;
+}
+/* لوحة بمربعات دهبي زي لوح الصور */
+@utility bg-board {
+  background-color: #fbf4e3;
+  background-image:
+    linear-gradient(rgb(196 156 72 / 0.55) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, rgb(196 156 72 / 0.55) 1.5px, transparent 1.5px);
+  background-size: 64px 64px;
+}
+/* بولارويد: إطار أبيض وهامش تحت */
+@utility polaroid {
+  background: #fffdf8;
+  padding: 0.55rem 0.55rem 0.9rem;
+  box-shadow: 0 1px 1px rgb(60 20 25 / 0.08), 0 14px 26px -14px rgb(60 20 25 / 0.45);
+}
+/* طابع بريد بحواف مخرّمة: دواير مقصوصة على الأطراف بس، والنص مقفول */
+@utility stamp {
+  --r: 5px;
+  background: #fffdf8;
+  padding: calc(2 * var(--r));
+  -webkit-mask:
+    radial-gradient(var(--r), #0000 98%, #000) round calc(-1.5 * var(--r)) calc(-1.5 * var(--r)) / calc(3 * var(--r)) calc(3 * var(--r)),
+    linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--r)) calc(100% - 3 * var(--r));
+  mask:
+    radial-gradient(var(--r), #0000 98%, #000) round calc(-1.5 * var(--r)) calc(-1.5 * var(--r)) / calc(3 * var(--r)) calc(3 * var(--r)),
+    linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--r)) calc(100% - 3 * var(--r));
+}
