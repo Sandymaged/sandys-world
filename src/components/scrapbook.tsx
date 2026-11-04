@@ -120,9 +120,9 @@ export function PageHeader({
 }) {
   return (
     <section className="container-x pt-5 sm:pt-8">
-      <div className={`panel relative overflow-hidden ${headerBg[tone]} px-6 py-10 sm:px-12 sm:py-14`}>
+      <div className={`panel relative overflow-hidden ${headerBg[tone]} px-6 py-10 sm:px-12 sm:pt-28 sm:pb-14`}>
         {/* الشريطة الكاروهات على الجنب: توقيع الهوية */}
-        <GiftRibbon className="end-14 hidden sm:block" strip="w-5" bowSize="w-32" />
+        <GiftRibbon className="end-14 hidden sm:block" strip="w-5" bowSize="w-32" cross />
         <div className="flex items-center justify-center gap-8">
           <div className="w-full max-w-2xl animate-fade-up text-center">
             {kicker && <Pill>{kicker}</Pill>}

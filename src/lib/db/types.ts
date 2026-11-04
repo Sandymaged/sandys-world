@@ -10,6 +10,7 @@ export type OrderStatus =
   | "preparing" // بيتجهز
   | "ready" // جاهز
   | "out_for_delivery" // خرج للتوصيل
+  | "delivery_failed" // التوصيل ماتمش (المستلم مردش أو العنوان غلط)
   | "delivered" // اتسلم
   | "cancelled"; // ملغي
 
@@ -57,6 +58,17 @@ export interface GiftRecord {
   /** اختيار التغليف لو العميل اختار غير العادي */
   wrapping?: { id: string; name: string; price: number } | null;
   items: GiftItemRecord[];
+  /** محاولات توصيل تانية في يوم تاني (برسوم جديدة) بعد ما التوصيل ماتمش */
+  redeliveries?: Redelivery[];
+}
+
+export interface Redelivery {
+  at: string;
+  date: string;
+  period: DeliveryPeriod;
+  fee: number;
+  /** العميل دفع الرسوم إمتى (فاضي = لسه) */
+  paidAt?: string | null;
 }
 
 export interface OrderMessage {
@@ -64,6 +76,13 @@ export interface OrderMessage {
   at: string;
   from: "store" | "customer";
   body: string;
+}
+
+/** حالة البراند جوه الطلب: سلّم حاجته للمتجر إمتى */
+export interface BrandOrderStatus {
+  handedAt?: string | null;
+  /** عمولة المتجر على البراند في الطلب ده، بتتثبت لحظة التسليم للعميل (lib/commission.ts) */
+  settled?: { month: string; threshold: number; gross: number; commission: number };
 }
 
 export interface OrderRefund {
@@ -125,6 +144,13 @@ export interface OrderRecord {
   messages?: OrderMessage[];
   storeReadAt?: string | null;
   customerReadAt?: string | null;
+  /**
+   * المخزون اتخصم ولا لسه. الطلب الجديد بيتعمل من غير خصم (false)، والخصم بيحصل لما المتجر ينقله لـ«بيتجهز».
+   * فاضي = طلب قديم اتخصم وقت ما اتعمل.
+   */
+  stockTaken?: boolean;
+  /** لكل براند (partnerId): سلّم حاجته للمتجر إمتى */
+  brandStatus?: Record<string, BrandOrderStatus>;
   totals: { items: number; packaging: number; delivery: number; discount: number; giftCard?: number; total: number };
   gifts: GiftRecord[];
   history: { at: string; status: OrderStatus; note?: string; by?: string }[];

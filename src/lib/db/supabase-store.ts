@@ -44,6 +44,8 @@ function toOrder(r: any): OrderRecord {
     messages: r.messages ?? [],
     storeReadAt: r.store_read_at ?? null,
     customerReadAt: r.customer_read_at ?? null,
+    brandStatus: r.brand_status ?? {},
+    stockTaken: r.stock_taken ?? true,
     totals: {
       items: Number(r.items_total),
       packaging: Number(r.packaging_total),
@@ -78,6 +80,8 @@ function toRow(o: Partial<OrderRecord>): Record<string, unknown> {
   if (o.giftCard !== undefined) row.gift_card = o.giftCard;
   if (o.giftCardUse !== undefined) row.gift_card_use = o.giftCardUse;
   if (o.source !== undefined) row.source = o.source;
+  if (o.brandStatus !== undefined) row.brand_status = o.brandStatus;
+  if (o.stockTaken !== undefined) row.stock_taken = o.stockTaken;
   if (o.refunds !== undefined) row.refunds = o.refunds;
   if (o.messages !== undefined) row.messages = o.messages;
   if (o.storeReadAt !== undefined) row.store_read_at = o.storeReadAt;
@@ -119,7 +123,15 @@ export const supabaseRepo: Repo = {
 
   async createOrder(o) {
     const history = [{ at: new Date().toISOString(), status: o.status }];
-    const r = await db().from("orders").insert(toRow({ ...o, history })).select("*").single();
+    let r = await db().from("orders").insert(toRow({ ...o, history })).select("*").single();
+    // لو migration البراندات لسه متشغلش (مفيش عمود stock_taken): نحفظ من غيره،
+    // والطلب بيرجع stockTaken = true فالمخزون بيتخصم وقت الطلب زي الأول
+    if (r.error && /stock_taken|brand_status/.test(r.error.message)) {
+      const row = toRow({ ...o, history });
+      delete row.stock_taken;
+      delete row.brand_status;
+      r = await db().from("orders").insert(row).select("*").single();
+    }
     return toOrder(check(r));
   },
 

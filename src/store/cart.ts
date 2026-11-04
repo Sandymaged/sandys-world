@@ -83,7 +83,8 @@ export const useCart = create<CartState>()(
       // الدرج مش بيتحفظ: لو الصفحة اتعملها refresh ميفتحش لوحده
       partialize: (s) => ({ gifts: s.gifts, delivery: s.delivery, sender: s.sender, couponCode: s.couponCode }),
       // السلات القديمة كان التوصيل فيها جوه كل هدية: بناخده من أول هدية
-      version: 2,
+      // نسخة 3: رسالة الكارت بقت واحدة للطلب كله (بناخدها من أول هدية فيها رسالة)
+      version: 3,
       migrate: (persisted, version) => {
         const st = persisted as Partial<CartState> & { gifts?: CartGift[] };
         if (version < 2 && !st.delivery) {
@@ -96,8 +97,12 @@ export const useCart = create<CartState>()(
                 hidePrice: first.hidePrice,
                 surprise: first.surprise,
                 wantsDeliveryPhoto: first.wantsDeliveryPhoto,
+                cardMessage: "",
               }
             : emptyDelivery();
+        }
+        if (version < 3 && st.delivery && st.delivery.cardMessage === undefined) {
+          st.delivery = { ...st.delivery, cardMessage: st.gifts?.find((g) => g.cardMessage)?.cardMessage ?? "" };
         }
         return st as CartState;
       },

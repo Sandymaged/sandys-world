@@ -33,7 +33,7 @@ export default async function AdminBrands() {
                     <span className="block truncate text-xs text-muted">{b.city} · {b.tagline}</span>
                   </span>
                   <span className="tabular text-xs text-muted">{count} منتجات</span>
-                  <span className="tabular w-24 text-end text-sm font-semibold">عمولة {Math.round(b.commissionRate * 100)}%</span>
+                  <span className="w-24 text-end text-xs text-muted">عمولة بالشرايح</span>
                 </Link>
               </li>
             );

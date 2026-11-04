@@ -5,10 +5,13 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useT } from "@/i18n/client";
 import { MAX_MESSAGE } from "@/lib/chat";
 import type { OrderMessage } from "@/lib/db/types";
+import { waLink } from "@/lib/admin-format";
 
 /**
  * الشات جوه الطلب. side = مين اللي فاتح (العميل من صفحة طلبه، أو المتجر من اللوحة).
  * مش لايف زي واتساب: الصفحة بتشيّك على رسايل جديدة كل شوية وهي مفتوحة.
+ * `whatsapp` (للمتجر بس): زرار بيسجّل الرسالة في الشات ويفتح واتساب على رقم العميل بنفس الرسالة،
+ * وتحتها لينك الطلب عشان العميل يقدر يرد من الموقع.
  */
 export function OrderChat({
   messages,
@@ -17,6 +20,7 @@ export function OrderChat({
   markRead,
   title,
   placeholder,
+  whatsapp,
 }: {
   messages: OrderMessage[];
   side: "customer" | "store";
@@ -24,6 +28,7 @@ export function OrderChat({
   markRead?: () => Promise<void>;
   title: string;
   placeholder: string;
+  whatsapp?: { phone: string; footer?: string };
 }) {
   const t = useT();
   const router = useRouter();
@@ -44,6 +49,23 @@ export function OrderChat({
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [count]);
 
+  const waUrl = (body: string) => (whatsapp ? waLink(whatsapp.phone, whatsapp.footer ? `${body}\n\n${whatsapp.footer}` : body) : "#");
+
+  const submit = (alsoWhatsapp: boolean) => {
+    const body = text.trim();
+    if (!body) return;
+    // واتساب لازم يتفتح مع الدوسة نفسها (وإلا المتصفح بيمنعه)، وبعدين الرسالة بتتسجل
+    if (alsoWhatsapp && whatsapp) window.open(waUrl(body), "_blank", "noopener");
+    setError(null);
+    start(async () => {
+      const r = await send(body);
+      if (r.ok) {
+        setText("");
+        router.refresh();
+      } else setError(r.error);
+    });
+  };
+
   const when = (iso: string) =>
     new Intl.DateTimeFormat(t.locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" }).format(new Date(iso));
 
@@ -60,6 +82,14 @@ export function OrderChat({
                   <p className="whitespace-pre-line">{m.body}</p>
                   <p className={`mt-0.5 text-[11px] ${mine ? "text-white/70" : "text-muted"}`}>
                     {m.from === "store" ? t("المتجر") : t("العميل")} · {when(m.at)}
+                    {whatsapp && m.from === "store" && (
+                      <>
+                        {" · "}
+                        <a href={waUrl(m.body)} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white">
+                          ابعتها واتساب
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
               </li>
@@ -72,14 +102,7 @@ export function OrderChat({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          setError(null);
-          start(async () => {
-            const r = await send(text);
-            if (r.ok) {
-              setText("");
-              router.refresh();
-            } else setError(r.error);
-          });
+          submit(false);
         }}
         className="space-y-2"
       >
@@ -92,9 +115,25 @@ export function OrderChat({
           className="field h-auto py-3 leading-6"
         />
         {error && <p className="text-sm text-brand">{error}</p>}
-        <button disabled={pending || !text.trim()} className="btn-primary btn-sm">
-          {pending ? t("لحظة…") : t("ابعت")}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button disabled={pending || !text.trim()} className="btn-primary btn-sm">
+            {pending ? t("لحظة…") : t("ابعت")}
+          </button>
+          {whatsapp && (
+            <button
+              type="button"
+              disabled={pending || !text.trim()}
+              onClick={() => submit(true)}
+              className="btn btn-sm bg-[#1f9d55] text-white hover:bg-[#178246]"
+              title="بتتسجل في الشات وبيتفتح واتساب على رقم العميل بنفس الرسالة"
+            >
+              <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+                <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4a.5.5 0 0 0 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z" />
+              </svg>
+              ابعت + واتساب
+            </button>
+          )}
+        </div>
       </form>
     </section>
   );

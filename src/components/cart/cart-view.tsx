@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Link, useT } from "@/i18n/client";
 import { deliveryProblems, giftProblems, giftTotals, orderPrepDays } from "@/lib/cart";
 import { cairoNow, earliestDeliveryDate } from "@/lib/delivery";
@@ -16,6 +17,7 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
   const hydrated = useHydrated();
   const gifts = useCart((s) => s.gifts);
   const delivery = useCart((s) => s.delivery);
+  const [tried, setTried] = useState(false);
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
@@ -39,7 +41,7 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
   const packaging = totals.reduce((s, t) => s + t.packaging, 0);
   const deliveryFee = zone?.fee ?? 0;
   const problems = gifts.map((g) => giftProblems(g, settings));
-  const dProblems = deliveryProblems(delivery);
+  const dProblems = deliveryProblems(delivery, settings.maxCardMessage);
   // اليوم المختار بقى بدري لو اتضافت هدية بتاخد وقت أطول
   if (zone && delivery.date && delivery.date < earliestDeliveryDate(orderPrepDays(gifts), zone, cairoNow(), settings)) dProblems.push("يوم التوصيل");
   const ready = problems.every((p) => p.length === 0) && dProblems.length === 0;
@@ -54,7 +56,9 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
           <Link href="/shop" className="btn-outline">{t("+ ضيف هدية تانية")}</Link>
           <Link href="/box" className="btn-outline">{t("+ اعمل بوكس")}</Link>
         </div>
-        <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} />
+        <div id="delivery">
+          <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} showErrors={tried} />
+        </div>
       </div>
 
       <aside className="rounded-3xl border border-line bg-paper p-6 shadow-[0_18px_36px_-28px_rgb(60_30_20/0.45)] lg:sticky lg:top-36">
@@ -82,13 +86,24 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
                 : t("كمّل بيانات الهدايا اللي عليها علامة قبل الدفع.")}
           </p>
         )}
-        <Link
-          href={ready ? "/checkout" : "#"}
-          aria-disabled={!ready}
-          className={`btn-primary mt-3 w-full ${ready ? "" : "pointer-events-none opacity-50"}`}
-        >
-          {t("كمّل للدفع")}
-        </Link>
+        {ready ? (
+          <Link href="/checkout" className="btn-primary mt-3 w-full">
+            {t("كمّل للدفع")}
+          </Link>
+        ) : (
+          // لسه فيه ناقص: الدوسة بتوري كل الأخطاء وبتنزل لأول مكان فيه مشكلة
+          <button
+            type="button"
+            className="btn-primary mt-3 w-full opacity-60"
+            onClick={() => {
+              setTried(true);
+              const first = dProblems.length ? document.getElementById("delivery") : document.querySelector("[data-gift-problem]");
+              first?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            {t("كمّل للدفع")}
+          </button>
+        )}
       </aside>
     </div>
   );

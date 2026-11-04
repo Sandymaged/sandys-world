@@ -1,6 +1,7 @@
 // شكل السلة وحساباتها. الأسعار هنا للعرض بس؛ السيرفر بيعيد حسابها من الكتالوج وقت الطلب.
 
 import { missingOptions, optionsPrice, type OptionChoice, type ProductOption } from "./options";
+import { recipientErrors } from "./validate";
 import { packagingFee } from "./pricing";
 import type { StoreSettings } from "./settings";
 import type { DeliveryPeriod } from "./types";
@@ -66,6 +67,8 @@ export interface OrderDelivery {
   hidePrice: boolean;
   surprise: boolean;
   wantsDeliveryPhoto: boolean;
+  /** رسالة الكارت: واحدة للطلب كله (بتتحط في كارت واحد مع الهدايا) */
+  cardMessage: string;
 }
 
 export const emptyRecipient: GiftRecipient = {
@@ -87,12 +90,15 @@ export const emptyDelivery = (): OrderDelivery => ({
   hidePrice: true,
   surprise: false,
   wantsDeliveryPhoto: true,
+  cardMessage: "",
 });
 
 /** الهدايا زي ما بتتبعت للسيرفر: كل هدية واخدة بيانات توصيل الطلب */
 export const withDelivery = (gifts: CartGift[], d: OrderDelivery): CartGift[] =>
-  gifts.map((g) => ({
+  gifts.map((g, i) => ({
     ...g,
+    // كارت واحد للطلب كله: الرسالة على أول هدية بس
+    cardMessage: i === 0 ? (d.cardMessage ?? "").trim() : "",
     recipient: { ...d.recipient },
     delivery: { date: d.date, period: d.period },
     hidePrice: d.hidePrice,
@@ -126,19 +132,22 @@ export function giftTotals(g: CartGift, settings: StoreSettings): GiftTotals {
   return { items, packaging, total: items + packaging };
 }
 
-const PHONE_RE = /^(\+?\d[\d\s-]{7,16})$/;
 
-export const isValidPhone = (s: string) => PHONE_RE.test(s.trim());
+
+export { isValidPhone } from "./validate";
 
 /** الحاجات الناقصة في الهدية قبل الدفع */
 /** الناقص في بيانات التوصيل (مرة واحدة للطلب كله) */
-export function deliveryProblems(d: OrderDelivery): string[] {
+export function deliveryProblems(d: OrderDelivery, maxCardMessage = Infinity): string[] {
   const out: string[] = [];
-  const r = d.recipient;
-  if (!r.name.trim()) out.push("اسم المستلم");
-  if (!isValidPhone(r.phone)) out.push("رقم موبايل المستلم");
-  if (!r.zoneId) out.push("المنطقة");
-  if (!r.address.trim()) out.push("العنوان");
+  const e = recipientErrors(d.recipient);
+  if (e.name) out.push("اسم المستلم");
+  if (e.phone) out.push("رقم موبايل المستلم");
+  if (e.zoneId) out.push("المنطقة");
+  if (e.address) out.push("العنوان");
+  if (e.landmark) out.push("العلامة المميزة");
+  if (e.locationUrl) out.push("لينك اللوكيشن");
+  if ((d.cardMessage ?? "").length > maxCardMessage) out.push("رسالة الكارت أطول من المسموح");
   if (!d.date) out.push("يوم التوصيل");
   if (!d.period) out.push("فترة التوصيل");
   return out;
@@ -147,7 +156,6 @@ export function deliveryProblems(d: OrderDelivery): string[] {
 /** الناقص في الهدية نفسها (التخصيص والاختيارات والكارت) */
 export function giftProblems(g: CartGift, settings: StoreSettings): string[] {
   const out: string[] = [];
-  if (g.cardMessage.length > settings.maxCardMessage) out.push("رسالة الكارت أطول من المسموح");
   for (const l of g.lines) {
     if (l.customizable && !l.customization?.trim()) out.push("نص التخصيص");
   }

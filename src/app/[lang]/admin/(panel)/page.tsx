@@ -1,6 +1,10 @@
+import Link from "next/link";
 import { Empty, OrderRow, StatCard, money } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin-auth";
+import { brandOrderOf } from "@/lib/brand-portal";
 import { unreadForStore } from "@/lib/chat";
+import { formatDay } from "@/lib/format";
+import { loadCatalogData } from "@/lib/db/catalog-store";
 import { expireUnpaid, repo, today, tomorrow } from "@/lib/db";
 import { cairoNow } from "@/lib/delivery";
 
@@ -16,6 +20,15 @@ export default async function AdminHome() {
   const pending = all.filter((o) => o.paymentStatus === "awaiting_confirmation" && o.status !== "cancelled");
   const fresh = all.filter((o) => o.status === "new");
   const withMessages = all.filter((o) => unreadForStore(o) > 0);
+  const catalog = await loadCatalogData();
+  const toReview = catalog.products.filter((p) => p.reviewStatus === "pending");
+  // البراندات اللي عدّى آخر يوم يسلّموا فيه ولسه مسلّموش
+  const late = active.flatMap((o) =>
+    catalog.partners.flatMap((p) => {
+      const bo = brandOrderOf(o, p.id, catalog);
+      return bo?.late ? [{ order: o, brand: p.name, handBy: bo.handBy }] : [];
+    }),
+  );
   const todaySales = active
     .filter((o) => cairoNow(new Date(o.createdAt)).date === d0 && o.status !== "awaiting_payment")
     .reduce((s, o) => s + o.totals.total, 0);
@@ -37,6 +50,25 @@ export default async function AdminHome() {
             ))}
           </div>
         </section>
+      )}
+      {late.length > 0 && (
+        <section className="rounded-2xl border border-brand/40 bg-brand-soft/60 p-4 text-sm">
+          <p className="font-semibold text-brand-dark">⏰ براندات متأخرة في التسليم</p>
+          <ul className="mt-2 space-y-1">
+            {late.map((l) => (
+              <li key={`${l.order.id}-${l.brand}`}>
+                <Link href={`/admin/orders/${l.order.id}`} className="hover:text-brand">
+                  <b>{l.brand}</b> · أوردر <span className="tabular">#{l.order.number}</span> · كان آخره {formatDay(l.handBy)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {toReview.length > 0 && (
+        <Link href="/admin/catalog/products" className="block rounded-2xl border border-line bg-[#fffdf8] p-4 text-sm hover:bg-brand-soft/40">
+          🛍️ فيه <b className="tabular">{toReview.length}</b> منتج جديد من البراندات مستني موافقتك
+        </Link>
       )}
       <p className="text-sm text-ink-2">
         مبيعات النهارده (المؤكدة): <b className="tabular text-brand">{money(todaySales)}</b>

@@ -9,38 +9,45 @@ import { GiftRibbon } from "./decor";
 import { Icon } from "./icons";
 import { Pill } from "./scrapbook";
 
-interface HeroImage {
+export interface HeroSticker {
   src: string;
   alt: string;
-  caption: string;
+  /** ورقة صغيرة جنب الصورة (لمين / بتاعة إيه) */
+  chip?: string;
 }
 
 const words = ["لماما", "لصاحبتك", "لأختك", "لحبيبتك", "لبابا", "لنفسك"];
 const ease = [0.22, 1, 0.36, 1] as const;
 
-// نجمة بـ ١٢ شعاع طويل ورفيع (زي البوستر)
-const starburst = Array.from({ length: 24 }, (_, i) => {
-  const a = (Math.PI / 12) * i - Math.PI / 2;
-  const r = i % 2 ? 16 : 100;
-  return `${(r * Math.cos(a)).toFixed(1)},${(r * Math.sin(a)).toFixed(1)}`;
-}).join(" ");
+/*
+ * أماكن الستيكرز حوالين العنوان: صور منتجات بإطار أبيض تخين ومايلة، بتنزل واحدة ورا التانية وبتطفو.
+ * اللي «round» دايرة وجنبها ورقة صغيرة. على الموبايل بيبان أول ٤ بس وأصغر.
+ */
+const spots = [
+  { pos: "top-6 start-[4%] sm:top-10 sm:start-[7%]", size: "w-20 sm:w-32", r: "-8deg", round: true, chipAt: "-bottom-3 -end-10" },
+  { pos: "top-4 end-[5%] sm:top-12 sm:end-[16%]", size: "w-20 sm:w-28", r: "7deg" },
+  { pos: "bottom-5 start-[6%] sm:bottom-auto sm:top-[62%] sm:start-[9%]", size: "w-[4.5rem] sm:w-28", r: "6deg" },
+  { pos: "bottom-6 end-[6%] sm:bottom-16 sm:end-[13%]", size: "w-20 sm:w-32", r: "-6deg", round: true, chipAt: "-top-3 -start-10" },
+  { pos: "hidden lg:block top-[42%] start-[2%]", size: "w-24", r: "-12deg" },
+  { pos: "hidden lg:block top-[38%] end-[6%]", size: "w-24", r: "10deg" },
+];
 
 function daysUntil(iso: string) {
   return Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000));
 }
 
 /**
- * أول الصفحة: صفحة زرقا هادية فيها الكلام والزراير، وصور بولارويد على الجنب،
- * وشريطة كاروهات حمرا بفيونكة (توقيع الهوية). الكلمة اللي بتتغير بتقول الهدية لمين.
+ * أول الصفحة: عنوان كبير في النص «هدية تفرّح» وكلمة بخط الإيد معدية فوقه بتقول الهدية لمين،
+ * وحواليه ستيكرز من منتجاتنا، والشريطة الكاروهات بالفيونكة على الطرف (توقيع الهوية).
  */
 export function Hero({
-  images,
+  stickers,
   seasonName,
   seasonHref,
   deadline,
   showBox = true,
 }: {
-  images: HeroImage[];
+  stickers: HeroSticker[];
   seasonName: string | null;
   seasonHref: string;
   deadline: string | null;
@@ -61,106 +68,84 @@ export function Hero({
 
   return (
     <section className="container-x pt-4 sm:pt-6">
-      <div className="panel relative overflow-hidden border border-line bg-paper">
-        {/* الشريطة والفيونكة */}
-        <GiftRibbon className="end-[12%] hidden lg:block" />
+      <div className="panel grain relative overflow-hidden border border-line bg-paper">
+        <GiftRibbon className="end-[3%] hidden xl:block" strip="w-5" bowSize="w-32" />
 
-        <div className="grid items-center gap-10 px-6 py-10 sm:px-12 sm:py-14 lg:grid-cols-[1.1fr_1fr] lg:pe-[18%]">
-          <div className="animate-fade-up">
-            <Pill tone="blue">{t("هدايا متغلفة من براندات أسيوط")}</Pill>
-            <h1 className="mt-4 text-5xl leading-[1.25] text-ink sm:text-6xl ltr:sm:text-[3.4rem]">
-              {t("هدية تفرّح")}
-              <span className="relative block h-[1.3em] overflow-hidden text-brand">
-                <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.span
-                    key={words[word]}
-                    className="block"
-                    initial={{ y: "80%", opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: "-80%", opacity: 0 }}
-                    transition={{ duration: 0.6, ease }}
-                  >
-                    {t(words[word])}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-            </h1>
-            <p className="mt-3 max-w-md text-lg leading-8 text-ink-2">
-              {t("باكدجات متغلفة، بوكس على ذوقك، وهدايا من براندات أسيوط المحلية. بتوصل لحد البيت في اليوم والفترة اللي تختارها.")}
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href={seasonHref} className="btn-primary">
-                {t("اختار هديتك")}
+        {/* الستيكرز */}
+        {stickers.slice(0, spots.length).map((s, i) => {
+          const spot = spots[i];
+          return (
+            <div key={s.src} className={`pointer-events-none absolute z-0 ${spot.pos}`} aria-hidden>
+              <div className="animate-float" style={{ animationDelay: `${-i * 1.3}s` }}>
+                <div className={`relative animate-drop-in ${spot.size}`} style={{ ["--r" as string]: spot.r, animationDelay: `${250 + i * 140}ms` }}>
+                  <div className={`relative aspect-square overflow-hidden border-[5px] border-white shadow-[0_14px_26px_-14px_rgb(60_20_25/0.55)] sm:border-[6px] ${spot.round ? "rounded-full" : "rounded-[1.4rem]"}`}>
+                    <Image src={s.src} alt="" fill sizes="140px" className="object-cover" priority={i < 2} />
+                  </div>
+                  {spot.round && s.chip && (
+                    <span className={`absolute ${spot.chipAt} hidden rotate-[-4deg] rounded-full bg-white px-3 py-1 text-sm font-semibold whitespace-nowrap text-ink shadow-md sm:block`}>
+                      {t(s.chip)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 pt-32 pb-36 text-center sm:px-12 sm:py-24 lg:py-28">
+          <Pill tone="blue">{t("هدايا متغلفة من براندات أسيوط")}</Pill>
+
+          <h1 className="relative mt-6 pb-[0.55em] text-[clamp(3.6rem,12vw,8.5rem)] leading-[1.05] text-ink">
+            <span className="animate-fade-up block">{t("هدية تفرّح")}</span>
+            {/* الكلمة بخط الإيد معدية على العنوان */}
+            <span className="absolute inset-x-0 -bottom-[0.12em] flex justify-center text-[0.6em] leading-[1.4]" aria-live="polite">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={words[word]}
+                  className="block -rotate-6 font-script text-brand drop-shadow-[0_2px_0_var(--color-paper)]"
+                  initial={{ y: "70%", opacity: 0, rotate: -14 }}
+                  animate={{ y: 0, opacity: 1, rotate: -6 }}
+                  exit={{ y: "-70%", opacity: 0, rotate: 2 }}
+                  transition={{ duration: 0.6, ease }}
+                >
+                  {t(words[word])}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+          </h1>
+
+          <p className="mt-4 max-w-lg text-lg leading-8 text-ink-2">
+            {t("باكدجات متغلفة، بوكس على ذوقك، وهدايا من براندات أسيوط المحلية. بتوصل لحد البيت في اليوم والفترة اللي تختارها.")}
+          </p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link href={seasonHref} className="btn-primary">
+              {t("اختار هديتك")}
+            </Link>
+            {showBox && (
+              <Link href="/box" className="btn border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
+                {t("اعمل البوكس بنفسك")}
               </Link>
-              {showBox && (
-                <Link href="/box" className="btn border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
-                  {t("اعمل البوكس بنفسك")}
-                </Link>
-              )}
-            </div>
-            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-ink-2">
-              {["توصيل في نفس اليوم في أسيوط", "صورة الهدية قبل ما تخرج", "كارت برسالتك مع كل هدية"].map((x) => (
-                <li key={x} className="flex items-center gap-1.5">
-                  <Icon name="check" className="size-4 text-brand" />
-                  {t(x)}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* صور بولارويد على نجمة زرقا بتلف بالراحة، وسهم مرسوم بالإيد */}
-          <div className="relative mx-auto h-[22rem] w-full max-w-sm sm:h-[26rem]">
-            <svg viewBox="-100 -100 200 200" className="absolute -inset-[18%] animate-spin-slow text-periwinkle" aria-hidden>
-              <polygon points={starburst} fill="currentColor" opacity="0.55" />
-            </svg>
-
-            {images[0] && (
-              <div className="absolute top-0 end-0 w-[60%] animate-float">
-                <figure className="polaroid animate-drop-in [--r:3deg] [animation-delay:200ms]">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <Image src={images[0].src} alt={images[0].alt} fill sizes="240px" className="object-cover" priority />
-                  </div>
-                  <figcaption className="mt-2 text-center font-script text-lg leading-none text-ink-2">{t(images[0].caption)}</figcaption>
-                </figure>
-              </div>
-            )}
-            {images[1] && (
-              <div className="absolute bottom-0 start-0 w-[54%] animate-float [animation-delay:-3.5s]">
-                <figure className="polaroid animate-drop-in [--r:-4deg] [animation-delay:450ms]">
-                  <div className="relative aspect-square overflow-hidden">
-                    <Image src={images[1].src} alt={images[1].alt} fill sizes="220px" className="object-cover" priority />
-                  </div>
-                  <figcaption className="mt-2 text-center font-script text-lg leading-none text-ink-2">{t(images[1].caption)}</figcaption>
-                </figure>
-              </div>
-            )}
-
-            {/* ملاحظة بخط الإيد وسهمها بيترسم */}
-            <div className="absolute top-4 start-0 w-[38%] text-center">
-              <p className="animate-fade-up font-script text-xl leading-tight text-blue-deep [animation-delay:900ms]">{t("متغلفة بحب")}</p>
-              <svg viewBox="0 0 120 60" className="mx-auto mt-1 w-24 rtl:-scale-x-100" fill="none" aria-hidden>
-                <path
-                  d="M10 8 C 20 40, 60 52, 104 40"
-                  stroke="var(--color-blue-deep)"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  pathLength={1}
-                  strokeDasharray="1"
-                  className="animate-[draw_1s_ease-out_1.1s_both]"
-                />
-                <path d="M94 31 L105 40 L93 48" stroke="var(--color-blue-deep)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="animate-fade-up [animation-delay:1.9s]" />
-              </svg>
-            </div>
-
-            {seasonName && (
-              <div className="absolute end-2 bottom-4 z-10 w-36 animate-pop-in rounded-2xl bg-brand p-3 text-center text-maroon-ink shadow-lg [animation-delay:1.2s]">
-                <p className="text-sm leading-tight">{seasonName}</p>
-                {daysLeft !== null && <p className="tabular mt-0.5 font-heading text-2xl">{t("فاضل {n} يوم", { n: daysLeft })}</p>}
-                <p className="text-xs opacity-80">{t("على آخر ميعاد للطلب")}</p>
-              </div>
             )}
           </div>
+          <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[15px] text-ink-2">
+            {["توصيل في نفس اليوم في أسيوط", "صورة الهدية قبل ما تخرج", "كارت برسالتك مع كل هدية"].map((x) => (
+              <li key={x} className="flex items-center gap-1.5">
+                <Icon name="check" className="size-4 text-brand" />
+                {t(x)}
+              </li>
+            ))}
+          </ul>
+          {seasonName && (
+            <Link
+              href={seasonHref}
+              className="mt-7 inline-flex -rotate-2 animate-pop-in items-center gap-3 rounded-2xl bg-brand px-5 py-2.5 text-maroon-ink shadow-lg transition-transform [animation-delay:1.2s] hover:rotate-0"
+            >
+              <span className="text-sm">{seasonName}</span>
+              {daysLeft !== null && <span className="tabular font-heading text-xl">{t("فاضل {n} يوم", { n: daysLeft })}</span>}
+            </Link>
+          )}
         </div>
+
       </div>
     </section>
   );

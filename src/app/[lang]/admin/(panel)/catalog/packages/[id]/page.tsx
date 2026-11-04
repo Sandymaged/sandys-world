@@ -5,7 +5,7 @@ import { CatalogForm, Check, ChecksGroup, Field, ImageField, PackageItemsPicker,
 import { requireAdmin } from "@/lib/admin-auth";
 import { deletePackage, savePackage } from "@/lib/admin-catalog-actions";
 import { adminOptions } from "@/lib/admin-options";
-import { loadCatalogData } from "@/lib/db/catalog-store";
+import { costOf, loadCatalogData } from "@/lib/db/catalog-store";
 
 export const instant = false;
 
@@ -54,7 +54,11 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
 
         <Section title="المحتويات والسعر">
           <PackageItemsPicker
-            products={d.products.map((p) => ({ id: p.id, name: p.name, price: p.price, cost: p.cost, available: p.isAvailable }))}
+            products={d.products.map((p) => {
+              // البراند بياخد سعر منتجه كامل حتى جوه الباكدج (والعمولة ممكن تبقى صفر تحت حد الشهر)، فتكلفته سعره
+              const brand = p.partnerId ? (d.partners.find((x) => x.id === p.partnerId)?.name ?? null) : null;
+              return { id: p.id, name: p.name, price: p.price, cost: brand ? p.price : costOf(p, d), available: p.isAvailable, brand };
+            })}
             initial={pk?.items ?? []}
             initialPrice={pk?.price ?? 0}
             minMargin={opts.minPackageMargin}

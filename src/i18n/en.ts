@@ -2,7 +2,7 @@
 // لو جملة اتغيرت في العربي، لازم المفتاح هنا يتغير معاها (وإلا بتظهر بالعربي في الإنجليزي).
 export const en: Record<string, string> = {
   // ── عام
-  "Sandy's World": "Sandy's World",
+  giftful: "giftful",
   "، ": ", ",
   "الرئيسية": "Home",
   "الهدايا": "Gifts",
@@ -711,4 +711,61 @@ export const en: Record<string, string> = {
   "جوجل": "Google",
   "طلبت قبل كده": "I've ordered before",
   "حاجة تانية": "Something else",
+
+  // ── هوية giftful
+  "هدايا محلية · كيتات هاند ميد": "Local gifts · Handmade kits",
+  "الخيط اللي بيجمع": "The thread that brings us together",
+
+  // ── مدة التجهيز في الدفع
+  "الهدايا دي بتتجهز في يوم، فأقرب يوم توصيل {date}.": "These gifts take a day to prepare, so the earliest delivery is {date}.",
+  "الهدايا دي بتتجهز في {n} أيام، فأقرب يوم توصيل {date}.": "These gifts take {n} days to prepare, so the earliest delivery is {date}.",
+
+  // ── التوصيل ماتمش
+  "مقدرناش نوصّل الهدية": "We couldn't deliver the gift",
+  "توصيل تاني في يوم تاني": "Second delivery on another day",
+  "السياسات": "Policies",
+  "الإلغاء والاسترجاع والتوصيل والخصوصية": "Cancellation, returns, delivery and privacy",
+  "كل اللي محتاج تعرفه عن الإلغاء والاسترجاع والتوصيل وبياناتك، بالبساطة.": "Everything you need to know about cancelling, returns, delivery and your data, in plain words.",
+  "عندك سؤال؟": "Have a question?",
+  "كلمنا من صفحة طلبك": "Message us from your order page",
+  "بتأكيد الطلب إنت موافق على": "By placing the order you agree to the",
+  "سياسة الإلغاء والاسترجاع والتوصيل": "cancellation, returns and delivery policy",
+  "هنكلمك نحدد ميعاد تاني. المحاولة التانية في نفس اليوم ببلاش، ولو في يوم تاني بتبقى برسوم توصيل جديدة.": "We'll call you to set a new time. A second try on the same day is free; on another day there's a new delivery fee.",
+
+  // ── الرئيسية: الستيكرز والورق الملوّن والبراندات
+  "عيد ميلاد سعيد": "Happy birthday",
+  "على ذوقك.": "Your taste.",
+  "ولحبايبك.": "Your people.",
+  "هدايا من براندات أسيوط": "Gifts from Assiut brands",
+  "تغليف على ذوق المناسبة": "Wrapped for the occasion",
+  "كارت بخط إيدك": "A card in your words",
+  "توصيل في نفس اليوم": "Same-day delivery",
+  "معمول بإيد ناس من بلدنا": "Handmade by people from home",
+
+  // ── التحقق من البيانات وكارت واحد للطلب
+  "اكتب رقم الموبايل": "Enter the mobile number",
+  "رقم الموبايل أرقام بس": "The mobile number can only contain digits",
+  "رقم الموبايل لازم يكون ١١ رقم ويبدأ بـ 01": "The mobile number must be 11 digits starting with 01",
+  "رقم الموبايل لازم يبدأ بـ 010 أو 011 أو 012 أو 015": "The mobile number must start with 010, 011, 012 or 015",
+  "اكتب الاسم": "Enter the name",
+  "الاسم من غير أرقام": "The name can't contain numbers",
+  "الاسم قصير أوي": "The name is too short",
+  "الاسم طويل أوي": "The name is too long",
+  "الاسم فيه رموز مش مسموحة": "The name contains characters that aren't allowed",
+  "اكتب العنوان": "Enter the address",
+  "اكتب العنوان بالتفصيل (الشارع والعمارة والدور)": "Write the full address (street, building and floor)",
+  "العنوان طويل أوي": "The address is too long",
+  "العلامة المميزة طويلة أوي": "The landmark is too long",
+  "اللينك طويل أوي": "The link is too long",
+  "اللينك لازم يبدأ بـ https://": "The link must start with https://",
+  "اللينك مش مظبوط": "The link isn't valid",
+  "اللينك مش مظبوط، انسخه من خرايط جوجل": "The link isn't valid. Copy it from Google Maps",
+  "الإيميل مش مظبوط": "The email isn't valid",
+  "اسمك: {e}": "Your name: {e}",
+  "موبايلك: {e}": "Your mobile: {e}",
+  "المستلم: {e}": "Recipient: {e}",
+  "التوصيل متاح دلوقتي للمنطقة دي بس.": "Delivery is only available to this area right now.",
+  "(كارت واحد للطلب كله، اختياري)": "(one card for the whole order, optional)",
+  "التغليف العادي": "Standard wrapping",
+  "العلامة المميزة": "Landmark",
 };

@@ -122,7 +122,10 @@ export async function SiteFooter() {
         <div className="border-t border-white/15">
           <div className="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-sm text-white/60">
             <p>
-              © 2026 {name}. {t("كل الحقوق محفوظة.")}
+              © 2026 {name}. {t("كل الحقوق محفوظة.")}{" "}
+              <Link href="/policies" className="underline underline-offset-4 hover:text-white">
+                {t("السياسات")}
+              </Link>
             </p>
             <a href="#" className="inline-flex items-center gap-1.5 rounded-full border border-white/25 px-4 py-1.5 text-white/80 transition-colors hover:bg-white hover:text-blue-deep">
               {t("لفوق")}

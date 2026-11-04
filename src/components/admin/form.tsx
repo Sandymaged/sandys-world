@@ -143,7 +143,7 @@ export function Select({ label, name, options, defaultValue }: { label: string; 
 }
 
 /** صورة: رفع ملف أو لينك، مع معاينة */
-export function ImageField({ current }: { current?: string | null }) {
+export function ImageField({ current, uploadLabel = "ارفعي صورة" }: { current?: string | null; uploadLabel?: string }) {
   const [preview, setPreview] = useState<string | null>(current ?? null);
   return (
     <div className="flex flex-wrap items-start gap-4">
@@ -157,7 +157,7 @@ export function ImageField({ current }: { current?: string | null }) {
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div>
-          <label className="label" htmlFor="imageFile">ارفعي صورة</label>
+          <label className="label" htmlFor="imageFile">{uploadLabel}</label>
           <input
             id="imageFile"
             name="imageFile"
@@ -185,6 +185,8 @@ export interface PickerProduct {
   price: number;
   cost: number;
   available: boolean;
+  /** اسم البراند لو المنتج بتاع براند (بياخد سعره كامل) */
+  brand?: string | null;
 }
 
 /**
@@ -212,6 +214,12 @@ export function PackageItemsPicker({
   const suggested = cost ? Math.ceil((cost / (1 - 0.45) + 40) / 10) * 10 : 0;
   const margin = price > 0 ? (price - cost) / price : 0;
   const low = price > 0 && items.length > 0 && margin < minMargin;
+  // نصيب البراندات: سعر منتجاتهم كامل، والفرق لو الباكدج أرخص بيتخصم من مكسبك
+  const brandShare = items.reduce((s, i) => {
+    const p = byId.get(i.productId);
+    return p?.brand ? s + p.price * i.quantity : s;
+  }, 0);
+  const loss = price > 0 && items.length > 0 && price < cost;
 
   return (
     <div className="space-y-4">
@@ -247,7 +255,8 @@ export function PackageItemsPicker({
             return (
               <li key={i.productId} className="flex items-center gap-3 px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate">{p?.name ?? "منتج اتمسح"}</span>
-                <span className="tabular text-xs text-muted">تكلفة {p?.cost ?? 0}</span>
+                {p?.brand && <span className="rounded-full bg-lilac/10 px-2 py-0.5 text-[11px] text-lilac">{p.brand}</span>}
+                <span className="tabular text-xs text-muted">{p?.brand ? "للبراند" : "تكلفة"} {p?.cost ?? 0}</span>
                 <input
                   type="number"
                   min={1}
@@ -288,7 +297,22 @@ export function PackageItemsPicker({
       <div>
         <label className="label" htmlFor="price">سعر الباكدج (شامل التغليف)</label>
         <input id="price" name="price" type="number" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} className="field tabular" required />
-        {low && <p className="mt-2 rounded-xl bg-butter-soft p-3 text-sm text-butter">الهامش أقل من {Math.round(minMargin * 100)}%. راجعي السعر أو المحتويات.</p>}
+        {loss ? (
+          <p className="mt-2 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">
+            بتخسري {cost - price} ج.م في كل باكدج: السعر أقل من التكلفة
+            {brandShare > 0 && <> (منها {brandShare} ج.م للبراندات، بياخدوا سعر منتجاتهم كامل حتى جوه الباكدج)</>}.
+          </p>
+        ) : (
+          low && (
+            <p className="mt-2 rounded-xl bg-butter-soft p-3 text-sm text-butter">
+              الهامش أقل من {Math.round(minMargin * 100)}%. راجعي السعر أو المحتويات.
+              {brandShare > 0 && <> منتجات البراندات ({brandShare} ج.م) بتتحسب بسعرها كامل، لأن البراند بياخده كله.</>}
+            </p>
+          )
+        )}
+        {!loss && !low && brandShare > 0 && price > 0 && (
+          <p className="mt-2 text-xs text-muted">من سعر الباكدج: {brandShare} ج.م للبراندات، والباقي {price - brandShare} ج.م ليكي (تغليف ومنتجاتك ومكسبك).</p>
+        )}
       </div>
     </div>
   );

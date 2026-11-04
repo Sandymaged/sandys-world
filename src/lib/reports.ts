@@ -114,6 +114,8 @@ function money(o: OrderRecord, catalog: CatalogData, f: FinanceSettings) {
   const partners = new Map(catalog.partners.map((p) => [p.id, p]));
   let goods = 0;
   let commission = 0;
+  // مبيعات كل براند في الطلب (بالنسبة القديمة لو الطلب من قبل نظام الشرايح)
+  const brands = new Map<string, { gross: number; legacy: number }>();
   for (const g of o.gifts) {
     for (const it of g.items) {
       const p = products.get(it.productId);
@@ -121,14 +123,24 @@ function money(o: OrderRecord, catalog: CatalogData, f: FinanceSettings) {
       const price = (it.unitPrice > 0 ? it.unitPrice : (p?.price ?? 0)) * it.quantity;
       const partner = it.partnerId ? partners.get(it.partnerId) : undefined;
       if (partner) {
-        const share = price * (1 - partner.commissionRate);
-        goods += share;
-        commission += price - share;
+        const b = brands.get(partner.id) ?? { gross: 0, legacy: 0 };
+        b.gross += price;
+        b.legacy += price * (it.commissionRate ?? partner.commissionRate);
+        brands.set(partner.id, b);
       } else goods += (p?.cost ?? 0) * it.quantity;
     }
   }
+  // العمولة بالشرايح بتتثبت وقت التسليم؛ قبل التسليم بنعتبرها صفر (البراند ياخد السعر كله لحد ما تتحسب)
+  for (const [pid, b] of brands) {
+    const settled = o.brandStatus?.[pid]?.settled;
+    const c = settled ? settled.commission : o.status === "delivered" ? b.legacy : 0;
+    commission += c;
+    goods += b.gross - c;
+  }
   const zoneId = o.gifts[0]?.recipient.zoneId;
-  const delivery = o.gifts.length && zoneId ? (f.zoneCosts[zoneId] ?? 0) : 0;
+  // كل محاولة توصيل تانية في يوم تاني مشوار جديد على المندوب
+  const trips = 1 + (o.gifts[0]?.redeliveries?.length ?? 0);
+  const delivery = o.gifts.length && zoneId ? (f.zoneCosts[zoneId] ?? 0) * trips : 0;
   const packaging = f.packagingCostPerGift * o.gifts.length;
   const fees = o.paymentMethod === "instapay" ? instapayFee(o.totals.total, f) : 0;
   return { goods, commission, delivery, packaging, fees };

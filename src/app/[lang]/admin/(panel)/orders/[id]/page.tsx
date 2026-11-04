@@ -4,14 +4,16 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/admin/action-form";
 import { OrderChat } from "@/components/order-chat";
 import { markStoreRead, sendStoreMessage } from "@/lib/chat-actions";
-import { PaymentPanel, StatusButtons } from "@/components/admin/order-actions";
+import { PaymentPanel, RedeliveryPanel, StatusButtons } from "@/components/admin/order-actions";
 import { StatusBadge, money } from "@/components/admin/ui";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { requireAdmin } from "@/lib/admin-auth";
 import { paymentLabel, waLink, waMessages } from "@/lib/admin-format";
 import { getStorefront } from "@/lib/catalog";
 import { repo } from "@/lib/db";
-import { periodLabel } from "@/lib/delivery";
+import { addDays, cairoNow, periodLabel } from "@/lib/delivery";
+import { brandOrderOf } from "@/lib/brand-portal";
+import { loadCatalogData } from "@/lib/db/catalog-store";
 import { addRefundAction } from "@/lib/finance-actions";
 import { formatDay } from "@/lib/format";
 import { giftCardDesigns } from "@/lib/gift-card";
@@ -31,7 +33,12 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
   const { id } = await params;
   const order = await repo().getById(id);
   if (!order) notFound();
-  const settings = (await getStorefront()).settings;
+  const storefront = await getStorefront();
+  const settings = storefront.settings;
+  const zone = storefront.zones.find((z) => z.id === order.gifts[0]?.recipient.zoneId);
+  const catalog = await loadCatalogData();
+  // كل براند منتجاته في الطلب ده: سلّم ولا لأ
+  const brands = catalog.partners.map((p) => ({ p, bo: brandOrderOf(order, p.id, catalog) })).filter((x) => x.bo);
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const orderUrl = `${origin}${order.locale === "en" ? "/en" : ""}/order/${order.token}`;
@@ -141,12 +148,46 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
             send={sendStoreMessage.bind(null, order.id)}
             markRead={markStoreRead.bind(null, order.id)}
             title="الشات مع العميل"
+            whatsapp={{ phone: order.sender.phone, footer: order.locale === "en" ? `Reply here: ${orderUrl}` : `تقدر ترد علينا من هنا: ${orderUrl}` }}
             placeholder="اكتبي للعميل (مثلاً: تحبي الكارت بخط عربي ولا إنجليزي؟)"
           />
+          {brands.length > 0 && (
+            <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
+              <h2 className="text-xl text-brand">البراندات</h2>
+              <ul className="mt-3 space-y-3">
+                {brands.map(({ p, bo }) => (
+                  <li key={p.id} className="space-y-1.5 text-sm">
+                    <p className="flex flex-wrap items-center gap-2">
+                      <Link href={`/admin/settlements/${p.id}`} className="font-semibold hover:text-brand">{p.name}</Link>
+                      {bo!.handedAt ? (
+                        <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">سلّم · {when(bo!.handedAt)}</span>
+                      ) : (
+                        bo!.open &&
+                        (bo!.late ? (
+                          <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">متأخر · كان آخره {formatDay(bo!.handBy)}</span>
+                        ) : (
+                          <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs text-butter">لسه مسلّمش · آخره {formatDay(bo!.handBy)}</span>
+                        ))
+                      )}
+                    </p>
+                    <p className="text-xs text-ink-2">{bo!.lines.map((l) => `${l.quantity}× ${l.name}`).join("، ")}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">الحالة</h2>
             <StatusButtons id={order.id} status={order.status} />
           </section>
+          <RedeliveryPanel
+            id={order.id}
+            status={order.status}
+            defaultFee={zone?.fee ?? order.gifts[0]?.deliveryFee ?? 0}
+            minDate={addDays(cairoNow().date, 1)}
+            periods={settings.periods.map((p) => ({ id: p.id, label: periodLabel(p.id, settings) }))}
+            redeliveries={order.gifts[0]?.redeliveries ?? []}
+          />
 
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">الدفع</h2>

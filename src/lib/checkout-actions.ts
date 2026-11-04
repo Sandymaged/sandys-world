@@ -1,7 +1,6 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { updateTag } from "next/cache";
 import { isLocale } from "@/i18n/config";
 import { translator } from "@/i18n/t";
 import { getStorefront, localizeStorefront } from "@/lib/catalog";
@@ -13,7 +12,9 @@ import type { GiftRecord } from "@/lib/db/types";
 import { cairoNow, periodLabel } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
 import { normalizeGiftCardCode } from "@/lib/gift-card";
-import { orderStockLines, takeStock } from "@/lib/stock";
+import { checkStock, orderStockLines, takeStock } from "@/lib/stock";
+import { normalizePhone } from "@/lib/validate";
+import { updateTag } from "next/cache";
 import type { DeliveryPeriod } from "@/lib/types";
 import { adminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/public";
@@ -116,7 +117,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
       title: c.title,
       recipient: {
         name: c.recipient.name.trim(),
-        phone: c.recipient.phone.trim(),
+        phone: normalizePhone(c.recipient.phone),
         zoneId: c.recipient.zoneId,
         zoneName: zones.get(c.recipient.zoneId)?.name ?? "",
         address: c.recipient.address.trim(),
@@ -162,8 +163,8 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   const hours = sameDay ? raw.settings.sameDayPaymentWindowHours : raw.settings.paymentWindowHours;
   const needsDesign = gifts.some((g) => g.items.some((it) => it.customization));
 
-  // المخزون بيقل دلوقتي، ولو حاجة خلصت أو الكمية مش كفاية الطلب ميكملش
-  const stock = await takeStock(orderStockLines(gifts));
+  // بنتأكد إن الكمية موجودة بس. الخصم بيحصل لما المتجر ينقل الطلب لـ«بيتجهز»
+  const stock = await checkStock(orderStockLines(gifts));
   if (!stock.ok) {
     await releaseAll();
     if (giftCardUse) await db.restoreGiftCard(giftCardUse.code, giftCardUse.ref);
@@ -171,9 +172,16 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
     return { ok: false, errors: [t("للأسف {name} خلص أو الكمية دي مش متاحة. شيله من السلة أو قلل الكمية.", { name })] };
   }
 
-  const order = await db.createOrder({
+  // لو الحفظ وقع لأي سبب: نفك الميعاد اللي اتحجز ونرجّع رصيد كارت الهدية
+  const undo = async () => {
+    await releaseAll();
+    if (giftCardUse) await db.restoreGiftCard(giftCardUse.code, giftCardUse.ref);
+  };
+  let order: Awaited<ReturnType<typeof db.createOrder>>;
+  try {
+    order = await db.createOrder({
     locale: lang,
-    sender: { name: input.sender.name.trim(), phone: input.sender.phone.trim(), email: input.sender.email.trim() },
+    sender: { name: input.sender.name.trim(), phone: normalizePhone(input.sender.phone), email: input.sender.email.trim() },
     status: instapay ? "awaiting_payment" : fullyPaid && needsDesign ? "awaiting_design_approval" : "new",
     paymentMethod: fullyPaid ? "instapay" : input.paymentMethod,
     paymentStatus: fullyPaid ? "confirmed" : instapay ? "awaiting_proof" : "cod",
@@ -194,9 +202,19 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
       total: Math.max(0, total),
     },
     gifts,
+    stockTaken: false,
   });
+  } catch (e) {
+    console.error("createOrder failed", e);
+    await undo();
+    return { ok: false, errors: [t("حصلت مشكلة وإحنا بنسجل الطلب. جرّب تاني بعد شوية، أو كلمنا على واتساب.")] };
+  }
+  // قاعدة البيانات لسه من غير عمود stock_taken: المخزون بيتخصم دلوقتي زي الأول
+  if (order.stockTaken !== false) {
+    const st = await takeStock(orderStockLines(gifts));
+    if (!st.ok) console.error("takeStock after createOrder failed", st.productId);
+    updateTag("catalog");
+  }
   if (coupon) await db.useCoupon(couponCode);
-  // عشان «خلص» يظهر على طول لو المخزون وصل صفر
-  updateTag("catalog");
   return { ok: true, token: order.token, number: order.number };
 }

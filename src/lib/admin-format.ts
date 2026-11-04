@@ -9,6 +9,7 @@ export const statusLabel: Record<OrderStatus, string> = {
   preparing: "بيتجهز",
   ready: "جاهز",
   out_for_delivery: "خرج للتوصيل",
+  delivery_failed: "التوصيل ماتمش",
   delivered: "اتسلم",
   cancelled: "ملغي",
 };
@@ -20,6 +21,7 @@ export const statusTone: Record<OrderStatus, string> = {
   preparing: "bg-lilac-soft text-lilac",
   ready: "bg-success-soft text-success",
   out_for_delivery: "bg-sky text-lilac",
+  delivery_failed: "bg-butter-soft text-butter",
   delivered: "bg-success text-white",
   cancelled: "bg-line text-muted",
 };
@@ -32,13 +34,20 @@ export const paymentLabel: Record<PaymentStatus, string> = {
   cod: "كاش عند الاستلام",
 };
 
+/**
+ * الإلغاء بس قبل ما التجهيز يبدأ: بعد الطلب المتجر بيبعت رسالة تأكيد للعميل،
+ * وأول ما يوافق الطلب بيدخل «بيتجهز» ومن ساعتها مفيش إلغاء.
+ */
+export const cancellable: OrderStatus[] = ["awaiting_payment", "new", "awaiting_design_approval"];
+
 /** الخطوة الجاية الطبيعية لكل حالة */
 export const nextStatus: Partial<Record<OrderStatus, OrderStatus[]>> = {
   new: ["preparing", "awaiting_design_approval"],
   awaiting_design_approval: ["preparing"],
   preparing: ["ready"],
   ready: ["out_for_delivery"],
-  out_for_delivery: ["delivered"],
+  out_for_delivery: ["delivered", "delivery_failed"],
+  // المحاولة التانية بتتسجل من «محاولة توصيل تانية» (نفس اليوم ببلاش، ويوم تاني برسوم)
 };
 
 /** 01xxxxxxxxx → 201xxxxxxxxx لواتساب */

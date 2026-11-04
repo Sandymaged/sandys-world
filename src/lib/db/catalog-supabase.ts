@@ -41,6 +41,8 @@ const productRow = (p: ProductRecord) => ({
   options: p.options ?? [],
   stock: p.stock ?? null,
   en: p.en ?? null,
+  // العمود ده من migration البراندات: بيتبعت بس لو اتحدد، عشان الحفظ ميقعش لو الـ migration لسه متشغلش
+  ...(p.reviewStatus !== undefined ? { review_status: p.reviewStatus } : {}),
 });
 
 const partnerRow = (p: Partner) => ({
@@ -122,6 +124,7 @@ export async function loadCatalogFromSupabase(): Promise<CatalogData> {
         boxEligible: r.box_eligible,
         options: r.options ?? [],
         stock: r.stock,
+        ...(r.review_status !== undefined ? { reviewStatus: r.review_status } : {}),
       }),
     ),
     partners: (check(partners) ?? []).map(

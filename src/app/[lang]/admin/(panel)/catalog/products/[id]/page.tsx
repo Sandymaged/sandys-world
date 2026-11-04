@@ -29,6 +29,13 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
         <h1 className="text-3xl text-brand">{p ? p.name : "منتج جديد"}</h1>
       </div>
       <CatalogForm action={save} backTo={back}>
+        {p?.reviewStatus === "pending" && (
+          <section className="space-y-3 bg-butter-soft p-5">
+            <h2 className="text-xl text-butter">البراند ضاف المنتج ده ومستني موافقتك</h2>
+            <p className="text-sm leading-6 text-butter">راجعي الصورة والسعر والوصف، وعلّمي الموافقة واحفظي. المنتج هيظهر على الموقع لو «متاح للبيع» متعلّم.</p>
+            <Check label="موافقة: اعرضي المنتج على الموقع" name="approve" defaultChecked={false} />
+          </section>
+        )}
         <Section title="الأساسي">
           <Row>
             <Field label="الاسم بالعربي" name="name" defaultValue={p?.name} required />
@@ -40,7 +47,7 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
           </Row>
           <Row>
             <Field label="السعر (ج.م)" name="price" type="number" defaultValue={p?.price} required />
-            <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={p?.cost ?? 0} hint="مش بتظهر للعميل. بتتحسب منها هوامش الباكدجات." />
+            <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={p?.cost ?? 0} hint="مش بتظهر للعميل. لمنتجات المتجر بس: منتج البراند تكلفته نصيب البراند (السعر ناقص العمولة) وبتتحسب لوحدها." />
           </Row>
           <Row>
             <Select
@@ -74,7 +81,7 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
 
         <Section title="الإعدادات">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Check label="متاح للبيع (لو اتشال، المنتج وكل باكدج فيه بيختفوا)" name="isAvailable" defaultChecked={p?.isAvailable ?? true} />
+            <Check label="متاح للبيع (لو اتشال، المنتج وكل باكدج فيه بيختفوا)" name="isAvailable" defaultChecked={p ? p.reviewStatus === "pending" || p.isAvailable : true} />
             <Check label="ينفع يتحط في بوكس" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
             <Check label="إضافة على الباكدجات (ورد، بالونة…)" name="isAddon" defaultChecked={p?.isAddon ?? false} />
             <Check label="بيتكتب عليه اسم أو جملة" name="isCustomizable" defaultChecked={p?.isCustomizable ?? false} />

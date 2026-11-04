@@ -14,13 +14,23 @@ const onSupabase = () =>
  * (أول تعديل بينسخ البيانات التجريبية للملف). التكلفة (cost) هنا بس، ومش بتوصل للعميل أبداً.
  */
 
-export type ProductRecord = Product & { cost: number };
+/** reviewStatus = "pending": براند ضافه ومستني موافقة المتجر (بيفضل مخفي لحد ما يتوافق عليه) */
+export type ProductRecord = Product & { cost: number; reviewStatus?: "pending" | null };
 
 export interface CatalogData {
   products: ProductRecord[];
   partners: Partner[];
   packages: GiftPackage[];
   kits: Kit[];
+}
+
+/**
+ * تكلفة المنتج على المتجر: منتج البراند تكلفته نصيب البراند (السعر ناقص العمولة)،
+ * ومنتج المتجر تكلفته اللي مكتوبة. الخصومات كلها على المتجر، فالبراند بياخد نصيبه من السعر الكامل.
+ */
+export function costOf(p: ProductRecord, d: Pick<CatalogData, "partners">) {
+  const partner = p.partnerId ? d.partners.find((x) => x.id === p.partnerId) : undefined;
+  return partner ? Math.round(p.price * (1 - partner.commissionRate) * 100) / 100 : p.cost;
 }
 
 const DIR = path.join(process.cwd(), ".data");

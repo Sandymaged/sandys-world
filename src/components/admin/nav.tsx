@@ -32,13 +32,17 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
     title: "الحسابات",
     items: [
       { href: "/admin/reports", label: "التقارير", icon: "chart" },
+      { href: "/admin/settlements", label: "حسابات البراندات", icon: "handshake" },
       { href: "/admin/expenses", label: "المصاريف", icon: "receipt" },
-      { href: "/admin/costs", label: "تكاليف التوصيل والتغليف", icon: "route" },
+      { href: "/admin/costs", label: "مناطق التوصيل والتكاليف", icon: "route" },
     ],
   },
   {
     title: "الموقع",
-    items: [{ href: "/admin/settings", label: "إعدادات الموقع", icon: "sliders" }],
+    items: [
+      { href: "/admin/settings", label: "إعدادات الموقع", icon: "sliders" },
+      { href: "/admin/users", label: "المستخدمين", icon: "users" },
+    ],
   },
 ];
 

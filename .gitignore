@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local dev data store (before Supabase)
 /.data
+
+# إعدادات Claude Code الشخصية
+.claude/settings.local.json

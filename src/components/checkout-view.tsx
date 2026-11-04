@@ -13,6 +13,7 @@ import type { StoreSettings } from "@/lib/settings";
 import type { Zone } from "@/lib/types";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useCart } from "@/store/cart";
+import { emailError, nameError, normalizePhone, phoneError, toLatinDigits } from "@/lib/validate";
 
 export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: StoreSettings }) {
   const t = useT();
@@ -30,10 +31,13 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   const [method, setMethod] = useState<"instapay" | "cod">("instapay");
   const [errors, setErrors] = useState<string[]>([]);
   const [pending, start] = useTransition();
+  // بياناتك: الخطأ بيبان بعد ما تسيب الخانة أو تحاول تأكد الطلب
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [tried, setTried] = useState(false);
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
-  if (gifts.length === 0 || gifts.some((g) => giftProblems(g, settings).length) || deliveryProblems(delivery).length) {
+  if (gifts.length === 0 || gifts.some((g) => giftProblems(g, settings).length) || deliveryProblems(delivery, settings.maxCardMessage).length) {
     return (
       <div className="card p-8 text-center">
         <p className="font-bold">{gifts.length ? t("فيه بيانات ناقصة في السلة") : t("السلة فاضية")}</p>
@@ -84,8 +88,17 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
     });
   }
 
+  const senderErr = { name: nameError(sender.name), phone: phoneError(sender.phone), email: emailError(sender.email) };
+  const sErr = (k: keyof typeof senderErr) => ((tried || touched[k]) && senderErr[k] ? t(senderErr[k]!) : null);
+  const touch = (k: string) => () => setTouched((x) => ({ ...x, [k]: true }));
+
   function submit() {
     setErrors([]);
+    if (senderErr.name || senderErr.phone || senderErr.email) {
+      setTried(true);
+      document.getElementById("sender")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     start(async () => {
       const r = await submitOrder(
         { gifts: withDelivery(gifts, delivery), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
@@ -104,22 +117,41 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
       <div className="min-w-0 space-y-8">
-        <section className="card space-y-3 p-4">
+        <section id="sender" className="card space-y-3 p-4">
           <h2 className="font-semibold">{t("بياناتك")}</h2>
           <p className="-mt-2 text-xs text-muted">{t("مش محتاج تعمل حساب. هنبعتلك التأكيد ومتابعة الطلب على واتساب.")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="label" htmlFor="sn">{t("اسمك")}</label>
-              <input id="sn" className="field" autoComplete="name" value={sender.name} onChange={(e) => setSender({ name: e.target.value })} />
+              <input id="sn" className={cls(sErr("name"))} maxLength={60} autoComplete="name" value={sender.name} onChange={(e) => setSender({ name: e.target.value })} onBlur={touch("name")} aria-invalid={!!sErr("name")} />
+              <Err msg={sErr("name")} />
             </div>
             <div>
               <label className="label" htmlFor="sp">{t("رقم واتساب")}</label>
-              <input id="sp" className="field tabular" dir="ltr" inputMode="tel" autoComplete="tel" placeholder="+20 1xx xxx xxxx" value={sender.phone} onChange={(e) => setSender({ phone: e.target.value })} />
+              <input
+                id="sp"
+                className={`${cls(sErr("phone"))} tabular`}
+                dir="ltr"
+                type="tel"
+                inputMode="tel"
+                maxLength={16}
+                autoComplete="tel"
+                placeholder="01xxxxxxxxx"
+                value={sender.phone}
+                onChange={(e) => setSender({ phone: toLatinDigits(e.target.value).replace(/[^\d+\s-]/g, "") })}
+                onBlur={() => {
+                  touch("phone")();
+                  if (sender.phone) setSender({ phone: normalizePhone(sender.phone) });
+                }}
+                aria-invalid={!!sErr("phone")}
+              />
+              <Err msg={sErr("phone")} />
             </div>
           </div>
           <div>
             <label className="label" htmlFor="se">{t("الإيميل")} <span className="font-normal text-muted">{t("(اختياري)")}</span></label>
-            <input id="se" className="field" dir="ltr" type="email" autoComplete="email" value={sender.email} onChange={(e) => setSender({ email: e.target.value })} />
+            <input id="se" className={cls(sErr("email"))} dir="ltr" type="email" maxLength={120} autoComplete="email" value={sender.email} onChange={(e) => setSender({ email: e.target.value.trim() })} onBlur={touch("email")} aria-invalid={!!sErr("email")} />
+            <Err msg={sErr("email")} />
           </div>
           <label className="flex cursor-pointer items-center gap-3 text-sm">
             <input type="checkbox" className="size-5 accent-ink" checked={sender.isRecipient} onChange={(e) => setSender({ isRecipient: e.target.checked })} />
@@ -247,7 +279,23 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
         <button onClick={submit} disabled={pending} className="btn-primary w-full text-base">
           {pending ? t("لحظة…") : payMethod === "instapay" && total > 0 ? t("أكد الطلب وكمّل للدفع") : t("أكد الطلب")}
         </button>
+        <p className="text-center text-xs text-muted">
+          {t("بتأكيد الطلب إنت موافق على")}{" "}
+          <Link href="/policies" target="_blank" className="text-brand underline underline-offset-4">
+            {t("سياسة الإلغاء والاسترجاع والتوصيل")}
+          </Link>
+        </p>
       </aside>
     </div>
   );
+}
+
+const cls = (error: string | null) => `field ${error ? "border-brand focus:border-brand focus:ring-brand/10" : ""}`;
+
+function Err({ msg }: { msg: string | null }) {
+  return msg ? (
+    <p className="mt-1 text-xs font-medium text-brand" role="alert">
+      {msg}
+    </p>
+  ) : null;
 }

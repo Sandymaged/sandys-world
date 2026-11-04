@@ -3,56 +3,11 @@
 import { randomUUID } from "node:crypto";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "./admin-auth";
-import { mutateCatalog, saveMedia, type ProductRecord } from "./db/catalog-store";
-import { normalizeOptions, type ProductOption } from "./options";
-import type { BridalRole, GiftPackage, Kit, KitCategory, Localized, PackageTier, Partner, RecipientTag } from "./types";
+import { bool, en, image, lines, many, num, removeProduct, slugify, str, upsertProduct, type SaveResult } from "./catalog-form";
+import { mutateCatalog } from "./db/catalog-store";
+import type { BridalRole, GiftPackage, Kit, KitCategory, PackageTier, Partner, RecipientTag } from "./types";
 
-export type SaveResult = { ok: true; id: string } | { ok: false; error: string };
-
-// ───────────── قراية الفورم ─────────────
-
-const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
-const num = (f: FormData, k: string) => {
-  const v = Number(str(f, k).replace(/,/g, ""));
-  return Number.isFinite(v) ? v : NaN;
-};
-const bool = (f: FormData, k: string) => f.get(k) === "on";
-const many = (f: FormData, k: string) => f.getAll(k).map(String).filter(Boolean);
-const lines = (f: FormData, k: string) => str(f, k).split("\n").map((l) => l.trim()).filter(Boolean);
-const csv = (f: FormData, k: string) => str(f, k).split(/[,،]/).map((x) => x.trim()).filter(Boolean);
-
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
-
-/** نسخة إنجليزي: بتتحفظ بس لو فيها حاجة */
-function en(fields: Localized): Localized | undefined {
-  const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => (Array.isArray(v) ? v.length : v)));
-  return Object.keys(clean).length ? (clean as Localized) : undefined;
-}
-
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-/** صورة جديدة: ملف مرفوع أو لينك، وإلا الصور القديمة زي ما هي */
-async function image(f: FormData, current: string[]): Promise<string[] | string> {
-  const file = f.get("imageFile");
-  if (file instanceof File && file.size > 0) {
-    if (!IMAGE_TYPES.includes(file.type)) return "الصورة لازم تكون JPG أو PNG أو WEBP";
-    if (file.size > 8 * 1024 * 1024) return "الصورة أكبر من 8 ميجا";
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    return [await saveMedia(`img.${ext}`, Buffer.from(await file.arrayBuffer())), ...current.slice(1)];
-  }
-  const url = str(f, "imageUrl");
-  if (url && url !== current[0]) {
-    if (!/^https:\/\/|^\/media\//.test(url)) return "لينك الصورة لازم يبدأ بـ https://";
-    return [url, ...current.slice(1)];
-  }
-  return current;
-}
+export type { SaveResult } from "./catalog-form";
 
 function done(id: string): SaveResult {
   updateTag("catalog");
@@ -63,65 +18,12 @@ function done(id: string): SaveResult {
 
 export async function saveProduct(id: string | null, f: FormData): Promise<SaveResult> {
   await requireAdmin();
-  const name = str(f, "name");
-  const price = num(f, "price");
-  const cost = num(f, "cost");
-  if (!name) return { ok: false, error: "اكتبي اسم المنتج" };
-  if (!(price > 0)) return { ok: false, error: "السعر لازم يكون رقم أكبر من صفر" };
-  if (!(cost >= 0)) return { ok: false, error: "التكلفة لازم تكون رقم" };
-  const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `p-${Date.now().toString(36)}`;
-  const customizable = bool(f, "isCustomizable");
-  let options: ProductOption[] = [];
-  try {
-    options = normalizeOptions(JSON.parse(str(f, "options") || "[]"));
-  } catch {
-    return { ok: false, error: "في مشكلة في الاختيارات، راجعيها" };
-  }
-
-  return mutateCatalog(async (d) => {
-    if (d.products.some((p) => p.slug === slug && p.id !== id)) return { ok: false as const, error: "الرابط ده مستخدم لمنتج تاني" };
-    const existing = id ? d.products.find((p) => p.id === id) : undefined;
-    if (id && !existing) return { ok: false as const, error: "المنتج ده مش موجود" };
-    const images = await image(f, existing?.images ?? []);
-    if (typeof images === "string") return { ok: false as const, error: images };
-    const rec: ProductRecord = {
-      id: existing?.id ?? randomUUID(),
-      slug,
-      name,
-      description: str(f, "description"),
-      images,
-      price,
-      cost,
-      category: str(f, "category"),
-      partnerId: str(f, "partnerId") || null,
-      brand: null,
-      occasions: many(f, "occasions"),
-      recipients: many(f, "recipients") as RecipientTag[],
-      interests: csv(f, "interests"),
-      isCustomizable: customizable,
-      customizationMaxChars: customizable ? Math.max(1, num(f, "customizationMaxChars") || 25) : null,
-      prepDays: Math.max(0, Math.round(num(f, "prepDays") || 0)),
-      isAvailable: bool(f, "isAvailable"),
-      isAddon: bool(f, "isAddon"),
-      boxEligible: bool(f, "boxEligible"),
-      options: options.length ? options : undefined,
-      stock: str(f, "stock") === "" ? null : Math.max(0, Math.round(num(f, "stock"))),
-      en: en({ name: str(f, "nameEn"), description: str(f, "descriptionEn"), category: str(f, "categoryEn") }),
-    };
-    if (existing) Object.assign(existing, rec);
-    else d.products.push(rec);
-    return { ok: true as const, id: rec.id };
-  }).then((r) => (r.ok ? done(r.id) : r));
+  return upsertProduct(id, f, { by: "store" }).then((r) => (r.ok ? done(r.id) : r));
 }
 
 export async function deleteProduct(id: string): Promise<SaveResult> {
   await requireAdmin();
-  return mutateCatalog((d) => {
-    const inPkg = d.packages.find((p) => p.items.some((i) => i.productId === id));
-    if (inPkg) return { ok: false as const, error: `المنتج ده جوه باكدج "${inPkg.name}". شيليه من الباكدج الأول، أو خليه "مش متاح" بدل المسح.` };
-    d.products = d.products.filter((p) => p.id !== id);
-    return { ok: true as const, id };
-  }).then((r) => (r.ok ? done(r.id) : r));
+  return removeProduct(id, { by: "store" }).then((r) => (r.ok ? done(r.id) : r));
 }
 
 // ───────────── البراندات المحلية (FR-114) ─────────────

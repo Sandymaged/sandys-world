@@ -1,10 +1,11 @@
 import "server-only";
 import type { GiftRecord } from "./db/types";
-import { mutateCatalog } from "./db/catalog-store";
+import { loadCatalogData, mutateCatalog } from "./db/catalog-store";
 import { adminClient } from "./supabase/admin";
 
 /*
- * المخزون: بيقل وقت الطلب وبيرجع لو الطلب اتلغى.
+ * المخزون: وقت الطلب بنتأكد بس إن الكمية موجودة (checkStock). الخصم الفعلي (takeStock) بيحصل
+ * لما صاحبة المتجر تنقل الطلب لـ«بيتجهز»، وبيرجع (returnStock) لو طلب اتخصم اتلغى.
  * المنتج اللي ليه اختيارات العدد بيتحسب على القيمة اللي اتختارت (اللون/المقاس)، غير كده على المنتج نفسه.
  * العدد الفاضي (null) معناه مفتوح ومش بيتحسب.
  */
@@ -42,6 +43,25 @@ async function adjustSupabase(s: Step, delta: number) {
     throw new Error(error.message);
   }
   return Boolean(data);
+}
+
+/** بيتأكد إن الكمية موجودة من غير ما يخصم (وقت الطلب). الطلبات اللي لسه متخصمتش ممكن تكون محتاجة نفس القطعة */
+export async function checkStock(lines: StockLine[]): Promise<{ ok: true } | { ok: false; productId: string }> {
+  const need = new Map<string, Step & { qty: number }>();
+  for (const s of steps(lines).filter((x) => x.qty > 0)) {
+    const k = `${s.productId}|${s.optionId ?? ""}|${s.valueId ?? ""}`;
+    const cur = need.get(k);
+    need.set(k, cur ? { ...cur, qty: cur.qty + s.qty } : { ...s });
+  }
+  if (!need.size) return { ok: true };
+  const products = new Map((await loadCatalogData()).products.map((p) => [p.id, p]));
+  for (const s of need.values()) {
+    const p = products.get(s.productId);
+    if (!p) continue;
+    const stock = s.optionId ? p.options?.find((o) => o.id === s.optionId)?.values.find((v) => v.id === s.valueId)?.stock : p.stock;
+    if (stock != null && stock < s.qty) return { ok: false, productId: s.productId };
+  }
+  return { ok: true };
 }
 
 /** بيخصم المخزون كله أو مفيش (لو حاجة مش كفاية بيرجّع اللي اتخصم) */

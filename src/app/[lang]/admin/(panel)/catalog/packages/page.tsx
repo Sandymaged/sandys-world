@@ -3,7 +3,7 @@ import { Empty, money } from "@/components/admin/ui";
 import { GiftArt } from "@/components/gift-art";
 import { requireAdmin } from "@/lib/admin-auth";
 import { adminOptions } from "@/lib/admin-options";
-import { loadCatalogData } from "@/lib/db/catalog-store";
+import { costOf, loadCatalogData } from "@/lib/db/catalog-store";
 import { tierLabels } from "@/lib/format";
 
 export const instant = false;
@@ -25,8 +25,13 @@ export default async function AdminPackages() {
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {d.packages.map((pk) => {
-            const cost = pk.items.reduce((s, i) => s + (products.get(i.productId)?.cost ?? 0) * i.quantity, 0);
+            const cost = pk.items.reduce((s, i) => {
+              const p = products.get(i.productId);
+              // منتج البراند تكلفته سعره كامل (البراند بياخده كله)
+              return s + (p ? (p.partnerId ? p.price : costOf(p, d)) : 0) * i.quantity;
+            }, 0);
             const margin = pk.price ? (pk.price - cost) / pk.price : 0;
+            const loss = pk.price > 0 && pk.price < cost;
             const hidden = !pk.isAvailable || pk.items.some((i) => !products.get(i.productId)?.isAvailable);
             return (
               <li key={pk.id}>
@@ -36,7 +41,11 @@ export default async function AdminPackages() {
                     <span className="block truncate font-semibold">{pk.name} <span className="text-xs font-normal text-muted">· {tierLabels[pk.tier]}</span></span>
                     <span className="block truncate text-xs text-muted">{pk.items.map((i) => products.get(i.productId)?.name ?? "؟").join(" · ")}</span>
                   </span>
-                  <span className={`tabular text-xs ${margin < opts.minPackageMargin ? "font-semibold text-brand" : "text-success"}`}>هامش {Math.round(margin * 100)}%</span>
+                  {loss ? (
+                    <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">بتخسري {Math.round(cost - pk.price)} ج.م</span>
+                  ) : (
+                    <span className={`tabular text-xs ${margin < opts.minPackageMargin ? "font-semibold text-brand" : "text-success"}`}>هامش {Math.round(margin * 100)}%</span>
+                  )}
                   <span className="tabular w-20 text-end text-sm font-semibold">{money(pk.price)}</span>
                   {hidden && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">مخفي</span>}
                 </Link>

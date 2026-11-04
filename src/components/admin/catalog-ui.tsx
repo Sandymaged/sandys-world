@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import type { SaveResult } from "@/lib/admin-catalog-actions";
 
 /** مسح بعد تأكيد، ولو فيه سبب يمنع المسح بيظهر */
-export function DeleteButton({ action, backTo, what }: { action: () => Promise<SaveResult>; backTo: string; what: string }) {
+export function DeleteButton({ action, backTo, what, confirmText }: { action: () => Promise<SaveResult>; backTo: string; what: string; confirmText?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function DeleteButton({ action, backTo, what }: { action: () => Promise<S
         type="button"
         disabled={pending}
         onClick={() => {
-          if (!window.confirm(`متأكدة إنك عايزة تمسحي ${what}؟ مفيش رجوع.`)) return;
+          if (!window.confirm(confirmText ?? `متأكدة إنك عايزة تمسحي ${what}؟ مفيش رجوع.`)) return;
           start(async () => {
             const r = await action();
             if (r.ok) router.push(backTo);

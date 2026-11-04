@@ -29,7 +29,8 @@ export async function expireUnpaid(): Promise<number> {
     await r.update(o.id, { status: "cancelled" }, { status: "cancelled", note: "اتلغى تلقائياً: الدفع متأكدش في المهلة" });
     for (const s of uniqueSlots(o.gifts)) await r.releaseSlot(s.date, s.period);
     if (o.giftCardUse) await r.restoreGiftCard(o.giftCardUse.code, o.giftCardUse.ref);
-    await returnStock(orderStockLines(o.gifts));
+    // طلبات زمان كان المخزون بيتخصم وقت الطلب؛ الجديدة مش بتتخصم غير في «بيتجهز»
+    if (o.stockTaken !== false) await returnStock(orderStockLines(o.gifts));
   }
   return due.length;
 }

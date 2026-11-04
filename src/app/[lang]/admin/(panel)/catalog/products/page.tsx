@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Empty, money } from "@/components/admin/ui";
 import { GiftArt } from "@/components/gift-art";
 import { requireAdmin } from "@/lib/admin-auth";
-import { loadCatalogData } from "@/lib/db/catalog-store";
+import { costOf, loadCatalogData } from "@/lib/db/catalog-store";
 
 export const instant = false;
 
@@ -22,8 +22,9 @@ export default async function AdminProducts() {
         <Empty>لسه مفيش منتجات.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
-          {d.products.map((p) => {
-            const margin = p.price ? Math.round(((p.price - p.cost) / p.price) * 100) : 0;
+          {[...d.products].sort((a, b) => Number(b.reviewStatus === "pending") - Number(a.reviewStatus === "pending")).map((p) => {
+            const cost = costOf(p, d);
+            const margin = p.price ? Math.round(((p.price - cost) / p.price) * 100) : 0;
             return (
               <li key={p.id}>
                 <Link href={`/admin/catalog/products/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-brand-soft/40">
@@ -35,11 +36,15 @@ export default async function AdminProducts() {
                     </span>
                   </span>
                   <span className="hidden text-end text-xs text-muted sm:block">
-                    تكلفة <span className="tabular">{money(p.cost)}</span>
+                    {p.partnerId ? "نصيب البراند" : "تكلفة"} <span className="tabular">{money(cost)}</span>
                     <span className="block">هامش <span className="tabular">{margin}%</span></span>
                   </span>
                   <span className="tabular w-20 text-end text-sm font-semibold">{money(p.price)}</span>
-                  {!p.isAvailable && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">خلص</span>}
+                  {p.reviewStatus === "pending" ? (
+                    <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs font-semibold text-butter">مستني موافقتك</span>
+                  ) : (
+                    !p.isAvailable && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">خلص</span>
+                  )}
                 </Link>
               </li>
             );

@@ -3,6 +3,7 @@
 import { isLocale } from "@/i18n/config";
 import { translator } from "@/i18n/t";
 import { isValidPhone } from "@/lib/cart";
+import { normalizePhone } from "@/lib/validate";
 import { getStorefront } from "@/lib/catalog";
 import { repo } from "@/lib/db";
 import { egp } from "@/lib/format";
@@ -51,7 +52,7 @@ export async function submitGiftCardOrder(input: GiftCardInput, locale: string):
   const settings = (await getStorefront()).settings;
   const order = await repo().createOrder({
     locale: lang,
-    sender: { name: input.sender.name.trim(), phone: input.sender.phone.trim(), email: input.sender.email.trim() },
+    sender: { name: input.sender.name.trim(), phone: normalizePhone(input.sender.phone), email: input.sender.email.trim() },
     status: "awaiting_payment",
     paymentMethod: "instapay",
     paymentStatus: "awaiting_proof",

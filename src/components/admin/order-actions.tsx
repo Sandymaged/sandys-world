@@ -1,18 +1,25 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { confirmPayment, rejectPayment, setOrderStatus } from "@/lib/admin-actions";
-import { nextStatus, statusLabel } from "@/lib/admin-format";
-import type { OrderStatus, PaymentStatus } from "@/lib/db/types";
+import { confirmPayment, markRedeliveryPaid, redeliverAction, rejectPayment, setOrderStatus } from "@/lib/admin-actions";
+import { cancellable, nextStatus, statusLabel } from "@/lib/admin-format";
+import type { OrderStatus, PaymentStatus, Redelivery } from "@/lib/db/types";
 
 export function StatusButtons({ id, status }: { id: string; status: OrderStatus }) {
   const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const run = (s: OrderStatus, note?: string) =>
+    start(async () => {
+      const r = await setOrderStatus(id, s, note);
+      setError(r.ok ? null : r.error);
+    });
   const next = nextStatus[status] ?? [];
-  const canCancel = !["delivered", "cancelled"].includes(status);
+  const canCancel = cancellable.includes(status);
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       {next.map((s) => (
-        <button key={s} disabled={pending} onClick={() => start(() => setOrderStatus(id, s))} className="btn-primary btn-sm">
+        <button key={s} disabled={pending} onClick={() => run(s)} className="btn-primary btn-sm">
           ← {statusLabel[s]}
         </button>
       ))}
@@ -21,14 +28,106 @@ export function StatusButtons({ id, status }: { id: string; status: OrderStatus 
         <button
           disabled={pending}
           onClick={() => {
-            if (window.confirm("متأكدة إنك عايزة تلغي الأوردر؟ فترات التوصيل هتتفك.")) start(() => setOrderStatus(id, "cancelled", "اتلغى من اللوحة"));
+            if (window.confirm("متأكدة إنك عايزة تلغي الأوردر؟ فترات التوصيل هتتفك.")) run("cancelled", "اتلغى من اللوحة");
           }}
           className="btn-outline btn-sm text-brand"
         >
           إلغاء
         </button>
       )}
+      {error && <p className="w-full rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
+      {status === "delivery_failed" && <p className="w-full text-xs text-muted">سجّلي المحاولة التانية من «محاولة توصيل تانية» تحت: نفس اليوم ببلاش، ويوم تاني برسوم جديدة.</p>}
+      {!canCancel && status !== "cancelled" && status !== "delivered" && <p className="w-full text-xs text-muted">التجهيز بدأ، فالطلب مينفعش يتلغي.</p>}
     </div>
+  );
+}
+
+/**
+ * بعد «التوصيل ماتمش»: محاولة تانية في نفس اليوم ببلاش، أو يوم تاني برسوم توصيل جديدة.
+ * وتحتها رسوم المحاولات اللي فاتت، ودفعت ولا لسه.
+ */
+export function RedeliveryPanel({
+  id,
+  status,
+  defaultFee,
+  minDate,
+  periods,
+  redeliveries,
+}: {
+  id: string;
+  status: OrderStatus;
+  defaultFee: number;
+  minDate: string;
+  periods: { id: string; label: string }[];
+  redeliveries: Redelivery[];
+}) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"same_day" | "other_day">("same_day");
+  if (status !== "delivery_failed" && redeliveries.length === 0) return null;
+  const done = (r: { ok: boolean; error?: string }) => {
+    setError(r.ok ? null : (r.error ?? null));
+    if (r.ok) router.refresh();
+  };
+  return (
+    <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
+      <h2 className="text-xl text-brand">محاولة توصيل تانية</h2>
+      {status === "delivery_failed" && (
+        <form action={(f) => start(async () => done(await redeliverAction(id, f)))} className="mt-3 space-y-3 text-sm">
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ["same_day", "نفس اليوم (ببلاش)"],
+                ["other_day", "يوم تاني (برسوم)"],
+              ] as const
+            ).map(([v, label]) => (
+              <label key={v} className={`chip cursor-pointer ${mode === v ? "border-brand bg-brand-soft text-brand" : ""}`}>
+                <input type="radio" name="mode" value={v} checked={mode === v} onChange={() => setMode(v)} className="sr-only" />
+                {label}
+              </label>
+            ))}
+          </div>
+          {mode === "other_day" && (
+            <div className="grid gap-2 sm:grid-cols-3">
+              <input type="date" name="date" min={minDate} defaultValue={minDate} required className="field tabular" aria-label="اليوم" />
+              <select name="period" className="field" aria-label="الفترة" defaultValue={periods[0]?.id}>
+                {periods.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+              <input name="fee" inputMode="numeric" defaultValue={defaultFee} className="field tabular" aria-label="رسوم التوصيل" placeholder="الرسوم" />
+            </div>
+          )}
+          <button disabled={pending} className="btn-primary btn-sm">
+            {pending ? "لحظة…" : mode === "same_day" ? "← خرج للتوصيل تاني" : "سجّلي الميعاد الجديد"}
+          </button>
+          {mode === "other_day" && <p className="text-xs text-muted">الرسوم بتتزود على إجمالي الطلب، والطلب بيرجع «جاهز» لحد اليوم ده.</p>}
+        </form>
+      )}
+      {redeliveries.length > 0 && (
+        <ul className="mt-3 space-y-1.5 text-sm">
+          {redeliveries.map((r, i) => (
+            <li key={r.at} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
+              <span className="tabular">{r.date} · رسوم {r.fee.toLocaleString("en-US")} ج.م</span>
+              {r.paidAt ? (
+                <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{r.fee ? "اتدفعت" : "ببلاش"}</span>
+              ) : (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => start(async () => done(await markRedeliveryPaid(id, i)))}
+                  className="btn btn-sm bg-success text-white"
+                >
+                  ✓ العميل دفع
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <p className="mt-2 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
+    </section>
   );
 }
 

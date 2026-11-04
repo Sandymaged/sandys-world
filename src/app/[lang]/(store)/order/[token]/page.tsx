@@ -38,6 +38,7 @@ const rank: Record<OrderStatus, number> = {
   preparing: 1,
   ready: 2,
   out_for_delivery: 3,
+  delivery_failed: 3,
   delivered: 4,
   cancelled: -2,
 };
@@ -70,6 +71,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
     : null;
   const current = rank[order.status];
   const gc = order.giftCard ?? null;
+  const redeliveryFees = (order.gifts[0]?.redeliveries ?? []).reduce((s, r) => s + r.fee, 0);
   const h = await headers();
   const site = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}${locale === "en" ? "/en" : ""}`;
   const expires = gc?.expiresAt
@@ -103,6 +105,11 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
             <StickyNote tone="pink" rotate={-1}>
               <p className="font-heading text-2xl text-brand">{t("الطلب ده اتلغى")}</p>
               <p className="mt-1 text-sm text-ink-2">{order.history.at(-1)?.note ?? t("لو ده غلط كلمنا على واتساب.")}</p>
+            </StickyNote>
+          ) : order.status === "delivery_failed" ? (
+            <StickyNote tone="butter" rotate={-1}>
+              <p className="font-heading text-2xl text-brand">{t("مقدرناش نوصّل الهدية")}</p>
+              <p className="mt-1 text-sm text-ink-2">{t("هنكلمك نحدد ميعاد تاني. المحاولة التانية في نفس اليوم ببلاش، ولو في يوم تاني بتبقى برسوم توصيل جديدة.")}</p>
             </StickyNote>
           ) : gc ? (
             <section className="card p-5 sm:p-6">
@@ -259,7 +266,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
             <dl className="space-y-1.5 text-sm">
               <div className="flex justify-between"><dt className="text-ink-2">{gc ? t("كارت الهدية") : t("الهدايا")}</dt><dd className="tabular">{egp(order.totals.items, t)}</dd></div>
               {order.totals.packaging > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("تغليف وتنسيق")}</dt><dd className="tabular">{egp(order.totals.packaging, t)}</dd></div>}
-              {!gc && <div className="flex justify-between"><dt className="text-ink-2">{t("التوصيل")}</dt><dd className="tabular">{egp(order.totals.delivery, t)}</dd></div>}
+              {!gc && <div className="flex justify-between"><dt className="text-ink-2">{t("التوصيل")}</dt><dd className="tabular">{egp(order.totals.delivery - redeliveryFees, t)}</dd></div>}
+              {redeliveryFees > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("توصيل تاني في يوم تاني")}</dt><dd className="tabular">{egp(redeliveryFees, t)}</dd></div>}
               {order.totals.discount > 0 && <div className="flex justify-between text-success"><dt>{t("الخصم")}</dt><dd className="tabular">− {egp(order.totals.discount, t)}</dd></div>}
               {(order.totals.giftCard ?? 0) > 0 && <div className="flex justify-between text-success"><dt>{t("كارت هدية")}</dt><dd className="tabular">− {egp(order.totals.giftCard ?? 0, t)}</dd></div>}
               <div className="flex justify-between border-t border-dashed border-butter/40 pt-2 font-heading text-xl text-brand"><dt>{t("الإجمالي")}</dt><dd className="tabular">{egp(order.totals.total, t)}</dd></div>

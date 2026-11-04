@@ -31,7 +31,7 @@ export function GiftEditor({
   const wrap = wraps.find((w) => w.id === gift.wrapping) ?? wraps[0];
 
   return (
-    <article className={`card ${problems.length && !open ? "border-brand/50" : ""}`}>
+    <article data-gift-problem={problems.length ? "" : undefined} className={`card ${problems.length && !open ? "border-brand/50" : ""}`}>
       <header className="flex items-start gap-3 p-4">
         <span className="tabular grid size-8 shrink-0 place-items-center rounded-full bg-surface text-sm font-semibold">
           {index + 1}
@@ -59,7 +59,7 @@ export function GiftEditor({
           <span className={problems.length ? "font-semibold text-brand" : "text-muted"}>
             {problems.length
               ? t("ناقص: {list}", { list: problems.slice(0, 3).map((p) => t(p)).join(t("، ")) + (problems.length > 3 ? "…" : "") })
-              : [wrap && (t.locale === "en" ? wrap.en || wrap.name : wrap.name), gift.cardMessage ? t("فيها كارت") : t("من غير كارت")].filter(Boolean).join(" · ")}
+              : (wrap && (t.locale === "en" ? wrap.en || wrap.name : wrap.name)) || t("التغليف العادي")}
           </span>
           <span className="font-semibold underline underline-offset-4">{t("تعديل")}</span>
         </button>
@@ -151,19 +151,6 @@ export function GiftEditor({
               </div>
             </section>
           )}
-
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">{t("رسالة الكارت")}</h3>
-            <textarea
-              rows={3}
-              className="field h-auto py-3"
-              maxLength={settings.maxCardMessage}
-              placeholder={t("كل سنة وإنتي طيبة يا ماما…")}
-              value={gift.cardMessage}
-              onChange={(e) => updateGift(gift.id, { cardMessage: e.target.value })}
-            />
-            <p className="tabular -mt-2 text-left text-xs text-muted">{gift.cardMessage.length}/{settings.maxCardMessage}</p>
-          </section>
 
           <div className="flex items-center justify-between border-t border-line pt-4">
             <button onClick={() => removeGift(gift.id)} className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">

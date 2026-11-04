@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Allura, Aref_Ruqaa, El_Messiri, IBM_Plex_Sans_Arabic, Playfair_Display } from "next/font/google";
+import { Aref_Ruqaa, El_Messiri, IBM_Plex_Sans_Arabic, Playfair_Display } from "next/font/google";
 import { notFound } from "next/navigation";
 import { MotionProvider } from "@/components/motion/providers";
 import { LocaleProvider } from "@/i18n/client";
@@ -20,9 +20,8 @@ const hand = Aref_Ruqaa({ variable: "--font-hand-ar", subsets: ["arabic", "latin
 
 // الإنجليزي: Playfair للعناوين، ونفس الخط مايل للاقتباسات (أوضح من الخطوط المكتوبة باليد)
 const headEn = Playfair_Display({ variable: "--font-head-en", subsets: ["latin"], weight: ["600", "700"] });
-// خط اللوجو (sandy's) مكتوب باليد
-const logo = Allura({ variable: "--font-logo-face", subsets: ["latin"], weight: "400" });
-const handEn = Playfair_Display({ variable: "--font-hand-en", subsets: ["latin"], weight: ["500"], style: "italic" });
+// Playfair مايل: للاقتباسات الإنجليزي (500)، وللوجو giftful (600). تحميل واحد للاتنين
+const handEn = Playfair_Display({ variable: "--font-hand-en", subsets: ["latin"], weight: ["500", "600"], style: "italic" });
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -50,7 +49,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
     <html
       lang={lang}
       dir={dirOf(lang)}
-      className={`${body.variable} ${head.variable} ${hand.variable} ${headEn.variable} ${handEn.variable} ${logo.variable} h-full antialiased`}
+      className={`${body.variable} ${head.variable} ${hand.variable} ${headEn.variable} ${handEn.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <LocaleProvider locale={lang}>

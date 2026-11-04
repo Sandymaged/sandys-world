@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 /* زينة بأسلوب ورق الدعوات: الفيونكة، والشريطة الكاروهات، وإطار متموج */
 
@@ -31,75 +32,97 @@ export function Bow({ className = "" }: { className?: string }) {
   );
 }
 
-// فيونكة القماش (مساحة 200×170، العقدة عند 100,58): الحلقات والأطراف "شريطة" بعرض ثابت
-// (خط تخين متلوّن بالكاروهات) عشان تبان قماش ملفوف وفيه فتحة في نص كل حلقة زي الفيونكة الحقيقية
-const ribbonPath = {
-  loopL: "M100 58 C 76 28, 30 6, 15 30 C 3 52, 32 78, 100 58",
-  loopR: "M100 58 C 124 28, 170 6, 185 30 C 197 52, 168 78, 100 58",
-  tailL: "M97 66 C 90 94, 72 122, 52 160",
-  tailR: "M103 66 C 113 96, 128 124, 142 162",
+// فيونكة بأربع حلقات زي فيونكة الورد (مساحة 240×210، العقدة عند 120,86)
+const fourLoop = {
+  backL: "M120 84 C 104 46, 70 18, 52 32 C 38 44, 52 76, 120 84 Z",
+  backR: "M120 84 C 136 46, 170 18, 188 32 C 202 44, 188 76, 120 84 Z",
+  frontL: "M120 86 C 92 66, 40 62, 30 86 C 22 108, 60 120, 120 86 Z",
+  frontR: "M120 86 C 148 66, 200 62, 210 86 C 218 108, 180 120, 120 86 Z",
+  tailL: "M114 96 C 108 130, 96 166, 78 198 L 92 190 L 100 204 C 116 170, 124 134, 124 98 Z",
+  tailR: "M126 96 C 136 130, 150 164, 172 194 L 158 188 L 152 202 C 132 168, 122 132, 116 98 Z",
 };
 
+/** نسبة مكان العقدة من عرض الفيونكة (عشان الشريطة اللي بالعرض تعدي من تحتها بالظبط) */
+export const BOW_KNOT_Y = (86 / 240) as number;
+
 /**
- * فيونكة قماش كاروهات بتتربط وإحنا بنفتح الصفحة: الطرفين بينزلوا، بعدين الحلقتين بيتفتحوا واحدة ورا التانية،
- * وفي الآخر العقدة بتتشد. (CSS بس، والحركة بتتلغي مع "تقليل الحركة")
+ * الفيونكة بأربع حلقات، أحمر سادة بنفس لون خيط اللوجو، وبتتربط وإحنا بنفتح الصفحة:
+ * الطرفين بينزلوا، بعدين الحلقات بتتفتح، وفي الآخر العقدة بتتشد. (CSS بس، والحركة بتتلغي مع "تقليل الحركة")
  */
 export function TiedBow({ className = "" }: { className?: string }) {
   const id = useId().replace(/:/g, "");
-  const check = `url(#check-${id})`;
-  const shade = `url(#shade-${id})`;
-  // الشريطة: حرف غامق تحت، وفوقه الكاروهات، وفوقها ضل عند العقدة
-  const band = (d: string, w: number) => (
+  const shade = `url(#bow-shade-${id})`;
+  const loop = (d: string) => (
     <>
-      <path d={d} stroke="#7a0d16" strokeWidth={w + 3} />
-      <path d={d} stroke={check} strokeWidth={w} />
-      <path d={d} stroke={shade} strokeWidth={w} />
+      <path d={d} fill="var(--color-brand)" stroke="#6e1018" strokeWidth="2.2" strokeLinejoin="round" />
+      <path d={d} fill={shade} />
     </>
   );
   return (
-    <svg viewBox="0 0 200 175" className={`bow-tie overflow-visible ${className}`} aria-hidden>
+    <svg viewBox="0 0 240 210" className={`bow-tie overflow-visible ${className}`} aria-hidden>
       <defs>
-        <pattern id={`check-${id}`} width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(8)">
-          <rect width="11" height="11" fill="#fff8f6" />
-          <rect width="5.5" height="11" fill="#c21f2c" opacity="0.6" />
-          <rect width="11" height="5.5" fill="#c21f2c" opacity="0.6" />
-        </pattern>
-        <radialGradient id={`shade-${id}`} cx="100" cy="58" r="90" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#3d0509" stopOpacity="0.5" />
-          <stop offset="0.35" stopColor="#3d0509" stopOpacity="0.12" />
-          <stop offset="0.8" stopColor="#fff" stopOpacity="0" />
-          <stop offset="1" stopColor="#3d0509" stopOpacity="0.15" />
+        <radialGradient id={`bow-shade-${id}`} cx="50%" cy="45%" r="62%">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.22" />
+          <stop offset="0.55" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#3d0509" stopOpacity="0.38" />
         </radialGradient>
-        {/* قصّة V في آخر كل طرف */}
-        <mask id={`cut-${id}`} maskUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="220">
-          <rect x="-20" y="-20" width="240" height="220" fill="#fff" />
-          <polygon points="58.5,147.6 61.6,171.8 36.8,158.8" fill="#000" />
-          <polygon points="137.2,148.9 157.2,162.8 131,172.4" fill="#000" />
-        </mask>
       </defs>
-      <g fill="none" strokeLinecap="butt" strokeLinejoin="round">
-        <g mask={`url(#cut-${id})`}>
-          <g className="tail tail-l">{band(ribbonPath.tailL, 21)}</g>
-          <g className="tail tail-r">{band(ribbonPath.tailR, 21)}</g>
-        </g>
-        <g className="loop loop-l">{band(ribbonPath.loopL, 23)}</g>
-        <g className="loop loop-r">{band(ribbonPath.loopR, 23)}</g>
-        <g className="knot">
-          <rect x="87" y="44" width="26" height="28" rx="9" fill={check} stroke="#7a0d16" strokeWidth="1.6" />
-          <rect x="87" y="44" width="26" height="28" rx="9" fill="#3d0509" opacity="0.22" />
-          <path d="M92 50 C 98 47, 104 47, 108 50" stroke="#fff" strokeWidth="1.5" opacity="0.5" strokeLinecap="round" />
-        </g>
+      <g className="tail tail-l">{loop(fourLoop.tailL)}</g>
+      <g className="tail tail-r">{loop(fourLoop.tailR)}</g>
+      <g className="loop loop-l">{loop(fourLoop.backL)}</g>
+      <g className="loop loop-r">{loop(fourLoop.backR)}</g>
+      <g className="loop loop-l">
+        {loop(fourLoop.frontL)}
+        <path d="M112 86 C 86 80, 56 80, 40 88" fill="none" stroke="#3d0509" strokeWidth="2" opacity="0.35" strokeLinecap="round" />
+      </g>
+      <g className="loop loop-r">
+        {loop(fourLoop.frontR)}
+        <path d="M128 86 C 154 80, 184 80, 200 88" fill="none" stroke="#3d0509" strokeWidth="2" opacity="0.35" strokeLinecap="round" />
+      </g>
+      <g className="knot">
+        <circle cx="120" cy="86" r="15" fill="var(--color-brand)" stroke="#6e1018" strokeWidth="2.2" />
+        <circle cx="120" cy="86" r="15" fill={shade} />
+        <path d="M111 80 C 116 76, 123 76, 128 79" fill="none" stroke="#fff" strokeWidth="2" opacity="0.5" strokeLinecap="round" />
       </g>
     </svg>
   );
 }
 
-/** الشريطة الكاروهات اللي نازلة على طرف الصفحة وفوقها الفيونكة. مكانها بيتحدد من className */
-export function GiftRibbon({ className = "", strip = "w-6", bowSize = "w-40" }: { className?: string; strip?: string; bowSize?: string }) {
+const tw = (cls: string, fallback: number) => {
+  const m = /w-(\d+(?:\.\d+)?)/.exec(cls);
+  return m ? Number(m[1]) * 0.25 : fallback;
+};
+
+/**
+ * الشريطة الكاروهات اللي نازلة على طرف الصفحة وفوقها الفيونكة. مكانها بيتحدد من className.
+ * `cross`: شريطة تانية بالعرض بتعدي من تحت الفيونكة (زي الهدية المربوطة)، والأب لازم يكون relative.
+ * الحركة بتبدأ بعد ما الصفحة تجهز، وبتتعاد مع كل فتح للصفحة أو تنقّل بين الصفحات.
+ */
+export function GiftRibbon({ className = "", strip = "w-6", bowSize = "w-40", cross = false }: { className?: string; strip?: string; bowSize?: string; cross?: boolean }) {
+  const path = usePathname();
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const stripRem = tw(strip, 1.5);
+  // العقدة على BOW_KNOT_Y من عرض الفيونكة، والفيونكة نازلة 1.5rem من فوق
+  const knot = 1.5 + tw(bowSize, 10) * BOW_KNOT_Y;
+  const hide = className.includes("hidden") ? className.match(/\b(?:sm|md|lg|xl):block\b/)?.[0] ?? "" : "";
   return (
-    <div aria-hidden className={`pointer-events-none absolute inset-y-0 z-10 ${className}`}>
-      <span className={`ribbon ribbon-drop block h-full ${strip}`} />
-      <TiedBow className={`absolute top-6 left-1/2 -translate-x-1/2 drop-shadow-[0_8px_8px_rgb(60_10_15/0.28)] ${bowSize}`} />
+    <div key={path} className={`contents ${ready ? "" : "ribbon-wait"}`}>
+      {cross && (
+        <div aria-hidden className={`pointer-events-none absolute inset-x-0 z-[9] ${hide ? `hidden ${hide}` : ""}`} style={{ top: `${knot - stripRem / 2}rem` }}>
+          <span
+            className="ribbon ribbon-slide block w-full"
+            style={{ height: `${stripRem}rem`, backgroundImage: "linear-gradient(rgb(255 255 255 / 0) 20%, rgb(255 255 255 / 0.18) 50%, rgb(255 255 255 / 0) 80%)", boxShadow: "inset 0 2px 0 rgb(110 16 24 / 0.55), inset 0 -2px 0 rgb(110 16 24 / 0.55), 0 4px 10px -4px rgb(60 10 15 / 0.35)" }}
+          />
+        </div>
+      )}
+      <div aria-hidden className={`pointer-events-none absolute inset-y-0 z-10 ${className}`}>
+        <span className={`ribbon ribbon-drop block h-full ${strip}`} />
+        <TiedBow className={`absolute top-6 left-1/2 -translate-x-1/2 drop-shadow-[0_8px_8px_rgb(60_10_15/0.28)] ${bowSize}`} />
+      </div>
     </div>
   );
 }

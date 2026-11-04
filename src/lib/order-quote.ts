@@ -2,7 +2,8 @@
 // المتصفح بيبعت اختيارات بس (إيه ولمين وإمتى)، والأسعار بتتحسب هنا من جديد.
 
 import type { CartGift } from "./cart";
-import { hasCustomization, isValidPhone } from "./cart";
+import { hasCustomization } from "./cart";
+import { emailError, nameError, phoneError, recipientErrors } from "./validate";
 import type { Storefront } from "./catalog";
 import { cairoNow, earliestDeliveryDate, periodsForDate, type CairoNow } from "./delivery";
 import { translator, type T } from "@/i18n/t";
@@ -61,8 +62,13 @@ export function quoteOrder(
   const products = new Map(sf.products.map((p) => [p.id, p]));
   const out: QuotedGift[] = [];
 
-  if (!input.sender.name.trim()) errors.push(t("اكتب اسمك"));
-  if (!isValidPhone(input.sender.phone)) errors.push(t("رقم موبايلك مش مظبوط"));
+  // بياناتك: الاسم والموبايل لازم يكونوا مظبوطين، والإيميل اختياري
+  const senderName = nameError(input.sender.name);
+  if (senderName) errors.push(t("اسمك: {e}", { e: t(senderName) }));
+  const senderPhone = phoneError(input.sender.phone);
+  if (senderPhone) errors.push(t("موبايلك: {e}", { e: t(senderPhone) }));
+  const senderEmail = emailError(input.sender.email ?? "");
+  if (senderEmail) errors.push(t(senderEmail));
   if (input.gifts.length === 0) errors.push(t("السلة فاضية"));
 
   input.gifts.forEach((g, gi) => {
@@ -156,9 +162,13 @@ export function quoteOrder(
 
     // المستلم والتوصيل
     const r = g.recipient;
-    if (!r.name.trim()) errors.push(t("{tag}: ناقص اسم المستلم", { tag }));
-    if (!isValidPhone(r.phone)) errors.push(t("{tag}: رقم المستلم مش مظبوط", { tag }));
-    if (!r.address.trim()) errors.push(t("{tag}: ناقص العنوان", { tag }));
+    // الطلب لشخص واحد، فبيانات المستلم بتتراجع مرة واحدة
+    if (gi === 0) {
+      const re = recipientErrors(r);
+      for (const k of ["name", "phone", "address", "landmark", "locationUrl"] as const) {
+        if (re[k]) errors.push(t("المستلم: {e}", { e: t(re[k]!) }));
+      }
+    }
     if (g.cardMessage.length > sf.settings.maxCardMessage) errors.push(t("{tag}: رسالة الكارت طويلة", { tag }));
     const zone = sf.zones.find((z) => z.id === r.zoneId);
     if (!zone) {

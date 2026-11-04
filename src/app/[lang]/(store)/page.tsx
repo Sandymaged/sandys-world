@@ -8,6 +8,8 @@ import { Grid, PackageCard, Rail } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { GiftFinder } from "@/components/gift-finder";
+import { BrandOrbit } from "@/components/brand-orbit";
+import { FeaturePills } from "@/components/feature-pills";
 import { Hero } from "@/components/hero";
 import { Icon } from "@/components/icons";
 import { NoteBoard } from "@/components/note-board";
@@ -57,13 +59,12 @@ export default async function HomePage() {
   // الباكدج اللي فيه أكتر حاجات: بنفرده كمثال على «إيه اللي جوه»
   const spotlight = [...featured].sort((a, b) => b.products.length - a.products.length)[0];
   const photo = (slug: string) => sf.products.find((p) => p.slug === slug);
-  const heroImages = [
-    { slug: "rose-bouquet", caption: "ورد الصبح" },
-    { slug: "chocolate-box", caption: "حاجة حلوة" },
-  ]
-    .map((h) => ({ p: photo(h.slug), caption: h.caption }))
-    .filter((h) => h.p?.images[0])
-    .map((h) => ({ src: h.p!.images[0], alt: h.p!.name, caption: h.caption }));
+  // ستيكرز الهيرو: صور منتجات (الأول والرابع دواير وجنبهم ورقة صغيرة)
+  const chips: Record<number, string> = { 0: "لماما", 3: "عيد ميلاد سعيد" };
+  const preferred = ["rose-bouquet", "chocolate-box"].map(photo).filter((p) => p?.images[0]);
+  const heroStickers = [...new Map([...preferred, ...sf.products].filter((p) => p?.images[0]).map((p) => [p!.images[0], p!])).values()]
+    .slice(0, 6)
+    .map((p, i) => ({ src: p.images[0], alt: p.name, chip: chips[i] }));
   const bridal = sf.kits.find((k) => k.category === "bridal");
   const workshop = sf.kits.find((k) => k.category === "workshop");
 
@@ -71,15 +72,17 @@ export default async function HomePage() {
     <div className="space-y-16 overflow-x-clip pb-4 sm:space-y-24">
       <Hero
         showBox={on.box}
-        images={heroImages}
+        stickers={heroStickers}
         seasonName={season?.name ?? null}
         seasonHref={season?.occasionSlug ? `/occasions/${season.occasionSlug}` : "/shop"}
         deadline={season?.readyDeadline ?? null}
       />
 
+      <FeaturePills />
+
       {/* نختار الهدية سوا */}
       <section className="container-x">
-        <div className="panel grid gap-10 bg-paper px-6 py-10 sm:px-12 sm:py-14 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="panel grain grid gap-10 bg-blue-soft px-6 py-10 sm:px-12 sm:py-14 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="reveal">
             <Pill>{t("محتار تجيب إيه؟")}</Pill>
             <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("يلا نختار الهدية سوا")}</h2>
@@ -199,7 +202,7 @@ export default async function HomePage() {
       {/* كارت الهدية: لما تبقى مش عارف تجيب إيه */}
       {on.giftCard && (
         <section className="container-x">
-          <div className="panel grid items-center gap-10 overflow-hidden border border-line bg-paper px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-2">
+          <div className="panel grain grid items-center gap-10 overflow-hidden border border-line bg-paper px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-2">
             <div className="relative mx-auto w-full max-w-md py-4">
               <div className="animate-float">
                 <GiftCardArt
@@ -227,7 +230,7 @@ export default async function HomePage() {
 
       {/* اكتب كارتك */}
       <section className="container-x">
-        <div className="panel bg-blush px-6 py-10 sm:px-12 sm:py-14">
+        <div className="panel grain bg-blush px-6 py-10 sm:px-12 sm:py-14">
           <div className="reveal mb-8 max-w-xl">
             <Pill>{t("مع كل هدية كارت")}</Pill>
             <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("جرّب تكتب كارتك")}</h2>
@@ -250,12 +253,16 @@ export default async function HomePage() {
       {/* البراندات المحلية */}
       {on.brands && (
         <section className="container-x">
+          <div className="panel grain bg-blue-soft px-5 py-12 sm:px-10 sm:py-16">
           <ScrapTitle
             kicker={t("ورا كل هدية حد عملها بحب")}
             title={t("براندات من أسيوط")}
             subtitle={t("كل منتج عندنا جاي من براند محلي صغير. اعرف مين عمله، واشتري منه أو اعمل هديتك كلها من منتجاته.")}
           />
           <div className="mt-10">
+            <BrandOrbit brands={sf.brands} image={spotlight?.images[0] ?? sf.products.find((p) => p.brandSlug && p.images[0])?.images[0] ?? null} />
+          </div>
+          <div className="mt-12">
             <Rail>
               {sf.brands.slice(0, 8).map((b) => (
                 <BrandCard key={b.id} brand={b} />
@@ -266,6 +273,7 @@ export default async function HomePage() {
             <Link href="/brands" className="btn border border-ink/15 bg-paper text-ink hover:border-brand hover:text-brand">
               {t("كل البراندات")}
             </Link>
+          </div>
           </div>
         </section>
       )}
@@ -322,7 +330,7 @@ export default async function HomePage() {
 
       {/* إزاي بتوصل */}
       <section className="container-x">
-        <div className="panel bg-paper px-6 py-12 sm:px-12 sm:py-16">
+        <div className="panel grain bg-paper px-6 py-12 sm:px-12 sm:py-16">
           <ScrapTitle kicker={t("بسيطة خالص")} title={t("إزاي بتوصل الهدية")} kickerTone="blue" />
           <div className="mt-12">
             <EnvelopeSteps steps={steps.map(([title, body]) => ({ title: t(title), body: t(body) }))} />

@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useT } from "@/i18n/client";
 import { orderPrepDays, type CartGift, type GiftRecipient, type OrderDelivery } from "@/lib/cart";
 import { addDays, cairoNow, earliestDeliveryDate, periodLabel, periodsForDate } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
 import type { StoreSettings } from "@/lib/settings";
 import type { Zone } from "@/lib/types";
+import { normalizePhone, recipientErrors, toLatinDigits } from "@/lib/validate";
 import { useCart } from "@/store/cart";
 
 const DAYS_SHOWN = 14;
@@ -14,13 +16,32 @@ const DAYS_SHOWN = 14;
  * التوصيل للطلب كله: الهدايا كلها رايحة لشخص واحد في ميعاد واحد، برسوم توصيل واحدة.
  * أقرب يوم بيتحسب من أطول مدة تجهيز في الهدايا.
  */
-export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: CartGift[]; zones: Zone[]; settings: StoreSettings; problems: string[] }) {
+export function DeliveryEditor({
+  gifts,
+  zones,
+  settings,
+  problems,
+  showErrors = false,
+}: {
+  gifts: CartGift[];
+  zones: Zone[];
+  settings: StoreSettings;
+  problems: string[];
+  /** بعد ما العميل يدوس «كمّل»: كل الأخطاء بتبان حتى في الخانات اللي ملمسهاش */
+  showErrors?: boolean;
+}) {
   const t = useT();
   const delivery = useCart((s) => s.delivery);
   const setDelivery = useCart((s) => s.setDelivery);
   const now = cairoNow();
   const prepDays = orderPrepDays(gifts);
   const zone = zones.find((z) => z.id === delivery.recipient.zoneId);
+  // الخطأ بيبان بعد ما العميل يسيب الخانة (أو بعد ما يحاول يكمّل)
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const errors = recipientErrors(delivery.recipient);
+  const err = (k: keyof typeof errors) => ((showErrors || touched[k]) && errors[k] ? t(errors[k]!) : null);
+  const blur = (k: string) => () => setTouched((x) => ({ ...x, [k]: true }));
+  const onlyZone = zones.length === 1 ? zones[0] : null;
 
   const setRecipient = (patch: Partial<GiftRecipient>) => {
     const recipient = { ...delivery.recipient, ...patch };
@@ -33,6 +54,14 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
     }
     setDelivery(next);
   };
+
+  // لو منطقة واحدة بس مفتوحة: بتتختار لوحدها. ولو المنطقة اللي كانت مختارة اتقفلت: بتتشال
+  useEffect(() => {
+    const id = delivery.recipient.zoneId;
+    if (onlyZone && id !== onlyZone.id) setRecipient({ zoneId: onlyZone.id });
+    else if (id && !zones.some((z) => z.id === id)) setRecipient({ zoneId: "" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- بس لما المناطق أو المنطقة المختارة تتغير
+  }, [onlyZone?.id, zones.length, delivery.recipient.zoneId]);
 
   const earliest = zone ? earliestDeliveryDate(prepDays, zone, now, settings) : null;
   // لو هدية جديدة بتاخد وقت أطول، اليوم اللي كان مختار ممكن يبقى بدري
@@ -58,16 +87,43 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="rn">{t("اسم المستلم")}</label>
-            <input id="rn" className="field" value={delivery.recipient.name} onChange={(e) => setRecipient({ name: e.target.value })} autoComplete="off" />
+            <input id="rn" className={fieldCls(err("name"))} maxLength={60} value={delivery.recipient.name} onChange={(e) => setRecipient({ name: e.target.value })} onBlur={blur("name")} aria-invalid={!!err("name")} aria-describedby="rn-e" autoComplete="off" />
+            <FieldError id="rn-e" msg={err("name")} />
           </div>
           <div>
             <label className="label" htmlFor="rp">{t("موبايل المستلم")}</label>
-            <input id="rp" className="field tabular" dir="ltr" inputMode="tel" placeholder="01xxxxxxxxx" value={delivery.recipient.phone} onChange={(e) => setRecipient({ phone: e.target.value })} />
+            <input
+              id="rp"
+              className={`${fieldCls(err("phone"))} tabular`}
+              dir="ltr"
+              type="tel"
+              inputMode="tel"
+              maxLength={16}
+              placeholder="01xxxxxxxxx"
+              value={delivery.recipient.phone}
+              // الأرقام العربي بتتحول لإنجليزي، والحروف مش بتتكتب
+              onChange={(e) => setRecipient({ phone: toLatinDigits(e.target.value).replace(/[^\d+\s-]/g, "") })}
+              onBlur={() => {
+                blur("phone")();
+                if (delivery.recipient.phone) setRecipient({ phone: normalizePhone(delivery.recipient.phone) });
+              }}
+              aria-invalid={!!err("phone")}
+              aria-describedby="rp-e"
+            />
+            <FieldError id="rp-e" msg={err("phone")} />
           </div>
         </div>
         <div>
           <label className="label" htmlFor="rz">{t("المنطقة")}</label>
-          <select id="rz" className="field" value={delivery.recipient.zoneId} onChange={(e) => setRecipient({ zoneId: e.target.value })}>
+          <select
+            id="rz"
+            className={`${fieldCls(err("zoneId"))} disabled:cursor-not-allowed disabled:bg-surface disabled:opacity-100`}
+            value={delivery.recipient.zoneId}
+            disabled={!!onlyZone}
+            onChange={(e) => setRecipient({ zoneId: e.target.value })}
+            onBlur={blur("zoneId")}
+            aria-invalid={!!err("zoneId")}
+          >
             <option value="">{t("اختار المنطقة")}</option>
             {groups.map(([label, list]) =>
               list.length ? (
@@ -81,21 +137,25 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
               ) : null,
             )}
           </select>
+          {onlyZone ? <p className="mt-1 text-xs text-muted">{t("التوصيل متاح دلوقتي للمنطقة دي بس.")}</p> : <FieldError msg={err("zoneId")} />}
         </div>
         <div>
           <label className="label" htmlFor="ra">{t("العنوان بالتفصيل")}</label>
-          <textarea id="ra" rows={2} className="field h-auto py-3" placeholder={t("الشارع، رقم العمارة، الدور، الشقة")} value={delivery.recipient.address} onChange={(e) => setRecipient({ address: e.target.value })} />
+          <textarea id="ra" rows={2} maxLength={300} className={`${fieldCls(err("address"))} h-auto py-3`} placeholder={t("الشارع، رقم العمارة، الدور، الشقة")} value={delivery.recipient.address} onChange={(e) => setRecipient({ address: e.target.value })} onBlur={blur("address")} aria-invalid={!!err("address")} aria-describedby="ra-e" />
+          <FieldError id="ra-e" msg={err("address")} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="rl">{t("علامة مميزة")}</label>
-            <input id="rl" className="field" placeholder={t("جنب صيدلية…")} value={delivery.recipient.landmark} onChange={(e) => setRecipient({ landmark: e.target.value })} />
+            <input id="rl" maxLength={120} className={fieldCls(err("landmark"))} placeholder={t("جنب صيدلية…")} value={delivery.recipient.landmark} onChange={(e) => setRecipient({ landmark: e.target.value })} onBlur={blur("landmark")} />
+            <FieldError msg={err("landmark")} />
           </div>
           <div>
             <label className="label" htmlFor="ru">
               {t("لينك اللوكيشن")} <span className="font-normal text-muted">{t("(اختياري)")}</span>
             </label>
-            <input id="ru" className="field" dir="ltr" inputMode="url" placeholder="https://maps.app.goo.gl/…" value={delivery.recipient.locationUrl} onChange={(e) => setRecipient({ locationUrl: e.target.value })} />
+            <input id="ru" type="url" maxLength={500} className={fieldCls(err("locationUrl"))} dir="ltr" inputMode="url" placeholder="https://maps.app.goo.gl/…" value={delivery.recipient.locationUrl} onChange={(e) => setRecipient({ locationUrl: e.target.value.trim() })} onBlur={blur("locationUrl")} aria-invalid={!!err("locationUrl")} aria-describedby="ru-e" />
+            <FieldError id="ru-e" msg={err("locationUrl")} />
           </div>
         </div>
       </div>
@@ -106,6 +166,11 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
           <p className="text-sm text-muted">{t("اختار المنطقة الأول عشان نعرف أقرب يوم متاح.")}</p>
         ) : (
           <>
+            {prepDays > 0 && earliest && (
+              <p className="text-sm text-ink-2">
+                {t(prepDays === 1 ? "الهدايا دي بتتجهز في يوم، فأقرب يوم توصيل {date}." : "الهدايا دي بتتجهز في {n} أيام، فأقرب يوم توصيل {date}.", { n: prepDays, date: formatDay(earliest, t) })}
+              </p>
+            )}
             {dateTooEarly && <p className="rounded-xl bg-butter-soft p-3 text-sm text-butter">{t("اليوم اللي كان متختار بقى بدري على تجهيز الهدايا. اختار يوم من الأيام دي.")}</p>}
             {earliest !== now.date && prepDays === 0 && zone.sameDay && (
               <p className="text-xs text-muted">
@@ -151,6 +216,22 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
         )}
       </div>
 
+      <div className="space-y-2">
+        <label className="label" htmlFor="cm">
+          {t("رسالة الكارت")} <span className="font-normal text-muted">{gifts.length > 1 ? t("(كارت واحد للطلب كله، اختياري)") : t("(اختياري)")}</span>
+        </label>
+        <textarea
+          id="cm"
+          rows={3}
+          className="field h-auto py-3"
+          maxLength={settings.maxCardMessage}
+          placeholder={t("كل سنة وإنتي طيبة يا ماما…")}
+          value={delivery.cardMessage ?? ""}
+          onChange={(e) => setDelivery({ cardMessage: e.target.value })}
+        />
+        <p className="tabular text-left text-xs text-muted">{(delivery.cardMessage ?? "").length}/{settings.maxCardMessage}</p>
+      </div>
+
       <div className="space-y-2 text-sm">
         {(
           [
@@ -168,4 +249,14 @@ export function DeliveryEditor({ gifts, zones, settings, problems }: { gifts: Ca
       </div>
     </section>
   );
+}
+
+const fieldCls = (error: string | null) => `field ${error ? "border-brand focus:border-brand focus:ring-brand/10" : ""}`;
+
+function FieldError({ msg, id }: { msg: string | null; id?: string }) {
+  return msg ? (
+    <p id={id} className="mt-1 text-xs font-medium text-brand" role="alert">
+      {msg}
+    </p>
+  ) : null;
 }

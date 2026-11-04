@@ -3,10 +3,17 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { checkPassword, endSession, requireAdmin, startSession } from "./admin-auth";
+import { cancellable } from "./admin-format";
+import { settleOnDelivery } from "./brand-portal";
+import { getStorefront } from "./catalog";
 import { repo, uniqueSlots } from "./db";
-import type { OrderStatus } from "./db/types";
+import type { OrderStatus, Redelivery } from "./db/types";
+import { cairoNow, periodLabel } from "./delivery";
+import { formatDay } from "./format";
 import { GIFT_CARD_VALID_MONTHS } from "./gift-card";
-import { orderStockLines, returnStock } from "./stock";
+import { orderStockLines, returnStock, takeStock } from "./stock";
+import type { DeliveryPeriod } from "./types";
+import { toLatinDigits } from "./validate";
 
 export async function adminLogin(_: unknown, form: FormData): Promise<{ error: string } | void> {
   const pass = String(form.get("password") ?? "");
@@ -20,23 +27,106 @@ export async function adminLogout() {
   redirect("/admin/login");
 }
 
-const allowed: OrderStatus[] = ["new", "awaiting_design_approval", "preparing", "ready", "out_for_delivery", "delivered", "cancelled"];
+const allowed: OrderStatus[] = ["new", "awaiting_design_approval", "preparing", "ready", "out_for_delivery", "delivery_failed", "delivered", "cancelled"];
 
-/** تغيير حالة الأوردر (FR-101). الإلغاء بيفك فترات التوصيل المحجوزة */
-export async function setOrderStatus(id: string, status: OrderStatus, note?: string) {
+/**
+ * تغيير حالة الأوردر (FR-101).
+ * - «بيتجهز»: هنا المخزون بيتخصم (مش وقت الطلب)، ولو حاجة مش كفاية الحالة مش بتتغير.
+ * - الإلغاء: بس قبل التجهيز، وبيفك فترات التوصيل ورصيد كارت الهدية (والمخزون لو كان اتخصم).
+ */
+export async function setOrderStatus(id: string, status: OrderStatus, note?: string): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireAdmin();
-  if (!allowed.includes(status)) return;
+  if (!allowed.includes(status)) return { ok: false, error: "الحالة دي مش مسموحة" };
   const db = repo();
   const order = await db.getById(id);
-  if (!order || order.status === status) return;
-  await db.update(id, { status }, { status, note, by: "admin" });
+  if (!order) return { ok: false, error: "الأوردر مش موجود" };
+  if (order.status === status) return { ok: true };
+  if (status === "cancelled" && !cancellable.includes(order.status)) return { ok: false, error: "التجهيز بدأ، فالطلب مينفعش يتلغي" };
+
+  let patch: Partial<typeof order> = { status };
+  if (status === "preparing" && order.stockTaken === false) {
+    const r = await takeStock(orderStockLines(order.gifts));
+    if (!r.ok) {
+      const name = order.gifts.flatMap((g) => g.items).find((it) => it.productId === r.productId)?.name ?? "منتج";
+      return { ok: false, error: `المخزون مش كفاية لـ «${name}». زوّدي العدد أو كلّمي العميل قبل ما الطلب يبدأ يتجهز.` };
+    }
+    patch = { status, stockTaken: true };
+    updateTag("catalog");
+  }
+  await db.update(id, patch, { status, note, by: "admin" });
+  // عمولة البراندات بتتحسب وتتثبت لحظة التسليم (شرايح الشهر)
+  if (status === "delivered") await settleOnDelivery(id);
   if (status === "cancelled" && order.status !== "cancelled") {
     for (const s of uniqueSlots(order.gifts)) await db.releaseSlot(s.date, s.period);
     if (order.giftCardUse) await db.restoreGiftCard(order.giftCardUse.code, order.giftCardUse.ref);
-    await returnStock(orderStockLines(order.gifts));
-    updateTag("catalog");
+    if (order.stockTaken !== false) {
+      await returnStock(orderStockLines(order.gifts));
+      updateTag("catalog");
+    }
   }
   revalidatePath("/[lang]/admin", "layout");
+  return { ok: true };
+}
+
+/**
+ * محاولة توصيل تانية بعد «التوصيل ماتمش».
+ * - نفس اليوم: ببلاش، والطلب بيرجع «خرج للتوصيل».
+ * - يوم تاني: بيتحجز ميعاد جديد، ورسوم التوصيل بتتزود على الطلب، والطلب بيرجع «جاهز» لحد اليوم ده.
+ */
+export async function redeliverAction(id: string, f: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const db = repo();
+  const order = await db.getById(id);
+  if (!order) return { ok: false, error: "الأوردر مش موجود" };
+  if (order.status !== "delivery_failed") return { ok: false, error: "المحاولة التانية بتتسجل بس لما التوصيل مايتمش" };
+
+  if (f.get("mode") === "same_day") {
+    await db.update(id, { status: "out_for_delivery" }, { status: "out_for_delivery", note: "محاولة تانية في نفس اليوم (ببلاش)", by: "admin" });
+    revalidatePath("/[lang]/admin", "layout");
+    return { ok: true };
+  }
+
+  const { settings } = await getStorefront();
+  const date = String(f.get("date") ?? "");
+  const period = String(f.get("period") ?? "") as DeliveryPeriod;
+  const fee = Number(toLatinDigits(String(f.get("fee") ?? "")).trim());
+  const today = cairoNow().date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "اختاري اليوم" };
+  if (date <= today) return { ok: false, error: "اليوم لازم يكون بعد النهارده (نفس اليوم ببلاش)" };
+  if (!settings.periods.some((p) => p.id === period)) return { ok: false, error: "اختاري الفترة" };
+  if (!Number.isFinite(fee) || fee < 0 || fee > 5000) return { ok: false, error: "اكتبي رسوم التوصيل بالأرقام" };
+  if (!(await db.reserveSlot(date, period, settings.defaultSlotCapacity))) return { ok: false, error: "الفترة دي اتملت، اختاري فترة أو يوم تاني" };
+
+  const r: Redelivery = { at: new Date().toISOString(), date, period, fee: Math.round(fee), paidAt: fee > 0 ? null : new Date().toISOString() };
+  const gifts = order.gifts.map((g, i) => ({
+    ...g,
+    deliveryDate: date,
+    deliveryPeriod: period,
+    ...(i === 0 ? { redeliveries: [...(g.redeliveries ?? []), r] } : {}),
+  }));
+  const totals = { ...order.totals, delivery: order.totals.delivery + r.fee, total: order.totals.total + r.fee };
+  await db.update(
+    id,
+    { gifts, totals, status: "ready" },
+    { status: "ready", note: `التوصيل اتأجل لـ ${formatDay(date)} (${periodLabel(period, settings)})${r.fee ? `، برسوم توصيل ${r.fee} ج.م` : " ببلاش"}`, by: "admin" },
+  );
+  revalidatePath("/[lang]/admin", "layout");
+  return { ok: true };
+}
+
+/** العميل دفع رسوم المحاولة التانية */
+export async function markRedeliveryPaid(id: string, index: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const db = repo();
+  const order = await db.getById(id);
+  const list = order?.gifts[0]?.redeliveries ?? [];
+  if (!order || !list[index]) return { ok: false, error: "مش موجودة" };
+  if (list[index].paidAt) return { ok: true };
+  const updated = list.map((r, i) => (i === index ? { ...r, paidAt: new Date().toISOString() } : r));
+  const gifts = order.gifts.map((g, i) => (i === 0 ? { ...g, redeliveries: updated } : g));
+  await db.update(id, { gifts }, { note: `رسوم التوصيل التاني (${list[index].fee} ج.م) اتدفعت`, by: "admin" });
+  revalidatePath("/[lang]/admin", "layout");
+  return { ok: true };
 }
 
 /** تأكيد الدفع بعد ما المبلغ يوصل الحساب (FR-63): الأوردر بيدخل "جديد" */

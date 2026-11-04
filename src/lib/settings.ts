@@ -3,7 +3,7 @@
 
 import type { DeliveryPeriod } from "./types";
 
-export const STORE_NAME = "Sandy's World";
+export const STORE_NAME = "giftful";
 
 export const TIMEZONE = "Africa/Cairo";
 
