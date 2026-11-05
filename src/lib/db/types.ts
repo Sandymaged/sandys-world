@@ -132,8 +132,8 @@ export interface OrderRecord {
   paymentConfirmedAt: string | null;
   paymentRejectionReason: string | null;
   couponCode: string | null;
-  /** لو الطلب ده شراء كارت هدية */
-  giftCard?: GiftCardOrder | null;
+  /** كروت الهدايا اللي اتشرت في الطلب ده (لوحدها أو مع هدايا). الكود بيتعمل لما الدفع يتأكد */
+  giftCards?: GiftCardOrder[];
   /** لو جزء من الطلب اتدفع بكارت هدية (ref عشان نرجّع الرصيد لو الطلب اتلغى) */
   giftCardUse?: { code: string; amount: number; ref: string } | null;
   /** العميل عرفنا منين (إنستجرام، صاحب…) */

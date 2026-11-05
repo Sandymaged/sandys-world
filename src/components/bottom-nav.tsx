@@ -19,7 +19,7 @@ const items: { href: string; label: string; icon: IconName }[] = [
 export function BottomNav({ showBox = true }: { showBox?: boolean }) {
   const t = useT();
   const path = usePathname();
-  const count = useCart((s) => s.gifts.length);
+  const count = useCart((s) => s.gifts.length + s.giftCards.length);
   const hydrated = useHydrated();
 
   return (

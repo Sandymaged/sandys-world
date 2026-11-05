@@ -43,19 +43,24 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const orderUrl = `${origin}${order.locale === "en" ? "/en" : ""}/order/${order.token}`;
   const msgs = waMessages(order, orderUrl);
-  const gc = order.giftCard ?? null;
-  const card = gc?.code ? await repo().getGiftCard(gc.code) : null;
+  // كروت الهدايا اللي في الطلب، ورصيد كل واحد بعد ما اتعمل
   const siteUrl = `${origin}${order.locale === "en" ? "/en" : ""}`;
-  const gcMessage = gc?.code
-    ? [
-        gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
-        `كارت هدية من ${STORE_NAME} بقيمة ${money(gc.amount)}`,
-        `الكود: ${gc.code}`,
-        `اختار هديتك من ${siteUrl} واكتب الكود وإنت بتدفع.`,
-      ]
-        .filter(Boolean)
-        .join("\n")
-    : "";
+  const cards = await Promise.all(
+    (order.giftCards ?? []).map(async (gc) => ({
+      gc,
+      record: gc.code ? await repo().getGiftCard(gc.code) : null,
+      message: gc.code
+        ? [
+            gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
+            `كارت هدية من ${STORE_NAME} بقيمة ${money(gc.amount)}`,
+            `الكود: ${gc.code}`,
+            `اختار هديتك من ${siteUrl} واكتب الكود وإنت بتدفع.`,
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : "",
+    })),
+  );
 
   return (
     <div className="space-y-6">
@@ -69,8 +74,8 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-6">
-          {gc && (
-            <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
+          {cards.map(({ gc, record: card, message: gcMessage }) => (
+            <section key={gc.code ?? `${gc.design}-${gc.amount}-${gc.toPhone}`} className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
               <h2 className="text-2xl text-brand">كارت هدية · <span className="tabular">{money(gc.amount)}</span></h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-[1fr_1.1fr] sm:items-center">
                 <GiftCardArt design={gc.design} amount={gc.amount} amountLabel={money(gc.amount)} title="كارت هدية" storeName={STORE_NAME} code={gc.code} />
@@ -83,7 +88,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                       {gc.message && <p className="font-script text-lg leading-7 text-lilac">«{gc.message}»</p>}
                     </>
                   ) : (
-                    <p className="text-muted">للمشتري نفسه</p>
+                    <p className="text-muted">الكود للمشتري، وهو هيبعته بنفسه</p>
                   )}
                   {gc.code ? (
                     <>
@@ -99,7 +104,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                 </div>
               </div>
             </section>
-          )}
+          ))}
           {order.gifts.map((g, i) => (
             <section key={g.id} className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
               <div className="flex flex-wrap items-baseline justify-between gap-2">

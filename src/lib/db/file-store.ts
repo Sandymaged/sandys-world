@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { DeliveryPeriod } from "../types";
-import type { GiftCardRecord, OrderRecord, Repo } from "./types";
+import type { GiftCardOrder, GiftCardRecord, OrderRecord, Repo } from "./types";
 
 /*
  * مخزن محلي في ملفات JSON جوه .data — للتجربة على الجهاز قبل ربط Supabase بس.
@@ -27,7 +27,13 @@ let queue: Promise<unknown> = Promise.resolve();
 
 async function load(): Promise<Data> {
   try {
-    return JSON.parse(await readFile(FILE, "utf8")) as Data;
+    const d = JSON.parse(await readFile(FILE, "utf8")) as Data;
+    // الطلبات القديمة كان فيها كارت واحد (giftCard)، دلوقتي list
+    for (const o of d.orders as (OrderRecord & { giftCard?: GiftCardOrder | null })[]) {
+      if (o.giftCard) o.giftCards = [o.giftCard];
+      delete o.giftCard;
+    }
+    return d;
   } catch {
     return { seq: 1000, orders: [], slots: {}, coupons: {} };
   }

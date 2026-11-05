@@ -83,7 +83,7 @@ export function handByOf(o: OrderRecord): string {
  * ومن ساعتها مفيش إلغاء. فأي طلب البراند بيشوفه لازم يتجهز.
  */
 const brandStatuses: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "delivery_failed", "delivered"];
-const visibleToBrand = (o: OrderRecord) => !o.giftCard && brandStatuses.includes(o.status);
+const visibleToBrand = (o: OrderRecord) => o.gifts.length > 0 && brandStatuses.includes(o.status);
 
 export function brandOrderOf(o: OrderRecord, partnerId: string, catalog: CatalogData): BrandOrder | null {
   if (!visibleToBrand(o)) return null;

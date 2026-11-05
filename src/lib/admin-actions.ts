@@ -136,33 +136,35 @@ export async function confirmPayment(id: string) {
   const order = await db.getById(id);
   if (!order || order.paymentMethod !== "instapay") return;
 
-  // شراء كارت هدية: الكود بيتعمل دلوقتي، والطلب بيخلص (مفيش حاجة بتتجهز أو تتوصل)
-  if (order.giftCard) {
-    if (order.giftCard.code) return;
-    const expires = new Date();
-    expires.setMonth(expires.getMonth() + GIFT_CARD_VALID_MONTHS);
-    const card = await db.issueGiftCard(order.id, order.giftCard.amount, expires.toISOString());
-    await db.update(
-      id,
-      {
-        paymentStatus: "confirmed",
-        paymentConfirmedAt: new Date().toISOString(),
-        paymentRejectionReason: null,
-        status: "delivered",
-        giftCard: { ...order.giftCard, code: card.code, expiresAt: card.expiresAt },
-      },
-      { status: "delivered", note: `الدفع اتأكد وكارت الهدية اتعمل: ${card.code}`, by: "admin" },
-    );
-    revalidatePath("/[lang]/admin", "layout");
-    return;
-  }
+  if (order.paymentStatus === "confirmed") return;
 
+  // كروت الهدايا: الكود بيتعمل دلوقتي لكل كارت لسه ملوش كود
+  const expires = new Date();
+  expires.setMonth(expires.getMonth() + GIFT_CARD_VALID_MONTHS);
+  const giftCards = [];
+  for (const c of order.giftCards ?? []) {
+    if (c.code) {
+      giftCards.push(c);
+      continue;
+    }
+    const card = await db.issueGiftCard(order.id, c.amount, expires.toISOString());
+    giftCards.push({ ...c, code: card.code, expiresAt: card.expiresAt });
+  }
+  const codes = giftCards.map((c) => c.code).join("، ");
+
+  // طلب كروت بس: بيخلص على طول (مفيش حاجة بتتجهز أو تتوصل). غير كده الهدايا بتبدأ تتجهز
   const needsDesign = order.gifts.some((g) => g.items.some((it) => it.customization));
-  const status: OrderStatus = needsDesign ? "awaiting_design_approval" : "new";
+  const status: OrderStatus = order.gifts.length === 0 ? "delivered" : needsDesign ? "awaiting_design_approval" : "new";
   await db.update(
     id,
-    { paymentStatus: "confirmed", paymentConfirmedAt: new Date().toISOString(), paymentRejectionReason: null, status },
-    { status, note: "الدفع اتأكد", by: "admin" },
+    {
+      paymentStatus: "confirmed",
+      paymentConfirmedAt: new Date().toISOString(),
+      paymentRejectionReason: null,
+      status,
+      ...(giftCards.length ? { giftCards } : {}),
+    },
+    { status, note: codes ? `الدفع اتأكد وكروت الهدايا اتعملت: ${codes}` : "الدفع اتأكد", by: "admin" },
   );
   revalidatePath("/[lang]/admin", "layout");
 }

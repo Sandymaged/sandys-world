@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { emptyDelivery, emptyRecipient, type CartGift, type OrderDelivery } from "@/lib/cart";
+import type { CartGiftCard } from "@/lib/gift-card";
 
 export interface Sender {
   name: string;
@@ -13,6 +14,10 @@ export interface Sender {
 
 interface CartState {
   gifts: CartGift[];
+  /** كروت الهدايا: بتتدفع مع الطلب، ومن غير توصيل */
+  giftCards: CartGiftCard[];
+  addGiftCard: (c: Omit<CartGiftCard, "id">) => string;
+  removeGiftCard: (id: string) => void;
   /** التوصيل للطلب كله (شخص واحد وميعاد واحد) */
   delivery: OrderDelivery;
   sender: Sender;
@@ -40,6 +45,13 @@ export const useCart = create<CartState>()(
   persist(
     (set) => ({
       gifts: [],
+      giftCards: [],
+      addGiftCard: (c) => {
+        const id = newId();
+        set((s) => ({ giftCards: [...s.giftCards, { ...c, id }], justAdded: id }));
+        return id;
+      },
+      removeGiftCard: (id) => set((s) => ({ giftCards: s.giftCards.filter((c) => c.id !== id) })),
       delivery: emptyDelivery(),
       sender: { name: "", phone: "", email: "", isRecipient: false },
       couponCode: "",
@@ -76,12 +88,12 @@ export const useCart = create<CartState>()(
       setSender: (patch) => set((s) => ({ sender: { ...s.sender, ...patch } })),
       setCoupon: (couponCode) => set({ couponCode }),
       // بنسيب المستلم والعنوان للطلب الجاي، وبنشيل الميعاد
-      clear: () => set((s) => ({ gifts: [], couponCode: "", delivery: { ...s.delivery, date: "", period: "" } })),
+      clear: () => set((s) => ({ gifts: [], giftCards: [], couponCode: "", delivery: { ...s.delivery, date: "", period: "" } })),
     }),
     {
       name: "gift-cart-v1",
       // الدرج مش بيتحفظ: لو الصفحة اتعملها refresh ميفتحش لوحده
-      partialize: (s) => ({ gifts: s.gifts, delivery: s.delivery, sender: s.sender, couponCode: s.couponCode }),
+      partialize: (s) => ({ gifts: s.gifts, giftCards: s.giftCards, delivery: s.delivery, sender: s.sender, couponCode: s.couponCode }),
       // السلات القديمة كان التوصيل فيها جوه كل هدية: بناخده من أول هدية
       // نسخة 3: رسالة الكارت بقت واحدة للطلب كله (بناخدها من أول هدية فيها رسالة)
       version: 3,
@@ -104,6 +116,7 @@ export const useCart = create<CartState>()(
         if (version < 3 && st.delivery && st.delivery.cardMessage === undefined) {
           st.delivery = { ...st.delivery, cardMessage: st.gifts?.find((g) => g.cardMessage)?.cardMessage ?? "" };
         }
+        st.giftCards ??= [];
         return st as CartState;
       },
     },

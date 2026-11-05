@@ -10,18 +10,20 @@ import type { Zone } from "@/lib/types";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useCart } from "@/store/cart";
 import { DeliveryEditor } from "./delivery-editor";
+import { GiftCardLines } from "./gift-card-lines";
 import { GiftEditor } from "./gift-editor";
 
 export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSettings }) {
   const t = useT();
   const hydrated = useHydrated();
   const gifts = useCart((s) => s.gifts);
+  const cards = useCart((s) => s.giftCards);
   const delivery = useCart((s) => s.delivery);
   const [tried, setTried] = useState(false);
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
-  if (gifts.length === 0) {
+  if (gifts.length === 0 && cards.length === 0) {
     return (
       <div className="card p-10 text-center">
         <p className="text-xl">{t("السلة فاضية")}</p>
@@ -39,11 +41,14 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
   const totals = gifts.map((g) => giftTotals(g, settings));
   const items = totals.reduce((s, t) => s + t.items, 0);
   const packaging = totals.reduce((s, t) => s + t.packaging, 0);
-  const deliveryFee = zone?.fee ?? 0;
+  // التوصيل للهدايا بس، كروت الهدايا من غير توصيل
+  const hasGifts = gifts.length > 0;
+  const deliveryFee = hasGifts ? (zone?.fee ?? 0) : 0;
+  const cardsSum = cards.reduce((s, c) => s + c.amount, 0);
   const problems = gifts.map((g) => giftProblems(g, settings));
-  const dProblems = deliveryProblems(delivery, settings.maxCardMessage);
+  const dProblems = hasGifts ? deliveryProblems(delivery, settings.maxCardMessage) : [];
   // اليوم المختار بقى بدري لو اتضافت هدية بتاخد وقت أطول
-  if (zone && delivery.date && delivery.date < earliestDeliveryDate(orderPrepDays(gifts), zone, cairoNow(), settings)) dProblems.push("يوم التوصيل");
+  if (hasGifts && zone && delivery.date && delivery.date < earliestDeliveryDate(orderPrepDays(gifts), zone, cairoNow(), settings)) dProblems.push("يوم التوصيل");
   const ready = problems.every((p) => p.length === 0) && dProblems.length === 0;
 
   return (
@@ -52,29 +57,35 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
         {gifts.map((g, i) => (
           <GiftEditor key={g.id} gift={g} index={i} settings={settings} problems={problems[i]} />
         ))}
+        {cards.length > 0 && <GiftCardLines cards={cards} />}
         <div className="flex flex-wrap gap-2">
-          <Link href="/shop" className="btn-outline">{t("+ ضيف هدية تانية")}</Link>
+          <Link href="/shop" className="btn-outline">{hasGifts ? t("+ ضيف هدية تانية") : t("+ ضيف هدية")}</Link>
           <Link href="/box" className="btn-outline">{t("+ اعمل بوكس")}</Link>
         </div>
-        <div id="delivery">
-          <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} showErrors={tried} />
-        </div>
+        {hasGifts && (
+          <div id="delivery">
+            <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} showErrors={tried} />
+          </div>
+        )}
       </div>
 
       <aside className="rounded-3xl border border-line bg-paper p-6 shadow-[0_18px_36px_-28px_rgb(60_30_20/0.45)] lg:sticky lg:top-36">
         <p className="mb-3 font-heading text-2xl text-brand">{t("ملخص الطلب")}</p>
         <dl className="space-y-1.5 text-sm">
-          <div className="flex justify-between"><dt className="text-muted">{t("الهدايا ({n})", { n: gifts.length })}</dt><dd className="tabular">{egp(items, t)}</dd></div>
+          {hasGifts && <div className="flex justify-between"><dt className="text-muted">{t("الهدايا ({n})", { n: gifts.length })}</dt><dd className="tabular">{egp(items, t)}</dd></div>}
           {packaging > 0 && (
             <div className="flex justify-between"><dt className="text-muted">{t("تغليف وتنسيق")}</dt><dd className="tabular">{egp(packaging, t)}</dd></div>
           )}
-          <div className="flex justify-between">
-            <dt className="text-muted">{t("التوصيل")}</dt>
-            <dd className="tabular">{zone ? egp(deliveryFee, t) : t("اختار المنطقة")}</dd>
-          </div>
+          {cardsSum > 0 && <div className="flex justify-between"><dt className="text-muted">{t("كروت الهدايا ({n})", { n: cards.length })}</dt><dd className="tabular">{egp(cardsSum, t)}</dd></div>}
+          {hasGifts && (
+            <div className="flex justify-between">
+              <dt className="text-muted">{t("التوصيل")}</dt>
+              <dd className="tabular">{zone ? egp(deliveryFee, t) : t("اختار المنطقة")}</dd>
+            </div>
+          )}
           <div className="flex justify-between border-t border-line pt-2 text-base font-bold">
             <dt>{t("الإجمالي")}</dt>
-            <dd className="tabular">{egp(items + packaging + deliveryFee, t)}</dd>
+            <dd className="tabular">{egp(items + packaging + deliveryFee + cardsSum, t)}</dd>
           </div>
         </dl>
         {!ready && (

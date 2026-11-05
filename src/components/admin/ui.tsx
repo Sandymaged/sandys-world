@@ -27,11 +27,16 @@ export function OrderRow({ o }: { o: OrderRecord }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">{o.sender.name}</span>
         <span className="block truncate text-xs text-muted">
-          {o.giftCard
-            ? `🎁 كارت هدية${o.giftCard.asGift && o.giftCard.toName ? ` لـ ${o.giftCard.toName}` : ""}`
-            : o.gifts.length === 1
-              ? `لـ ${o.gifts[0].recipient.name} · ${o.gifts[0].recipient.zoneName}`
-              : `${o.gifts.length} هدايا`}
+          {[
+            o.gifts.length === 1 ? `لـ ${o.gifts[0].recipient.name} · ${o.gifts[0].recipient.zoneName}` : o.gifts.length > 1 ? `${o.gifts.length} هدايا` : "",
+            (o.giftCards ?? []).length === 1
+              ? `🎁 كارت هدية${o.giftCards![0].asGift && o.giftCards![0].toName ? ` لـ ${o.giftCards![0].toName}` : ""}`
+              : (o.giftCards ?? []).length > 1
+                ? `🎁 ${o.giftCards!.length} كروت هدايا`
+                : "",
+          ]
+            .filter(Boolean)
+            .join(" + ")}
           {dates && <> · <span className="tabular">{dates}</span></>}
         </span>
       </span>

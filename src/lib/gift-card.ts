@@ -1,5 +1,7 @@
 // كارت الهدية: الأشكال والمبالغ والقواعد (مشتركة بين المتصفح والسيرفر)
 
+import { isValidPhone, nameError } from "./validate";
+
 export const giftCardDesigns = [
   { id: "classic", label: "عام" },
   { id: "birthday", label: "عيد ميلاد" },
@@ -17,6 +19,37 @@ export const GIFT_CARD_VALID_MONTHS = 12;
 export const GIFT_CARD_MAX_MESSAGE = 160;
 
 export const isGiftCardDesign = (v: string): v is GiftCardDesign => giftCardDesigns.some((d) => d.id === v);
+
+/**
+ * كارت هدية في السلة: بيتدفع مع باقي الطلب ومن غير توصيل.
+ * asGift = إحنا نبعته على واتساب للي هيوصله، غير كده الكود بيوصل للمشتري وهو يبعته بنفسه.
+ */
+export interface CartGiftCard {
+  id: string;
+  design: GiftCardDesign;
+  amount: number;
+  asGift: boolean;
+  toName: string;
+  toPhone: string;
+  fromName: string;
+  message: string;
+}
+
+/** مجموع كروت الهدايا في طلب (جوه totals.items مع الهدايا) */
+export const cardsTotal = (o: { giftCards?: { amount: number }[] }) => (o.giftCards ?? []).reduce((s, c) => s + c.amount, 0);
+
+/** المشاكل في كارت (بالعربي، والترجمة وقت العرض). نفس القواعد في المتصفح والسيرفر */
+export function giftCardProblems(c: Omit<CartGiftCard, "id">): string[] {
+  const p: string[] = [];
+  if (!isGiftCardDesign(c.design)) p.push("اختار شكل الكارت");
+  if (!Number.isInteger(c.amount) || c.amount < GIFT_CARD_MIN || c.amount > GIFT_CARD_MAX) p.push("المبلغ مش مظبوط");
+  if (c.asGift) {
+    if (nameError(c.toName)) p.push("اكتب اسم اللي هيوصله الكارت");
+    if (!isValidPhone(c.toPhone)) p.push("رقم اللي هيوصله الكارت مش مظبوط");
+  }
+  if (c.message.length > GIFT_CARD_MAX_MESSAGE) p.push("الرسالة طويلة");
+  return p;
+}
 
 /** الكود بيتكتب بحروف كابيتال ومن غير مسافات: GC-7KQ2-M9XA */
 export const normalizeGiftCardCode = (code: string) =>

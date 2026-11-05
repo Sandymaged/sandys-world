@@ -96,7 +96,13 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   if (input.giftCardCode?.trim()) {
     const code = normalizeGiftCardCode(input.giftCardCode);
     const card = await db.getGiftCard(code);
-    const amount = card ? Math.min(card.balance, quote.total) : 0;
+    // كارت الهدية بيدفع الهدايا بس، مش كروت هدايا جديدة
+    const payable = quote.total - quote.cardsTotal;
+    if (payable <= 0) {
+      await releaseAll();
+      return { ok: false, errors: [t("كارت الهدية مينفعش يتدفع بيه كروت هدايا جديدة")] };
+    }
+    const amount = card ? Math.min(card.balance, payable) : 0;
     const ref = randomUUID();
     if (!card || amount <= 0 || !(await db.redeemGiftCard(code, amount, ref))) {
       await releaseAll();
@@ -193,8 +199,20 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
     couponCode: coupon ? couponCode : null,
     giftCardUse,
     source: input.source?.trim().slice(0, 40) || null,
+    // كروت الهدايا جوه items مع الهدايا (cardsTotal في lib/gift-card.ts بيفصلهم)
+    giftCards: (input.giftCards ?? []).map((c) => ({
+      design: c.design,
+      amount: c.amount,
+      asGift: c.asGift,
+      toName: c.asGift ? c.toName.trim() : "",
+      toPhone: c.asGift ? normalizePhone(c.toPhone) : "",
+      fromName: c.fromName.trim().slice(0, 40),
+      message: c.asGift ? c.message.trim() : "",
+      code: null,
+      expiresAt: null,
+    })),
     totals: {
-      items: quote.itemsTotal,
+      items: quote.itemsTotal + quote.cardsTotal,
       packaging: quote.packagingTotal,
       delivery: quote.deliveryTotal,
       discount: quote.discount,

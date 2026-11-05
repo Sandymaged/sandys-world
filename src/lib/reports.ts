@@ -3,6 +3,7 @@ import type { CatalogData } from "./db/catalog-store";
 import type { OrderRecord } from "./db/types";
 import { cairoNow } from "./delivery";
 import { instapayFee, type Expense, type FinanceSettings } from "./finance";
+import { cardsTotal } from "./gift-card";
 
 /*
  * التقارير (بحساب الفلوس اللي دخلت فعلاً):
@@ -152,7 +153,7 @@ function profitOf(orders: OrderRecord[], i: Inputs, from: string, to: string, ex
   for (const o of orders) {
     if (!counted(o) || !inRange(dayOf(o.createdAt), from, to)) continue;
     cash += o.totals.total;
-    if (!o.giftCard) {
+    if (o.gifts.length) {
       const m = money(o, i.catalog, i.finance);
       cost += m.goods + m.delivery + m.packaging + m.fees;
     }
@@ -171,7 +172,7 @@ const bump = (map: Map<string, Ranked>, key: string, label: string, by: number, 
 export function buildReport(i: Inputs, from: string, to: string, prevFrom: string, prevTo: string): Report {
   const inPeriod = i.orders.filter((o) => inRange(dayOf(o.createdAt), from, to));
   const sold = inPeriod.filter(counted);
-  const regular = sold.filter((o) => !o.giftCard);
+  const regular = sold.filter((o) => o.gifts.length > 0);
 
   const costs = { goods: 0, delivery: 0, packaging: 0, fees: 0, refunds: 0, expenses: 0 };
   const income = { commission: 0, packaging: 0, delivery: 0 };
@@ -188,11 +189,11 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
   let paidWithGiftCards = 0;
   for (const o of sold) {
     cashIn += o.totals.total;
-    if (o.giftCard) {
-      giftCardSales += o.totals.total;
-      continue;
-    }
-    giftValue += o.totals.items + o.totals.packaging + o.totals.delivery - o.totals.discount;
+    // كروت الهدايا اللي اتشرت (لوحدها أو مع هدايا): فلوس دخلت ولسه هتتصرف على هدايا بعدين
+    const cards = cardsTotal(o);
+    giftCardSales += cards;
+    if (o.gifts.length === 0) continue;
+    giftValue += o.totals.items - cards + o.totals.packaging + o.totals.delivery - o.totals.discount;
     paidWithGiftCards += o.totals.giftCard ?? 0;
     income.packaging += o.totals.packaging;
     income.delivery += o.totals.delivery;
@@ -265,7 +266,7 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
     from,
     to,
     orders: regular.length,
-    prevOrders: i.orders.filter((o) => counted(o) && !o.giftCard && inRange(dayOf(o.createdAt), prevFrom, prevTo)).length,
+    prevOrders: i.orders.filter((o) => counted(o) && o.gifts.length > 0 && inRange(dayOf(o.createdAt), prevFrom, prevTo)).length,
     cashIn,
     prevCashIn: prev.cash,
     giftValue,

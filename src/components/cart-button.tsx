@@ -7,7 +7,7 @@ import { Icon } from "./icons";
 
 export function CartButton() {
   const t = useT();
-  const count = useCart((s) => s.gifts.length);
+  const count = useCart((s) => s.gifts.length + s.giftCards.length);
   const hydrated = useHydrated();
   return (
     <Link

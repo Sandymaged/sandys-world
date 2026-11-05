@@ -9,6 +9,7 @@ import { cairoNow, earliestDeliveryDate, periodsForDate, type CairoNow } from ".
 import { translator, type T } from "@/i18n/t";
 import { describeChoices, optionsPrice, valueAvailable, type OptionChoice } from "./options";
 import { couponDiscount, kitTotal, packagingFee, type CouponRule } from "./pricing";
+import { giftCardProblems, type CartGiftCard } from "./gift-card";
 
 export interface OrderInput {
   gifts: CartGift[];
@@ -17,6 +18,8 @@ export interface OrderInput {
   paymentMethod: "instapay" | "cod";
   /** العميل عرفنا منين (اختياري) */
   source?: string;
+  /** كروت هدايا بتتدفع مع الطلب (من غير توصيل) */
+  giftCards?: Omit<CartGiftCard, "id">[];
 }
 
 export interface QuotedItem {
@@ -47,6 +50,8 @@ export interface Quote {
   packagingTotal: number;
   deliveryTotal: number;
   discount: number;
+  /** كروت الهدايا (جوه total) */
+  cardsTotal: number;
   total: number;
   codAllowed: boolean;
 }
@@ -69,7 +74,11 @@ export function quoteOrder(
   if (senderPhone) errors.push(t("موبايلك: {e}", { e: t(senderPhone) }));
   const senderEmail = emailError(input.sender.email ?? "");
   if (senderEmail) errors.push(t(senderEmail));
-  if (input.gifts.length === 0) errors.push(t("السلة فاضية"));
+  const cards = input.giftCards ?? [];
+  if (input.gifts.length === 0 && cards.length === 0) errors.push(t("السلة فاضية"));
+  cards.forEach((c, i) => {
+    for (const e of giftCardProblems(c)) errors.push(t("كارت الهدية {n}: {e}", { n: i + 1, e: t(e) }));
+  });
 
   input.gifts.forEach((g, gi) => {
     const tag = t("الهدية {n}", { n: gi + 1 });
@@ -207,10 +216,14 @@ export function quoteOrder(
   const itemsTotal = out.reduce((s, g) => s + g.subtotal - g.packaging, 0);
   const packagingTotal = out.reduce((s, g) => s + g.packaging, 0);
   const deliveryTotal = out.reduce((s, g) => s + g.deliveryFee, 0);
+  // الخصم على الهدايا بس، مش على كروت الهدايا
   const discount = coupon ? couponDiscount(itemsTotal + packagingTotal, coupon) : 0;
+  const cardsTotal = cards.reduce((s, c) => s + c.amount, 0);
 
-  // الكاش عند الاستلام: المرسل هو المستلم، ومفيش تخصيص، وجوه محافظة أسيوط (8.3)
+  // الكاش عند الاستلام: المرسل هو المستلم، ومفيش تخصيص، وجوه محافظة أسيوط (8.3)، ومفيش كروت هدايا (لازم تتدفع الأول)
   const codAllowed =
+    input.gifts.length > 0 &&
+    cards.length === 0 &&
     input.sender.isRecipient &&
     input.gifts.every((g) => !hasCustomization(g)) &&
     input.gifts.every((g) => sf.zones.find((z) => z.id === g.recipient.zoneId)?.kind !== "governorate");
@@ -223,7 +236,8 @@ export function quoteOrder(
     packagingTotal,
     deliveryTotal,
     discount,
-    total: itemsTotal + packagingTotal + deliveryTotal - discount,
+    cardsTotal,
+    total: itemsTotal + packagingTotal + deliveryTotal - discount + cardsTotal,
     codAllowed,
   };
 }

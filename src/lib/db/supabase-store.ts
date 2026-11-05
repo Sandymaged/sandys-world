@@ -37,7 +37,8 @@ function toOrder(r: any): OrderRecord {
     paymentConfirmedAt: r.payment_confirmed_at,
     paymentRejectionReason: r.payment_rejection_reason,
     couponCode: r.coupon_code,
-    giftCard: r.gift_card ?? null,
+    // عمود gift_card: الطلبات القديمة فيه كارت واحد، والجديدة list
+    giftCards: Array.isArray(r.gift_card) ? r.gift_card : r.gift_card ? [r.gift_card] : [],
     giftCardUse: r.gift_card_use ?? null,
     source: r.source ?? null,
     refunds: r.refunds ?? [],
@@ -77,7 +78,7 @@ function toRow(o: Partial<OrderRecord>): Record<string, unknown> {
   if (o.paymentConfirmedAt !== undefined) row.payment_confirmed_at = o.paymentConfirmedAt;
   if (o.paymentRejectionReason !== undefined) row.payment_rejection_reason = o.paymentRejectionReason;
   if (o.couponCode !== undefined) row.coupon_code = o.couponCode;
-  if (o.giftCard !== undefined) row.gift_card = o.giftCard;
+  if (o.giftCards !== undefined) row.gift_card = o.giftCards.length ? o.giftCards : null;
   if (o.giftCardUse !== undefined) row.gift_card_use = o.giftCardUse;
   if (o.source !== undefined) row.source = o.source;
   if (o.brandStatus !== undefined) row.brand_status = o.brandStatus;

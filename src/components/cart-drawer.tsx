@@ -9,6 +9,7 @@ import { egp } from "@/lib/format";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import { useCart } from "@/store/cart";
 import { GiftArt } from "./gift-art";
+import { GiftCardArt } from "./gift-card-art";
 import { Icon } from "./icons";
 
 const colors = ["#e5306c", "#ffd34d", "#9b7bff", "#3fd18b", "#ffffff"];
@@ -25,15 +26,23 @@ const useDesktop = () =>
 /** درج بيطلع لما هدية تتضاف: احتفال صغير، وتكمّل تسوّق أو تروح للسلة */
 export function CartDrawer() {
   const t = useT();
-  const { justAdded, gifts, closeDrawer } = useCart();
+  const { justAdded, gifts, giftCards, closeDrawer } = useCart();
   const reduce = useReducedMotion();
   const desktop = useDesktop();
   // موبايل: درج من تحت يتسحب لتحت يقفل. كمبيوتر: لوحة من الشمال
   const rtl = useDir() === "rtl";
   const hidden = desktop ? { x: rtl ? "-100%" : "100%" } : { y: "100%" };
-  const gift = gifts.find((g) => g.id === justAdded);
-  const open = Boolean(gift);
-  const subtotal = gifts.reduce((s, g) => s + giftTotals(g, DEFAULT_SETTINGS).total, 0);
+  // اللي اتضاف: هدية أو كارت هدية
+  const g = gifts.find((x) => x.id === justAdded);
+  const c = giftCards.find((x) => x.id === justAdded);
+  const added = g
+    ? { card: null, image: g.image, title: g.title, sub: [...g.lines, ...g.addons].map((l) => l.name).join(" · "), price: giftTotals(g, DEFAULT_SETTINGS).total }
+    : c
+      ? { card: c, image: null, title: t("كارت هدية"), sub: c.asGift ? t("هيتبعت لـ {name} على واتساب", { name: c.toName }) : t("الكود هيوصلك على واتساب"), price: c.amount }
+      : null;
+  const open = Boolean(added);
+  const count = gifts.length + giftCards.length;
+  const subtotal = gifts.reduce((s, x) => s + giftTotals(x, DEFAULT_SETTINGS).total, 0) + giftCards.reduce((s, x) => s + x.amount, 0);
 
   useEffect(() => {
     if (!open || reduce) return;
@@ -52,7 +61,7 @@ export function CartDrawer() {
 
   return (
     <AnimatePresence>
-      {gift && (
+      {added && (
         <>
           <motion.div
             key="backdrop"
@@ -89,7 +98,7 @@ export function CartDrawer() {
               </motion.span>
               <div>
                 <p className="font-heading text-xl">{t("اتضافت للسلة!")}</p>
-                <p className="text-sm text-muted">{t("فاضل تحدد المستلم وميعاد التوصيل")}</p>
+                <p className="text-sm text-muted">{added.card ? t("من غير توصيل، بيتبعت على واتساب") : t("فاضل تحدد المستلم وميعاد التوصيل")}</p>
               </div>
               <button onClick={closeDrawer} aria-label={t("قفل")} className="ms-auto grid size-9 place-items-center rounded-full hover:bg-surface">
                 <Icon name="plus" className="size-5 rotate-45" />
@@ -102,16 +111,20 @@ export function CartDrawer() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <GiftArt image={gift.image} label={gift.title} className="size-16 shrink-0 rounded-xl" sizes="64px" />
+              {added.card ? (
+                <GiftCardArt design={added.card.design} title="" storeName="" className="w-20 shrink-0 !rounded-lg !shadow-none" />
+              ) : (
+                <GiftArt image={added.image} label={added.title} className="size-16 shrink-0 rounded-xl" sizes="64px" />
+              )}
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{gift.title}</p>
-                <p className="truncate text-xs text-muted">{[...gift.lines, ...gift.addons].map((l) => l.name).join(" · ")}</p>
+                <p className="truncate font-semibold">{added.title}</p>
+                <p className="truncate text-xs text-muted">{added.sub}</p>
               </div>
-              <p className="tabular shrink-0 font-semibold">{egp(giftTotals(gift, DEFAULT_SETTINGS).total, t)}</p>
+              <p className="tabular shrink-0 font-semibold">{egp(added.price, t)}</p>
             </motion.div>
 
             <p className="mt-4 flex justify-between text-sm">
-              <span className="text-muted">{gifts.length === 1 ? t("في السلة هدية واحدة") : t("في السلة {n} هدايا", { n: gifts.length })}</span>
+              <span className="text-muted">{count === 1 ? t("في السلة هدية واحدة") : t("في السلة {n} هدايا", { n: count })}</span>
               <span className="tabular font-semibold">{egp(subtotal, t)}</span>
             </p>
 

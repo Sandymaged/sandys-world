@@ -70,24 +70,69 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
     ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { weekday: "long", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" }).format(new Date(order.paymentDueAt))
     : null;
   const current = rank[order.status];
-  const gc = order.giftCard ?? null;
+  const cards = order.giftCards ?? [];
+  const cardsSum = cards.reduce((x, c) => x + c.amount, 0);
+  // طلب كروت هدايا بس (من غير هدايا بتتوصل)
+  const cardOnly = order.gifts.length === 0 && cards.length > 0;
   const redeliveryFees = (order.gifts[0]?.redeliveries ?? []).reduce((s, r) => s + r.fee, 0);
   const h = await headers();
   const site = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}${locale === "en" ? "/en" : ""}`;
-  const expires = gc?.expiresAt
-    ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "long", year: "numeric" }).format(new Date(gc.expiresAt))
-    : null;
-  // رسالة الكارت اللي بتتبعت على واتساب (للمستلم لو هدية، أو المشتري يبعتها لنفسه/يحتفظ بيها)
-  const shareText =
-    gc?.code &&
-    [
-      gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
-      t("كارت هدية من {store} بقيمة {amount}", { store: t(STORE_NAME), amount: egp(gc.amount, t) }),
-      t("الكود: {code}", { code: gc.code }),
-      t("اختار هديتك من {url} واكتب الكود وإنت بتدفع (صالح لحد {date}).", { url: site, date: expires ?? "" }),
-    ]
-      .filter(Boolean)
-      .join("\n");
+  const dateFmt = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "long", year: "numeric" });
+  // رسالة كل كارت اللي بتتبعت على واتساب (للي هيوصله لو إحنا بنبعته، أو المشتري يبعتها بنفسه)
+  const shared = cards.map((gc) => {
+    const expires = gc.expiresAt ? dateFmt.format(new Date(gc.expiresAt)) : null;
+    const text = gc.code
+      ? [
+          gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
+          t("كارت هدية من {store} بقيمة {amount}", { store: t(STORE_NAME), amount: egp(gc.amount, t) }),
+          t("الكود: {code}", { code: gc.code }),
+          t("اختار هديتك من {url} واكتب الكود وإنت بتدفع (صالح لحد {date}).", { url: site, date: expires ?? "" }),
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : "";
+    return { gc, expires, text };
+  });
+  const cardsSection =
+    cards.length > 0 ? (
+      <section className="card p-5 sm:p-6">
+        <h2 className="text-2xl">{cards.every((c) => c.code) ? (cards.length > 1 ? t("كروت الهدايا جاهزة!") : t("كارت الهدية جاهز!")) : cards.length > 1 ? t("كروت الهدايا") : t("كارت الهدية")}</h2>
+        {cards.some((c) => !c.code) && (
+          <p className="mt-3 rounded-xl bg-butter-soft p-3 text-sm text-butter">
+            {order.paymentStatus === "awaiting_confirmation"
+              ? t("استلمنا صورة التحويل وبنراجعها. أول ما نتأكد هيظهر الكود هنا ويتبعت على واتساب.")
+              : t("أول ما الدفع يتأكد هيظهر الكود هنا ويتبعت على واتساب.")}
+          </p>
+        )}
+        <ul className="mt-4 divide-y divide-dashed divide-line">
+          {shared.map(({ gc, expires, text }, i) => (
+            <li key={gc.code ?? i} className="space-y-2 py-4 first:pt-0 last:pb-0">
+              <p className="text-sm text-ink-2">
+                <b className="tabular text-ink">{egp(gc.amount, t)}</b> ·{" "}
+                {gc.asGift ? t("هيتبعت لـ {name} على واتساب", { name: gc.toName }) : t("الكود ليك تبعته بنفسك")}
+              </p>
+              {gc.code && (
+                <>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="tabular font-heading text-2xl tracking-[0.12em] text-brand select-all" dir="ltr">{gc.code}</p>
+                    <CopyButton value={gc.code} />
+                  </div>
+                  {expires && <p className="text-sm text-ink-2">{t("صالح لحد {date}", { date: expires })}</p>}
+                  <a
+                    href={gc.asGift && gc.toPhone ? waLink(gc.toPhone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-sm bg-success text-white hover:opacity-90"
+                  >
+                    {gc.asGift && gc.toName ? t("ابعته لـ {name} على واتساب", { name: gc.toName }) : t("ابعته على واتساب")}
+                  </a>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
 
   return (
     <div>
@@ -111,38 +156,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
               <p className="font-heading text-2xl text-brand">{t("مقدرناش نوصّل الهدية")}</p>
               <p className="mt-1 text-sm text-ink-2">{t("هنكلمك نحدد ميعاد تاني. المحاولة التانية في نفس اليوم ببلاش، ولو في يوم تاني بتبقى برسوم توصيل جديدة.")}</p>
             </StickyNote>
-          ) : gc ? (
-            <section className="card p-5 sm:p-6">
-              <h2 className="text-2xl">{gc.code ? t("كارت الهدية جاهز!") : t("حالة الطلب")}</h2>
-              {gc.code ? (
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <p className="text-xs text-muted">{t("الكود")}</p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="tabular font-heading text-3xl tracking-[0.12em] text-brand select-all" dir="ltr">{gc.code}</p>
-                      <CopyButton value={gc.code} />
-                    </div>
-                    {expires && <p className="mt-1 text-sm text-ink-2">{t("صالح لحد {date}", { date: expires })}</p>}
-                  </div>
-                  {shareText && (
-                    <a
-                      href={gc.asGift && gc.toPhone ? waLink(gc.toPhone, shareText) : `https://wa.me/?text=${encodeURIComponent(shareText)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn bg-success text-white hover:opacity-90"
-                    >
-                      {gc.asGift && gc.toName ? t("ابعته لـ {name} على واتساب", { name: gc.toName }) : t("ابعته على واتساب")}
-                    </a>
-                  )}
-                </div>
-              ) : (
-                <p className="mt-3 rounded-xl bg-butter-soft p-3 text-sm text-butter">
-                  {order.paymentStatus === "awaiting_confirmation"
-                    ? t("استلمنا صورة التحويل وبنراجعها. أول ما نتأكد هيظهر الكود هنا ويوصلك على واتساب.")
-                    : t("أول ما الدفع يتأكد هيظهر كود الكارت هنا ويوصلك على واتساب.")}
-                </p>
-              )}
-            </section>
+          ) : cardOnly ? (
+            cardsSection
           ) : (
             <section className="card p-5 pt-6">
               <h2 className="text-2xl text-ink">{t("حالة الطلب")}</h2>
@@ -169,6 +184,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
               )}
             </section>
           )}
+
+          {!cardOnly && order.status !== "cancelled" && cardsSection}
 
           {/* الدفع بإنستاباي */}
           {waitingProof && (
@@ -235,8 +252,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
 
         {/* الهدايا والإجمالي */}
         <aside className="space-y-6 lg:sticky lg:top-36">
-          {gc && (
-            <div className="space-y-3">
+          {cards.map((gc, i) => (
+            <div key={gc.code ?? i} className="space-y-3">
               <GiftCardArt
                 design={gc.design}
                 amount={gc.amount}
@@ -245,11 +262,11 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                 storeName={t(STORE_NAME)}
                 toName={gc.asGift && gc.toName ? t("لـ {name}", { name: gc.toName }) : undefined}
                 code={gc.code}
-                className="-rotate-1"
+                className={i % 2 ? "rotate-1" : "-rotate-1"}
               />
               {gc.asGift && gc.message && <p className="px-2 font-script text-xl leading-8 text-ink-2">«{gc.message}»{gc.fromName && ` — ${gc.fromName}`}</p>}
             </div>
-          )}
+          ))}
           {order.gifts.map((g) => (
             <div key={g.id} className={`card p-4 pt-5`}>
               <p className="font-heading text-xl text-brand">{g.title}</p>
@@ -264,9 +281,10 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           ))}
           <div className="rounded-3xl border border-line bg-paper p-6 shadow-[0_18px_36px_-28px_rgb(60_30_20/0.45)]">
             <dl className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><dt className="text-ink-2">{gc ? t("كارت الهدية") : t("الهدايا")}</dt><dd className="tabular">{egp(order.totals.items, t)}</dd></div>
+              {order.gifts.length > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("الهدايا")}</dt><dd className="tabular">{egp(order.totals.items - cardsSum, t)}</dd></div>}
+              {cardsSum > 0 && <div className="flex justify-between"><dt className="text-ink-2">{cards.length > 1 ? t("كروت الهدايا") : t("كارت الهدية")}</dt><dd className="tabular">{egp(cardsSum, t)}</dd></div>}
               {order.totals.packaging > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("تغليف وتنسيق")}</dt><dd className="tabular">{egp(order.totals.packaging, t)}</dd></div>}
-              {!gc && <div className="flex justify-between"><dt className="text-ink-2">{t("التوصيل")}</dt><dd className="tabular">{egp(order.totals.delivery - redeliveryFees, t)}</dd></div>}
+              {order.gifts.length > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("التوصيل")}</dt><dd className="tabular">{egp(order.totals.delivery - redeliveryFees, t)}</dd></div>}
               {redeliveryFees > 0 && <div className="flex justify-between"><dt className="text-ink-2">{t("توصيل تاني في يوم تاني")}</dt><dd className="tabular">{egp(redeliveryFees, t)}</dd></div>}
               {order.totals.discount > 0 && <div className="flex justify-between text-success"><dt>{t("الخصم")}</dt><dd className="tabular">− {egp(order.totals.discount, t)}</dd></div>}
               {(order.totals.giftCard ?? 0) > 0 && <div className="flex justify-between text-success"><dt>{t("كارت هدية")}</dt><dd className="tabular">− {egp(order.totals.giftCard ?? 0, t)}</dd></div>}

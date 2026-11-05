@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useHref, useT } from "@/i18n/client";
-import { submitGiftCardOrder } from "@/lib/gift-card-actions";
+import { useState } from "react";
+import { useT } from "@/i18n/client";
 import { egp } from "@/lib/format";
 import {
   GIFT_CARD_MAX,
@@ -11,42 +9,42 @@ import {
   GIFT_CARD_MIN,
   giftCardAmounts,
   giftCardDesigns,
+  giftCardProblems,
   type GiftCardDesign,
 } from "@/lib/gift-card";
+import { normalizePhone, toLatinDigits } from "@/lib/validate";
+import { useCart } from "@/store/cart";
 import { STORE_NAME } from "@/lib/settings";
 import { GiftCardArt } from "./gift-card-art";
 import { Icon } from "./icons";
 
-/** صفحة كارت الهدية: الكارت بيتغير قدامك مع كل اختيار، وبعدين بياناتك وتكمل للدفع */
+/** صفحة كارت الهدية: الكارت بيتغير قدامك مع كل اختيار، وبيتضاف للسلة ويتدفع مع باقي الطلب (من غير شحن) */
 export function GiftCardForm() {
   const t = useT();
-  const router = useRouter();
-  const href = useHref();
+  const addGiftCard = useCart((s) => s.addGiftCard);
   const [design, setDesign] = useState<GiftCardDesign>("classic");
   const [amount, setAmount] = useState(500);
   const [custom, setCustom] = useState("");
-  const [asGift, setAsGift] = useState(false);
+  const [asGift, setAsGift] = useState(true);
   const [toName, setToName] = useState("");
   const [toPhone, setToPhone] = useState("");
   const [fromName, setFromName] = useState("");
   const [message, setMessage] = useState("");
-  const [sender, setSender] = useState({ name: "", phone: "", email: "" });
   const [errors, setErrors] = useState<string[]>([]);
-  const [pending, start] = useTransition();
 
   const value = custom ? Number(custom) : amount;
   const storeName = t(STORE_NAME);
 
-  function submit() {
-    setErrors([]);
-    start(async () => {
-      const r = await submitGiftCardOrder({ design, amount: value, asGift, toName, toPhone, fromName, message, sender }, t.locale);
-      if (!r.ok) {
-        setErrors(r.errors);
-        return;
-      }
-      router.push(href(`/order/${r.token}`));
-    });
+  function add() {
+    const card = { design, amount: value, asGift, toName: toName.trim(), toPhone: normalizePhone(toPhone), fromName: fromName.trim(), message: message.trim() };
+    const p = giftCardProblems(card);
+    setErrors(p.map((x) => (x === "المبلغ مش مظبوط" ? t("المبلغ لازم يكون من {min} لـ {max}", { min: egp(GIFT_CARD_MIN, t), max: egp(GIFT_CARD_MAX, t) }) : t(x))));
+    if (p.length) return;
+    // درج السلة بيفتح لوحده؛ نفضّي الاسم والرسالة عشان لو حب يضيف كارت تاني
+    addGiftCard(card);
+    setToName("");
+    setToPhone("");
+    setMessage("");
   }
 
   return (
@@ -85,7 +83,7 @@ export function GiftCardForm() {
         <div>
           <h2 className="text-4xl leading-tight">{t("كارت الهدية")}</h2>
           <p className="tabular mt-2 font-heading text-3xl text-brand">{value ? egp(value, t) : "—"}</p>
-          <p className="mt-2 leading-7 text-ink-2">{t("بيوصل على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح لمدة سنة، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده.")}</p>
+          <p className="mt-2 leading-7 text-ink-2">{t("كود بيتبعت على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح لمدة سنة، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده.")}</p>
         </div>
 
         <fieldset>
@@ -138,11 +136,26 @@ export function GiftCardForm() {
           <p className="mt-2 text-xs text-muted">{t("من {min} لـ {max}", { min: egp(GIFT_CARD_MIN, t), max: egp(GIFT_CARD_MAX, t) })}</p>
         </fieldset>
 
-        <label className="flex cursor-pointer items-center gap-3">
-          <input type="checkbox" className="size-5 accent-ink" checked={asGift} onChange={(e) => setAsGift(e.target.checked)} />
-          <Icon name="gift" className="size-5 text-brand" />
-          {t("عايز أبعته هدية لحد")}
-        </label>
+        {/* الكارت بيتبعت إزاي: إحنا نبعته على واتساب للي هيوصله، أو الكود يوصلك وتبعته بنفسك */}
+        <fieldset>
+          <legend className="mb-3 font-semibold">{t("الكارت هيوصل إزاي؟")}</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                [true, "ابعتوه إنتوا", "إحنا نبعته على واتساب للي هيوصله، ومعاه رسالتك."],
+                [false, "هبعته بنفسي", "الكود يوصلك إنت على واتساب، وتبعته لمين ما تحب."],
+              ] as const
+            ).map(([v, title, body]) => (
+              <label key={title} className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition-colors ${asGift === v ? "border-ink bg-bg ring-1 ring-ink" : "border-line hover:border-ink/40"}`}>
+                <input type="radio" name="send" className="mt-1 size-5 accent-ink" checked={asGift === v} onChange={() => setAsGift(v)} />
+                <span>
+                  <span className="block font-semibold">{t(title)}</span>
+                  <span className="mt-0.5 block text-sm leading-6 text-ink-2">{t(body)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         {asGift && (
           <div className="space-y-3 rounded-2xl bg-blush/60 p-4">
@@ -153,7 +166,15 @@ export function GiftCardForm() {
               </label>
               <label className="block">
                 <span className="label">{t("رقم واتساب بتاعه")}</span>
-                <input className="field tabular" dir="ltr" inputMode="tel" placeholder="+20 1xx xxx xxxx" value={toPhone} onChange={(e) => setToPhone(e.target.value)} />
+                <input
+                  className="field tabular"
+                  dir="ltr"
+                  inputMode="tel"
+                  placeholder="01xxxxxxxxx"
+                  value={toPhone}
+                  onChange={(e) => setToPhone(toLatinDigits(e.target.value).replace(/[^\d+\s-]/g, ""))}
+                  onBlur={() => toPhone && setToPhone(normalizePhone(toPhone))}
+                />
               </label>
             </div>
             <label className="block">
@@ -167,20 +188,6 @@ export function GiftCardForm() {
           </div>
         )}
 
-        <div className="space-y-3 border-t border-line pt-6">
-          <p className="font-semibold">{t("بياناتك")}</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block">
-              <span className="label">{t("اسمك")}</span>
-              <input className="field" autoComplete="name" value={sender.name} onChange={(e) => setSender({ ...sender, name: e.target.value })} />
-            </label>
-            <label className="block">
-              <span className="label">{t("رقم واتساب")}</span>
-              <input className="field tabular" dir="ltr" inputMode="tel" autoComplete="tel" placeholder="+20 1xx xxx xxxx" value={sender.phone} onChange={(e) => setSender({ ...sender, phone: e.target.value })} />
-            </label>
-          </div>
-        </div>
-
         {errors.length > 0 && (
           <ul className="space-y-1 rounded-xl bg-brand-soft/60 p-3 text-sm leading-6 text-brand-dark">
             {errors.map((e) => (
@@ -189,10 +196,14 @@ export function GiftCardForm() {
           </ul>
         )}
 
-        <button type="button" onClick={submit} disabled={pending} className="btn-dark w-full">
-          {pending ? t("لحظة…") : t("كمّل للدفع")}
+        <button type="button" onClick={add} className="btn-dark w-full">
+          <Icon name="bag" className="size-5" />
+          {t("ضيف للسلة")}
         </button>
-        <p className="text-center text-xs text-muted">{t("الدفع بإنستاباي، وأول ما يتأكد هيوصلك الكود على واتساب.")}</p>
+        <p className="flex items-center justify-center gap-1.5 text-center text-sm text-ink-2">
+          <Icon name="check" className="size-4 text-success" />
+          {t("من غير مصاريف شحن. بيتبعت على واتساب أول ما الدفع يتأكد.")}
+        </p>
       </div>
     </div>
   );
