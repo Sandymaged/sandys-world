@@ -153,6 +153,8 @@ function profitOf(orders: OrderRecord[], i: Inputs, from: string, to: string, ex
   for (const o of orders) {
     if (!counted(o) || !inRange(dayOf(o.createdAt), from, to)) continue;
     cash += o.totals.total;
+    // نفس قاعدة buildReport: الكارت مكسب لما يتصرف، مش لما يتباع
+    cost += cardsTotal(o) - (o.gifts.length ? (o.totals.giftCard ?? 0) : 0);
     if (o.gifts.length) {
       const m = money(o, i.catalog, i.finance);
       cost += m.goods + m.delivery + m.packaging + m.fees;
@@ -160,6 +162,83 @@ function profitOf(orders: OrderRecord[], i: Inputs, from: string, to: string, ex
     cost += (o.refunds ?? []).filter((r) => inRange(dayOf(r.at), from, to)).reduce((s, r) => s + r.amount, 0);
   }
   return { cash, profit: cash - cost - expenses };
+}
+
+/** فلوسك دلوقتي (من الأول لحد النهارده، مش فترة) */
+export interface MoneyNow {
+  /** اللي دخل */
+  instapayIn: number;
+  cashIn: number;
+  /** اللي خرج */
+  fees: number;
+  refunds: number;
+  brandPayouts: number;
+  expenses: number;
+  deliveryAndPackaging: number;
+  /** اللي المفروض معاكي (إنستاباي + كاش) */
+  onHand: number;
+  /** مش بتاعتك */
+  brandsOwed: number;
+  giftCardsOutstanding: number;
+  /** بتاعتك فعلاً */
+  yours: number;
+  /** فلوس طلبات اتدفعت ولسه ماتسلمتش (ممكن ترجع لو اتلغت) */
+  undelivered: number;
+  discounts: number;
+  giftCards: { sold: number; used: number; outstanding: number; expired: number };
+}
+
+export function moneyNow(i: Inputs & { brandsOwed: number; brandPayouts: number }): MoneyNow {
+  let instapayIn = 0;
+  let cashIn = 0;
+  let fees = 0;
+  let refunds = 0;
+  let deliveryAndPackaging = 0;
+  let undelivered = 0;
+  let discounts = 0;
+  let sold = 0;
+  let used = 0;
+  for (const o of i.orders) {
+    // إنستاباي: أي تحويل اتأكد دخل الحساب (ولو الطلب اتلغى بعدها، اللي رجع متسجل في المرتجعات)
+    if (o.paymentMethod === "instapay" && o.paymentStatus === "confirmed") {
+      instapayIn += o.totals.total;
+      fees += instapayFee(o.totals.total, i.finance);
+    }
+    // الكاش بيوصلك لما الهدية تتسلم
+    if (o.paymentMethod === "cod" && o.status === "delivered") cashIn += o.totals.total;
+    refunds += (o.refunds ?? []).reduce((s, r) => s + r.amount, 0);
+    if (!counted(o)) continue;
+    discounts += o.totals.discount;
+    sold += cardsTotal(o);
+    used += o.totals.giftCard ?? 0;
+    if (o.gifts.length) {
+      const m = money(o, i.catalog, i.finance);
+      deliveryAndPackaging += m.delivery + m.packaging;
+      if (o.paymentMethod === "instapay" && o.status !== "delivered") undelivered += o.totals.total - cardsTotal(o);
+    }
+  }
+  const expenses = i.expenses.reduce((s, e) => s + e.amount, 0);
+  const onHand = instapayIn + cashIn - fees - refunds - i.brandPayouts - expenses - deliveryAndPackaging;
+  const brandsOwed = Math.max(0, i.brandsOwed);
+  const outstanding = i.giftCardBalances;
+  const r = (n: number) => Math.round(n);
+  return {
+    instapayIn: r(instapayIn),
+    cashIn: r(cashIn),
+    fees: r(fees),
+    refunds: r(refunds),
+    brandPayouts: r(i.brandPayouts),
+    expenses: r(expenses),
+    deliveryAndPackaging: r(deliveryAndPackaging),
+    onHand: r(onHand),
+    brandsOwed: r(brandsOwed),
+    giftCardsOutstanding: r(outstanding),
+    yours: r(onHand - brandsOwed - outstanding),
+    undelivered: r(undelivered),
+    discounts: r(discounts),
+    // اللي خلصت مدته من غير ما يتصرف بيبقى بتاعك
+    giftCards: { sold: r(sold), used: r(used), outstanding: r(outstanding), expired: r(Math.max(0, sold - used - outstanding)) },
+  };
 }
 
 const top = (map: Map<string, Ranked>, n = 8) => [...map.values()].sort((a, b) => b.value - a.value).slice(0, n);
@@ -230,7 +309,8 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
   for (const e of periodExpenses) bump(expensesByCategory, e.category, e.category, e.amount);
 
   const totalCosts = Object.values(costs).reduce((s, v) => s + v, 0);
-  const profit = cashIn - totalCosts;
+  // كارت الهدية مش مكسب وقت ما يتباع (فلوس هتتصرف على هدايا بعدين): بيبقى مكسب لما يتصرف على طلب
+  const profit = cashIn - giftCardSales + paidWithGiftCards - totalCosts;
   const prevExpenses = i.expenses.filter((e) => inRange(e.spentOn, prevFrom, prevTo)).reduce((s, e) => s + e.amount, 0);
   const prev = profitOf(i.orders, i, prevFrom, prevTo, prevExpenses);
 
@@ -277,7 +357,7 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
     totalCosts,
     profit,
     prevProfit: prev.profit,
-    margin: cashIn > 0 ? profit / cashIn : 0,
+    margin: cashIn - giftCardSales + paidWithGiftCards > 0 ? profit / (cashIn - giftCardSales + paidWithGiftCards) : 0,
     income,
     losses: {
       cancelledCount: cancelled.length,

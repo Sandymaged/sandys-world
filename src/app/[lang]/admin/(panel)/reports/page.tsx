@@ -4,7 +4,8 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { expireUnpaid, repo } from "@/lib/db";
 import { loadCatalogData } from "@/lib/db/catalog-store";
 import { listExpenses, listZonesAdmin, loadFinance } from "@/lib/finance";
-import { buildReport, periodRange, periods, type PeriodId, type Ranked } from "@/lib/reports";
+import { allStatements } from "@/lib/brand-portal";
+import { buildReport, moneyNow, periodRange, periods, type PeriodId, type Ranked } from "@/lib/reports";
 
 export const instant = false;
 
@@ -65,14 +66,26 @@ export default async function ReportsPage({ searchParams }: PageProps<"/[lang]/a
   const sp = await searchParams;
   const period = (periods.find((p) => p.id === sp.p)?.id ?? "this-month") as PeriodId;
   const range = periodRange(period);
-  const [orders, catalog, finance, expenses, zones, giftCardBalances] = await Promise.all([
+  const [orders, catalog, finance, expenses, zones, giftCardBalances, statements] = await Promise.all([
     repo().list(),
     loadCatalogData(),
     loadFinance(),
     listExpenses(),
     listZonesAdmin(),
     repo().giftCardBalances(),
+    allStatements(),
   ]);
+  // فلوس البراندات اللي معاكي: كل نصيبهم من الطلبات اللي اتدفعت (مستحق، أو في مدة الاسترجاع، أو لسه في الشغل) ناقص اللي اتحوّل
+  const now = moneyNow({
+    orders,
+    catalog,
+    finance,
+    expenses,
+    zoneNames: new Map(),
+    giftCardBalances,
+    brandsOwed: statements.reduce((s, b) => s + Math.max(0, b.s.due + b.s.holding + b.s.pending - b.s.paid), 0),
+    brandPayouts: statements.reduce((s, b) => s + b.s.paid, 0),
+  });
   const r = buildReport(
     { orders, catalog, finance, expenses, zoneNames: new Map(zones.map((z) => [z.id, z.name])), giftCardBalances },
     range.from,
@@ -108,6 +121,66 @@ export default async function ReportsPage({ searchParams }: PageProps<"/[lang]/a
         </nav>
       </div>
 
+      {/* فلوسك دلوقتي: من الأول، مش مرتبطة بالفترة اللي فوق */}
+      <section className="rounded-2xl bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)] sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-2xl text-brand">فلوسك دلوقتي</h2>
+          <p className="text-xs text-muted">من أول يوم لحد النهارده</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl bg-bg p-4">
+            <p className="text-sm text-ink-2">المفروض يكون معاكي</p>
+            <p className={`tabular mt-1 font-heading text-3xl ${now.onHand < 0 ? "text-brand" : "text-ink"}`}>{money(now.onHand)}</p>
+            <p className="tabular mt-1 text-xs text-muted">إنستاباي {money(now.instapayIn)} · كاش {money(now.cashIn)} قبل الخصم</p>
+          </div>
+          <div className="rounded-2xl bg-bg p-4">
+            <p className="text-sm text-ink-2">مش بتاعتك (لازم تفضل موجودة)</p>
+            <p className="tabular mt-1 font-heading text-3xl text-butter">{money(now.brandsOwed + now.giftCardsOutstanding)}</p>
+            <p className="tabular mt-1 text-xs text-muted">للبراندات {money(now.brandsOwed)} · كروت هدايا {money(now.giftCardsOutstanding)}</p>
+          </div>
+          <div className={`rounded-2xl p-4 ${now.yours < 0 ? "bg-brand-soft" : "bg-success-soft"}`}>
+            <p className="text-sm text-ink-2">بتاعتك فعلاً</p>
+            <p className={`tabular mt-1 font-heading text-3xl ${now.yours < 0 ? "text-brand" : "text-success"}`}>{money(now.yours)}</p>
+            <p className="mt-1 text-xs text-muted">ده اللي تقدري تصرفي منه.</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
+          <dl className="space-y-1.5 text-sm">
+            <div className="flex justify-between"><dt>دخل إنستاباي (تحويلات اتأكدت)</dt><dd className="tabular font-semibold">{money(now.instapayIn)}</dd></div>
+            <div className="flex justify-between"><dt>كاش اتحصّل عند التسليم</dt><dd className="tabular font-semibold">{money(now.cashIn)}</dd></div>
+            <div className="flex justify-between text-ink-2"><dt>− عمولة إنستاباي</dt><dd className="tabular">{money(now.fees)}</dd></div>
+            <div className="flex justify-between text-ink-2"><dt>− فلوس رجعت وتعويضات</dt><dd className="tabular">{money(now.refunds)}</dd></div>
+            <div className="flex justify-between text-ink-2"><dt>− اتحوّل للبراندات</dt><dd className="tabular">{money(now.brandPayouts)}</dd></div>
+            <div className="flex justify-between text-ink-2"><dt>− المصاريف المتسجلة</dt><dd className="tabular">{money(now.expenses)}</dd></div>
+            <div className="flex justify-between text-ink-2"><dt>− التوصيل والتغليف (من التكاليف)</dt><dd className="tabular">{money(now.deliveryAndPackaging)}</dd></div>
+            <div className="flex justify-between border-t border-dashed border-line pt-2 font-semibold"><dt>= المفروض معاكي</dt><dd className="tabular">{money(now.onHand)}</dd></div>
+            {now.undelivered > 0 && (
+              <p className="pt-1 text-xs leading-5 text-muted">منهم {money(now.undelivered)} فلوس طلبات اتدفعت ولسه ماتسلمتش، ممكن ترجع لو طلب اتلغى.</p>
+            )}
+          </dl>
+          <div className="space-y-4">
+            <dl className="space-y-1.5 text-sm">
+              <p className="font-semibold">كروت الهدايا</p>
+              <div className="flex justify-between"><dt>اتباع</dt><dd className="tabular">{money(now.giftCards.sold)}</dd></div>
+              <div className="flex justify-between"><dt>اتصرف منها على هدايا</dt><dd className="tabular">{money(now.giftCards.used)}</dd></div>
+              <div className="flex justify-between font-semibold text-butter"><dt>لسه عند الناس (عليكي)</dt><dd className="tabular">{money(now.giftCards.outstanding)}</dd></div>
+              <div className="flex justify-between text-success"><dt>مدتها خلصت ومتصرفتش (بقت بتاعتك)</dt><dd className="tabular">{money(now.giftCards.expired)}</dd></div>
+            </dl>
+            <div className="flex justify-between rounded-xl bg-bg p-3 text-sm">
+              <span>الخصومات اللي اديتيها (أكواد خصم)</span>
+              <span className="tabular font-semibold">{money(now.discounts)}</span>
+            </div>
+          </div>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-muted">
+          قارني «المفروض معاكي» باللي في إنستاباي والكاش اللي في إيدك. لو فيه فرق يبقى فيه مصروف ماتسجلش، أو تكلفة توصيل مختلفة عن اللي في{" "}
+          <Link href="/admin/costs" className="underline underline-offset-4">التكاليف</Link>.
+        </p>
+      </section>
+
+      <h2 className="pt-2 text-2xl text-brand">المكسب والمبيعات في الفترة</h2>
+
       {missingCosts && (
         <p className="rounded-2xl bg-[#fff1b8] p-4 text-sm leading-6">
           عشان المكسب يبقى حقيقي، حطي تكلفة التوصيل لكل منطقة وتكلفة التغليف من{" "}
@@ -130,7 +203,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/[lang]/a
           <h2 className="text-xl text-brand">الحساب</h2>
           <dl className="mt-3 space-y-1.5 text-sm">
             <div className="flex justify-between"><dt>الفلوس اللي دخلت</dt><dd className="tabular font-semibold">{money(r.cashIn)}</dd></div>
-            {r.giftCardSales > 0 && <div className="flex justify-between text-muted"><dt>منها كروت هدايا اتباعت</dt><dd className="tabular">{money(r.giftCardSales)}</dd></div>}
+            {r.giftCardSales > 0 && <div className="flex justify-between text-ink-2"><dt>− كروت هدايا اتباعت (مش مكسب لسه)</dt><dd className="tabular">{money(r.giftCardSales)}</dd></div>}
+            {r.paidWithGiftCards > 0 && <div className="flex justify-between text-ink-2"><dt>+ هدايا اتدفعت بكروت هدايا</dt><dd className="tabular">{money(r.paidWithGiftCards)}</dd></div>}
             {costRows.map((c) => (
               <div key={c.key} className="flex justify-between text-ink-2">
                 <dt>− {c.label}</dt>
