@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/admin/action-form";
 import { OrderChat } from "@/components/order-chat";
 import { markStoreRead, sendStoreMessage } from "@/lib/chat-actions";
-import { PaymentPanel, RedeliveryPanel, StatusButtons } from "@/components/admin/order-actions";
+import { GiftCardSendButtons, PaymentPanel, RedeliveryPanel, StatusButtons } from "@/components/admin/order-actions";
 import { StatusBadge, money } from "@/components/admin/ui";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -52,7 +52,13 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
       record: gc.code ? await repo().getGiftCard(gc.code) : null,
       cardUrl: gc.code ? `${siteUrl}/card/${gc.code}` : "",
       message: gc.code
-        ? giftCardShareText(translator(order.locale), { ...gc, amountLabel: egp(gc.amount, translator(order.locale)), store: translator(order.locale)(STORE_NAME), link: `${siteUrl}/card/${gc.code}` })
+        ? giftCardShareText(translator(order.locale), {
+            ...gc,
+            amountLabel: egp(gc.amount, translator(order.locale)),
+            store: translator(order.locale)(STORE_NAME),
+            link: `${siteUrl}/card/${gc.code}`,
+            expires: gc.expiresAt ? new Intl.DateTimeFormat(order.locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Cairo" }).format(new Date(gc.expiresAt)) : null,
+          })
         : "",
     })),
   );
@@ -89,13 +95,21 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                     <>
                       <p className="pt-2">الكود: <b className="tabular tracking-wider" dir="ltr">{gc.code}</b></p>
                       {card && <p>الرصيد الباقي: <b className="tabular">{money(card.balance)}</b> من {money(card.amount)}</p>}
-                      <a href={waLink(gc.asGift && gc.toPhone ? gc.toPhone : order.sender.phone, gcMessage)} target="_blank" rel="noreferrer" className="chip mt-2 border-success bg-success-soft text-success hover:bg-success hover:text-white">
-                        {gc.asGift ? `ابعت الكارت لـ ${gc.toName} على واتساب` : "ابعت الكارت للمشتري على واتساب"}
-                      </a>
-                      <a href={cardUrl} target="_blank" rel="noreferrer" className="chip mt-2 ms-2 border-line bg-white text-ink-2 hover:border-brand hover:text-brand">
+                      <GiftCardSendButtons
+                        id={order.id}
+                        code={gc.code}
+                        waHref={waLink(gc.asGift && gc.toPhone ? gc.toPhone : order.sender.phone, gcMessage)}
+                        label={gc.asGift ? `ابعت الكارت لـ ${gc.toName} على واتساب` : "ابعت الكارت للمشتري على واتساب"}
+                        sentAt={gc.sentAt ?? null}
+                        sentLabel={gc.sentAt ? `اتبعت ${when(gc.sentAt)}` : null}
+                      />
+                      <a href={cardUrl} target="_blank" rel="noreferrer" className="chip border-line bg-white text-ink-2 hover:border-brand hover:text-brand">
                         صفحة الكارت (صور)
                       </a>
-                      <p className="text-xs text-muted">الرسالة فيها لينك صفحة الكارت. من الموبايل تقدري تفتحي الصفحة وتبعتي الكارت صورتين (الوش والضهر).</p>
+                      <p className="text-xs text-muted">
+                        الرسالة فيها لينك صفحة الكارت. من الموبايل تقدري تفتحي الصفحة وتبعتي الكارت صورتين (الوش والضهر).
+                        {gc.asGift && " المشتري مش بيشوف الكود، بيشوف بس إنه اتبعت."}
+                      </p>
                     </>
                   ) : (
                     <p className="pt-2 text-butter">الكود هيتعمل أول ما تأكدي الدفع.</p>

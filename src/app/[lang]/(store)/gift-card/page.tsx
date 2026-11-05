@@ -4,12 +4,13 @@ import { sectionOpen } from "@/lib/site-settings";
 import { GiftCardForm } from "@/components/gift-card-form";
 import { Breadcrumbs } from "@/components/product-info";
 import { getT } from "@/i18n/server";
+import { GIFT_CARD_VALID_DAYS } from "@/lib/gift-card";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
   return {
     title: t("كارت هدية"),
-    description: t("مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح لمدة سنة."),
+    description: t("مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} أيام.", { days: GIFT_CARD_VALID_DAYS }),
   };
 }
 

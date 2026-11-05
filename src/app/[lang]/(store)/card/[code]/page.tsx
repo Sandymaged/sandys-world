@@ -10,7 +10,7 @@ import { Link } from "@/i18n/client";
 import { getLocale, getT } from "@/i18n/server";
 import { waLink } from "@/lib/admin-format";
 import { egp } from "@/lib/format";
-import { giftCardShareText } from "@/lib/gift-card";
+import { GIFT_CARD_VALID_DAYS, giftCardShareText } from "@/lib/gift-card";
 import { giftCardByCode } from "@/lib/gift-card-view";
 import { STORE_NAME } from "@/lib/settings";
 
@@ -57,7 +57,7 @@ async function Content({ params }: { params: Promise<{ code: string }> }) {
   const expires = dateFmt.format(new Date(record.expiresAt));
   const expired = Date.parse(record.expiresAt) < Date.now();
   const amountLabel = egp(gc.amount, t);
-  const text = giftCardShareText(t, { ...gc, amountLabel, store: t(STORE_NAME), link });
+  const text = giftCardShareText(t, { ...gc, amountLabel, store: t(STORE_NAME), link, expires });
   const name = gc.asGift ? gc.toName : "";
 
   return (
@@ -73,21 +73,26 @@ async function Content({ params }: { params: Promise<{ code: string }> }) {
         }
       />
       <div className="container-x grid gap-10 py-10 lg:grid-cols-[1fr_1fr] lg:items-start">
-        <GiftCardShare
-          card={{
-            design: gc.design,
-            amountLabel,
-            toName: name,
-            fromName: gc.asGift ? gc.fromName : "",
-            message: gc.asGift ? gc.message : "",
-            code: record.code,
-            expires,
-            site: origin.replace(/^https?:\/\//, ""),
-          }}
-          shareText={text}
-          waHref={gc.asGift && gc.toPhone ? waLink(gc.toPhone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`}
-          fileName={`giftful-${record.code}`}
-        />
+        <div className="space-y-5">
+          <GiftCardShare
+            card={{
+              design: gc.design,
+              amountLabel,
+              toName: name,
+              code: record.code,
+              site: origin.replace(/^https?:\/\//, ""),
+              validity: t("صالح {days} أيام بس، لحد {date}", { days: GIFT_CARD_VALID_DAYS, date: expires }),
+            }}
+            shareText={text}
+            waHref={gc.asGift && gc.toPhone ? waLink(gc.toPhone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`}
+            fileName={`giftful-${record.code}`}
+          />
+          {gc.asGift && gc.message && (
+            <p className="text-center font-script text-2xl leading-10 text-lilac">
+              «{gc.message}»{gc.fromName && <span className="mt-1 block text-lg text-ink-2">— {gc.fromName}</span>}
+            </p>
+          )}
+        </div>
 
         <div className="panel space-y-6 border border-line bg-paper p-6 sm:p-8">
           <div>

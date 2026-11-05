@@ -16,7 +16,7 @@ import type { OrderStatus } from "@/lib/db/types";
 import { periodLabel } from "@/lib/delivery";
 import { waLink } from "@/lib/admin-format";
 import { egp, formatDay } from "@/lib/format";
-import { giftCardShareText } from "@/lib/gift-card";
+import { GIFT_CARD_VALID_DAYS, giftCardShareText } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -78,19 +78,21 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
   const redeliveryFees = (order.gifts[0]?.redeliveries ?? []).reduce((s, r) => s + r.fee, 0);
   const h = await headers();
   const site = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}${locale === "en" ? "/en" : ""}`;
-  const dateFmt = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "long", year: "numeric" });
-  // رسالة كل كارت اللي بتتبعت على واتساب (للي هيوصله لو إحنا بنبعته، أو المشتري يبعتها بنفسه)
+  const dateFmt = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Cairo" });
+  const sentFmt = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" });
+  // رسالة الكارت اللي المشتري يبعتها بنفسه. لو إحنا اللي بنبعته، الكود مش بيظهر للمشتري خالص
+  // (عشان يوصل للي جاتله الهدية بس، ومحدش يستخدمه قبله)
   const shared = cards.map((gc) => {
     const expires = gc.expiresAt ? dateFmt.format(new Date(gc.expiresAt)) : null;
-    const cardUrl = gc.code ? `${site}/card/${gc.code}` : "";
-    const text = gc.code ? giftCardShareText(t, { ...gc, amountLabel: egp(gc.amount, t), store: t(STORE_NAME), link: cardUrl }) : "";
-    return { gc, expires, text, cardUrl };
+    const cardUrl = gc.code && !gc.asGift ? `${site}/card/${gc.code}` : "";
+    const text = cardUrl ? giftCardShareText(t, { ...gc, amountLabel: egp(gc.amount, t), store: t(STORE_NAME), link: cardUrl, expires }) : "";
+    return { gc, expires, text, cardUrl, sent: gc.sentAt ? sentFmt.format(new Date(gc.sentAt)) : null };
   });
   const cardsSection =
     cards.length > 0 ? (
       <section className="card p-5 sm:p-6">
         <h2 className="text-2xl">{cards.every((c) => c.code) ? (cards.length > 1 ? t("كروت الهدايا جاهزة!") : t("كارت الهدية جاهز!")) : cards.length > 1 ? t("كروت الهدايا") : t("كارت الهدية")}</h2>
-        {cards.some((c) => !c.code) && (
+        {cards.some((c) => !c.code && !c.asGift) && (
           <p className="mt-3 rounded-xl bg-butter-soft p-3 text-sm text-butter">
             {order.paymentStatus === "awaiting_confirmation"
               ? t("استلمنا صورة التحويل وبنراجعها. أول ما نتأكد هيظهر الكود هنا ويتبعت على واتساب.")
@@ -98,29 +100,48 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           </p>
         )}
         <ul className="mt-4 divide-y divide-dashed divide-line">
-          {shared.map(({ gc, expires, text, cardUrl }, i) => (
+          {shared.map(({ gc, expires, text, cardUrl, sent }, i) => (
             <li key={gc.code ?? i} className="space-y-2 py-4 first:pt-0 last:pb-0">
               <p className="text-sm text-ink-2">
                 <b className="tabular text-ink">{egp(gc.amount, t)}</b> ·{" "}
                 {gc.asGift ? t("هيتبعت لـ {name} على واتساب", { name: gc.toName }) : t("الكود ليك تبعته بنفسك")}
               </p>
-              {gc.code && (
+              {gc.asGift && (
+                <>
+                  {/* مراحل الكارت: الدفع يتأكد ← بنجهّزه ← اتبعت */}
+                  <p className={`flex items-center gap-2 rounded-xl p-3 text-sm font-semibold ${sent ? "bg-success-soft text-success" : "bg-butter-soft text-butter"}`}>
+                    {sent ? <Icon name="check" className="size-5 shrink-0" /> : <Icon name="clock" className="size-5 shrink-0" />}
+                    {sent
+                      ? t("اتبعت على واتساب لـ {name} {when}", { name: gc.toName, when: sent })
+                      : gc.code
+                        ? t("بنجهّزه ونبعته لـ {name} على واتساب.", { name: gc.toName })
+                        : t("هيتبعت لـ {name} على واتساب أول ما الدفع يتأكد.", { name: gc.toName })}
+                  </p>
+                  <p className="text-xs leading-5 text-muted">
+                    {t("الكود بيوصل لـ {name} بس، عشان يفضل مفاجأة ومحدش غيره يستخدمه.", { name: gc.toName })}{" "}
+                    {t("الكارت صالح {days} أيام بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS, name: gc.toName })}
+                  </p>
+                </>
+              )}
+              {!gc.asGift && sent && (
+                <p className="flex items-center gap-2 text-sm font-semibold text-success">
+                  <Icon name="check" className="size-5" />
+                  {t("اتبعتلك على واتساب {when}", { when: sent })}
+                </p>
+              )}
+              {!gc.asGift && !gc.code && <p className="text-xs leading-5 text-muted">{t("الكارت صالح {days} أيام بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS })}</p>}
+              {gc.code && !gc.asGift && (
                 <>
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="tabular font-heading text-2xl tracking-[0.12em] text-brand select-all" dir="ltr">{gc.code}</p>
                     <CopyButton value={gc.code} />
                   </div>
-                  {expires && <p className="text-sm text-ink-2">{t("صالح لحد {date}", { date: expires })}</p>}
+                  {expires && <p className="text-sm font-semibold text-brand">{t("صالح {days} أيام بس، لحد {date}", { days: GIFT_CARD_VALID_DAYS, date: expires })}</p>}
                   <a href={cardUrl} className="btn btn-sm me-2 border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
                     {t("شوف الكارت")}
                   </a>
-                  <a
-                    href={gc.asGift && gc.toPhone ? waLink(gc.toPhone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-sm bg-success text-white hover:opacity-90"
-                  >
-                    {gc.asGift && gc.toName ? t("ابعته لـ {name} على واتساب", { name: gc.toName }) : t("ابعته على واتساب")}
+                  <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer" className="btn btn-sm bg-success text-white hover:opacity-90">
+                    {t("ابعته على واتساب")}
                   </a>
                 </>
               )}
@@ -257,7 +278,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                 title={t("كارت هدية")}
                 storeName={t(STORE_NAME)}
                 toName={gc.asGift && gc.toName ? t("لـ {name}", { name: gc.toName }) : undefined}
-                code={gc.code}
+                code={gc.asGift ? null : gc.code}
                 className={i % 2 ? "rotate-1" : "-rotate-1"}
               />
               {gc.asGift && gc.message && <p className="px-2 font-script text-xl leading-8 text-ink-2">«{gc.message}»{gc.fromName && ` — ${gc.fromName}`}</p>}

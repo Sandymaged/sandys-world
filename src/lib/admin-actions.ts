@@ -10,7 +10,7 @@ import { repo, uniqueSlots } from "./db";
 import type { OrderStatus, Redelivery } from "./db/types";
 import { cairoNow, periodLabel } from "./delivery";
 import { formatDay } from "./format";
-import { GIFT_CARD_VALID_MONTHS } from "./gift-card";
+import { GIFT_CARD_VALID_DAYS } from "./gift-card";
 import { orderStockLines, returnStock, takeStock } from "./stock";
 import type { DeliveryPeriod } from "./types";
 import { toLatinDigits } from "./validate";
@@ -139,8 +139,7 @@ export async function confirmPayment(id: string) {
   if (order.paymentStatus === "confirmed") return;
 
   // كروت الهدايا: الكود بيتعمل دلوقتي لكل كارت لسه ملوش كود
-  const expires = new Date();
-  expires.setMonth(expires.getMonth() + GIFT_CARD_VALID_MONTHS);
+  const expires = new Date(Date.now() + GIFT_CARD_VALID_DAYS * 24 * 60 * 60 * 1000);
   const giftCards = [];
   for (const c of order.giftCards ?? []) {
     if (c.code) {
@@ -166,6 +165,19 @@ export async function confirmPayment(id: string) {
     },
     { status, note: codes ? `الدفع اتأكد وكروت الهدايا اتعملت: ${codes}` : "الدفع اتأكد", by: "admin" },
   );
+  revalidatePath("/[lang]/admin", "layout");
+}
+
+/** كارت الهدية اتبعت على واتساب (أو اترجع «لسه ماتبعتش» لو اتعلّم بالغلط)، والعميل بيشوفها في صفحة طلبه */
+export async function setGiftCardSent(id: string, code: string, sent: boolean) {
+  await requireAdmin();
+  const db = repo();
+  const order = await db.getById(id);
+  const card = order?.giftCards?.find((c) => c.code === code);
+  if (!order || !card || Boolean(card.sentAt) === sent) return;
+  const giftCards = order.giftCards!.map((c) => (c.code === code ? { ...c, sentAt: sent ? new Date().toISOString() : null } : c));
+  const to = card.asGift ? card.toName : "المشتري";
+  await db.update(id, { giftCards }, { note: sent ? `كارت ${code} اتبعت لـ ${to} على واتساب` : `كارت ${code}: اترجع «لسه ماتبعتش»`, by: "admin" });
   revalidatePath("/[lang]/admin", "layout");
 }
 

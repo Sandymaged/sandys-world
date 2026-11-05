@@ -103,6 +103,8 @@ export interface GiftCardOrder {
   message: string;
   code: string | null; // بيتعمل أول ما الدفع يتأكد
   expiresAt: string | null;
+  /** المتجر بعته على واتساب إمتى (للي هيوصله، أو للمشتري لو هيبعته بنفسه) */
+  sentAt?: string | null;
 }
 
 /** الكارت نفسه ورصيده، وكل مرة اتصرف منه */

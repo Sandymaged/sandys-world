@@ -2,9 +2,44 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { confirmPayment, markRedeliveryPaid, redeliverAction, rejectPayment, setOrderStatus } from "@/lib/admin-actions";
+import { confirmPayment, markRedeliveryPaid, redeliverAction, rejectPayment, setGiftCardSent, setOrderStatus } from "@/lib/admin-actions";
 import { cancellable, nextStatus, statusLabel } from "@/lib/admin-format";
 import type { OrderStatus, PaymentStatus, Redelivery } from "@/lib/db/types";
+
+/**
+ * إرسال كارت الهدية: زرار واتساب بيفتح الرسالة ويعلّم الكارت «اتبعت» (العميل بيشوفها في صفحة طلبه).
+ * ولو اتبعت من الموبايل من صفحة الكارت، فيه زرار يعلّمه بإيدك، وزرار يرجّعه لو اتعلّم بالغلط.
+ */
+export function GiftCardSendButtons({ id, code, waHref, label, sentAt, sentLabel }: { id: string; code: string; waHref: string; label: string; sentAt: string | null; sentLabel: string | null }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const mark = (sent: boolean) =>
+    start(async () => {
+      await setGiftCardSent(id, code, sent);
+      router.refresh();
+    });
+  return (
+    <div className="space-y-2 pt-1">
+      <div className="flex flex-wrap gap-2">
+        <a href={waHref} target="_blank" rel="noreferrer" onClick={() => !sentAt && mark(true)} className="chip border-success bg-success-soft text-success hover:bg-success hover:text-white">
+          {label}
+        </a>
+      </div>
+      {sentAt ? (
+        <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-success">
+          ✓ {sentLabel}
+          <button type="button" disabled={pending} onClick={() => mark(false)} className="text-xs font-normal text-muted underline underline-offset-4 hover:text-brand">
+            لسه ماتبعتش؟
+          </button>
+        </p>
+      ) : (
+        <button type="button" disabled={pending} onClick={() => mark(true)} className="text-xs text-muted underline underline-offset-4 hover:text-brand">
+          {pending ? "لحظة…" : "بعتّيه من الموبايل؟ علّمي إنه اتبعت"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function StatusButtons({ id, status }: { id: string; status: OrderStatus }) {
   const [pending, start] = useTransition();

@@ -14,8 +14,8 @@ export type GiftCardDesign = (typeof giftCardDesigns)[number]["id"];
 export const giftCardAmounts = [300, 500, 750, 1000, 1500, 2000];
 export const GIFT_CARD_MIN = 200;
 export const GIFT_CARD_MAX = 10000;
-/** صالح لمدة سنة من يوم ما الدفع يتأكد */
-export const GIFT_CARD_VALID_MONTHS = 12;
+/** صالح 10 أيام من يوم ما الكود يتعمل (لما الدفع يتأكد) */
+export const GIFT_CARD_VALID_DAYS = 10;
 export const GIFT_CARD_MAX_MESSAGE = 160;
 
 export const isGiftCardDesign = (v: string): v is GiftCardDesign => giftCardDesigns.some((d) => d.id === v);
@@ -60,7 +60,7 @@ type Tr = (key: string, vars?: Record<string, string | number>) => string;
  */
 export function giftCardShareText(
   t: Tr,
-  c: { asGift: boolean; toName: string; fromName: string; message: string; amountLabel: string; store: string; link: string },
+  c: { asGift: boolean; toName: string; fromName: string; message: string; amountLabel: string; store: string; link: string; expires: string | null },
 ) {
   const to = c.asGift && c.toName ? c.toName : "";
   const lines = [
@@ -70,7 +70,9 @@ export function giftCardShareText(
       : t("وصلك كارت هدية من {store} بقيمة {amount}", { store: c.store, amount: c.amountLabel }),
   ];
   if (c.asGift && c.message) lines.push("", `«${c.message}»`);
-  lines.push("", t("افتح الكارت من هنا 👇"), c.link, "", t("اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝"));
+  lines.push("", t("افتح الكارت من هنا 👇"), c.link);
+  if (c.expires) lines.push("", t("⏳ الكارت صالح {days} أيام بس، لحد {date}. استخدمه قبلها!", { days: GIFT_CARD_VALID_DAYS, date: c.expires }));
+  lines.push("", t("اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝"));
   return lines.join("\n");
 }
 

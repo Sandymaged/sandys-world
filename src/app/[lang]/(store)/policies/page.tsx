@@ -4,7 +4,7 @@ import { Link } from "@/i18n/client";
 import { Icon, type IconName } from "@/components/icons";
 import { getStorefront } from "@/lib/catalog";
 import { periodLabel } from "@/lib/delivery";
-import { GIFT_CARD_VALID_MONTHS } from "@/lib/gift-card";
+import { GIFT_CARD_VALID_DAYS } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,9 +63,9 @@ export default async function PoliciesPage() {
           id: "gift-cards",
           title: "Gift cards",
           items: [
-            <>A gift card is valid for {GIFT_CARD_VALID_MONTHS} months from purchase, and can be used over several orders until its balance runs out.</>,
+            <>A gift card is valid for {GIFT_CARD_VALID_DAYS} days from the day its code is sent, and can be used over several orders within that time until its balance runs out. After that it can&apos;t be used or refunded.</>,
             <>Gift cards can&apos;t be exchanged for cash.</>,
-            <>You buy them from the cart like any gift, with no shipping fee, paid with InstaPay. The code is sent on WhatsApp once payment is confirmed: to the person, if you ask us to send it, or to you if you&apos;ll send it yourself.</>,
+            <>You buy them from the cart like any gift, with no shipping fee, paid with InstaPay. The code is sent on WhatsApp once payment is confirmed: to the person, if you ask us to send it (only they get the code, and your order page shows when it&apos;s been sent), or to you if you&apos;ll send it yourself.</>,
             <>Discount codes don&apos;t apply to gift cards, and a new gift card can&apos;t be paid for with another gift card.</>,
           ],
         },
@@ -119,9 +119,9 @@ export default async function PoliciesPage() {
           id: "gift-cards",
           title: "كروت الهدايا",
           items: [
-            <>كارت الهدية صالح {GIFT_CARD_VALID_MONTHS} شهر من يوم الشراء، وينفع يتصرف على كذا طلب لحد ما رصيده يخلص.</>,
+            <>كارت الهدية صالح {GIFT_CARD_VALID_DAYS} أيام بس من يوم ما الكود يتبعت، وينفع يتصرف على كذا طلب في المدة دي لحد ما رصيده يخلص. بعدها مينفعش يتستخدم ولا فلوسه ترجع.</>,
             <>كارت الهدية مينفعش يتبدّل بفلوس.</>,
-            <>بيتشرى من السلة زي أي هدية، من غير مصاريف شحن، والدفع بإنستاباي. والكود بيتبعت على واتساب أول ما الدفع يتأكد: للي هيوصله لو اخترت إننا نبعته، أو ليك إنت لو هتبعته بنفسك.</>,
+            <>بيتشرى من السلة زي أي هدية، من غير مصاريف شحن، والدفع بإنستاباي. والكود بيتبعت على واتساب أول ما الدفع يتأكد: للي هيوصله لو اخترت إننا نبعته (والكود بيوصله هو بس، وإنت بتشوف في صفحة طلبك إنه اتبعت)، أو ليك إنت لو هتبعته بنفسك.</>,
             <>أكواد الخصم مش بتتطبق على كروت الهدايا، ومينفعش تدفع تمن كارت هدية جديد بكارت هدية تاني.</>,
           ],
         },
