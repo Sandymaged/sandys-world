@@ -293,16 +293,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container-x text-center">
-        {quote("paper").text && (
-          <Quote by={quote("paper").sub || undefined}>
-            {quote("paper").text}
-          </Quote>
-        )}
-        <Link href="/shop" className="btn-primary mt-8 px-10">
-          {t("يلا نبدأ")}
-        </Link>
-      </section>
     </div>
   );
 }
