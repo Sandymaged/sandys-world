@@ -15,16 +15,17 @@ const pills = [
 export async function FeaturePills() {
   const t = await getT();
   return (
+    // العنوان على جنب والورق المايل جنبه في صفوف، فالقسم بياخد العرض ومش طويل
     <section className="container-x">
-      <div className="panel grain flex flex-col items-center overflow-hidden bg-bg px-6 py-14 text-center sm:py-20">
-        <h2 className="reveal text-4xl leading-tight sm:text-6xl">
+      <div className="grid items-center gap-8 lg:grid-cols-[auto_1fr] lg:gap-16">
+        <h2 className="reveal text-center text-4xl leading-tight sm:text-6xl lg:text-start">
           {t("على ذوقك.")}
           <br />
           {t("ولحبايبك.")}
         </h2>
-        <ul className="mt-10 flex flex-col items-center gap-1">
+        <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-4 lg:justify-start">
           {pills.map((p, i) => (
-            <li key={p.text} className={p.shift}>
+            <li key={p.text}>
               <span
                 className={`reveal-pop inline-block rounded-[1.3rem] px-7 py-3 font-heading text-2xl shadow-[0_10px_20px_-14px_rgb(60_20_25/0.5)] sm:px-9 sm:text-3xl ${p.tone}`}
                 style={{ ["--r" as string]: p.r, animationDelay: `${i * 60}ms` }}

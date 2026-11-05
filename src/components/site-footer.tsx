@@ -64,14 +64,22 @@ export async function SiteFooter() {
           </div>
 
           {/* طابع البريد والختم */}
-          <div className="relative mx-auto hidden h-40 w-44 sm:block" aria-hidden>
-            <div className="stamp absolute end-2 top-0 w-28 rotate-6 bg-blush">
-              <div className="grid aspect-[4/5] place-items-center bg-paper/60">
-                <Bow className="w-14 text-brand" />
+          <div className="relative mx-auto hidden h-44 w-48 sm:block" aria-hidden>
+            <div className="absolute end-2 top-0 w-32 rotate-6 drop-shadow-[0_10px_14px_rgb(60_20_25/0.3)]">
+              <div className="stamp bg-white">
+                <div className="flex aspect-[4/5] flex-col items-center justify-center gap-1 bg-brand text-white">
+                  <Bow className="w-14 text-white" />
+                  <span className="font-logo text-lg italic">giftful</span>
+                  <span className="text-[11px] tracking-wide text-white/80">{t("بريد الهدايا")}</span>
+                </div>
               </div>
             </div>
-            <div className="absolute start-0 bottom-0 grid size-24 animate-spin-slow place-items-center rounded-full border-2 border-dashed border-blue-deep/50">
-              <span className="font-script text-base text-blue-deep">{t("بريد الهدايا")}</span>
+            {/* ختم البريد */}
+            <div className="absolute start-0 bottom-0 grid size-24 -rotate-12 place-items-center rounded-full border-[3px] border-double border-blue-deep/70 bg-paper/70 text-center text-blue-deep">
+              <span className="leading-tight">
+                <span className="block text-[11px] font-semibold">{t("أسيوط")}</span>
+                <span className="block font-script text-lg">{t("بحب")}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -79,7 +87,7 @@ export async function SiteFooter() {
 
       <div className="bg-blue-deep text-white/80">
         <div aria-hidden className="ribbon h-2 !shadow-none" />
-        <div className="container-x grid grid-cols-2 gap-x-6 gap-y-10 py-14 text-[15px] lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
+        <div className="reveal-stagger container-x grid grid-cols-2 gap-x-6 gap-y-10 py-14 text-[15px] lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
           <div className="col-span-2 max-w-xs lg:col-span-1">
             <p className="text-lg text-white" aria-label={name}>
               <Logo accent="text-pink-mid" />

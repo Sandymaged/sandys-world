@@ -52,6 +52,10 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       className={`${body.variable} ${head.variable} ${hand.variable} ${headEn.variable} ${handEn.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        {/* من غير جافاسكريبت الحركات مش هتبدأ، فكل حاجة تبان على طول */}
+        <noscript>
+          <style>{".reveal,.reveal-pop,.reveal-draw,.reveal-stagger>*,.animate-drop-in,.animate-pop-in,.animate-fade-up{animation:none!important;opacity:1!important}"}</style>
+        </noscript>
         <LocaleProvider locale={lang}>
           <MotionProvider>{children}</MotionProvider>
         </LocaleProvider>

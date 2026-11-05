@@ -22,7 +22,7 @@ export function EnvelopeSteps({ steps }: { steps: { title: string; body: string 
   return (
     <div>
       <p className="mb-8 text-center font-script text-xl text-blue-deep">{t("دوس على أي جواب يتفتح")}</p>
-      <ol className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="reveal-stagger grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((s, i) => {
           const isOpen = open.has(i);
           return (

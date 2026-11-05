@@ -24,12 +24,12 @@ const ease = [0.22, 1, 0.36, 1] as const;
  * اللي «round» دايرة وجنبها ورقة صغيرة. على الموبايل بيبان أول ٤ بس وأصغر.
  */
 const spots = [
-  { pos: "top-6 start-[4%] sm:top-10 sm:start-[7%]", size: "w-20 sm:w-32", r: "-8deg", round: true, chipAt: "-bottom-3 -end-10" },
-  { pos: "top-4 end-[5%] sm:top-12 sm:end-[16%]", size: "w-20 sm:w-28", r: "7deg" },
-  { pos: "bottom-5 start-[6%] sm:bottom-auto sm:top-[62%] sm:start-[9%]", size: "w-[4.5rem] sm:w-28", r: "6deg" },
-  { pos: "bottom-6 end-[6%] sm:bottom-16 sm:end-[13%]", size: "w-20 sm:w-32", r: "-6deg", round: true, chipAt: "-top-3 -start-10" },
-  { pos: "hidden lg:block top-[42%] start-[2%]", size: "w-24", r: "-12deg" },
-  { pos: "hidden lg:block top-[38%] end-[6%]", size: "w-24", r: "10deg" },
+  { pos: "top-6 start-[4%] sm:top-8 sm:start-[7%]", size: "w-20 sm:w-28", r: "-8deg", round: true, chipAt: "-bottom-3 -end-10" },
+  { pos: "top-4 end-[5%] sm:top-8 sm:end-[16%]", size: "w-20 sm:w-24", r: "7deg" },
+  { pos: "bottom-5 start-[6%] sm:bottom-auto sm:top-[60%] sm:start-[10%]", size: "w-[4.5rem] sm:w-24", r: "6deg" },
+  { pos: "bottom-6 end-[6%] sm:bottom-8 sm:end-[13%]", size: "w-20 sm:w-28", r: "-6deg", round: true, chipAt: "-top-3 -start-10" },
+  { pos: "hidden lg:block top-[40%] start-[2%]", size: "w-20", r: "-12deg" },
+  { pos: "hidden lg:block top-[36%] end-[5%]", size: "w-20", r: "10deg" },
 ];
 
 function daysUntil(iso: string) {
@@ -92,11 +92,11 @@ export function Hero({
           );
         })}
 
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 pt-32 pb-36 text-center sm:px-12 sm:py-24 lg:py-28">
-          <Pill tone="blue">{t("هدايا متغلفة من براندات أسيوط")}</Pill>
+        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 pt-24 pb-28 text-center sm:px-12 sm:py-12 lg:py-14">
+          <Pill tone="blue">{t("متجر هدايا أونلاين في أسيوط")}</Pill>
 
-          <h1 className="relative mt-6 pb-[0.55em] text-[clamp(3.6rem,12vw,8.5rem)] leading-[1.05] text-ink">
-            <span className="animate-fade-up block">{t("هدية تفرّح")}</span>
+          <h1 className="relative mt-4 pb-[0.55em] text-[clamp(3.2rem,9vw,6.25rem)] leading-[1.05] text-ink">
+            <span className="animate-fade-up block">{t("ابعت هدية")}</span>
             {/* الكلمة بخط الإيد معدية على العنوان */}
             <span className="absolute inset-x-0 -bottom-[0.12em] flex justify-center text-[0.6em] leading-[1.4]" aria-live="polite">
               <AnimatePresence mode="popLayout" initial={false}>
@@ -114,10 +114,10 @@ export function Hero({
             </span>
           </h1>
 
-          <p className="mt-4 max-w-lg text-lg leading-8 text-ink-2">
-            {t("باكدجات متغلفة، بوكس على ذوقك، وهدايا من براندات أسيوط المحلية. بتوصل لحد البيت في اليوم والفترة اللي تختارها.")}
+          <p className="mt-3 max-w-xl text-lg leading-8 text-ink-2">
+            {t("اختار هدية جاهزة أو اعمل بوكس على ذوقك من منتجات براندات أسيوط. إحنا بنغلّفها ونكتب كارتك، وبنوصّلها لحد باب اللي بتحبه في اليوم والفترة اللي تختارها.")}
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href={seasonHref} className="btn-primary">
               {t("اختار هديتك")}
             </Link>
@@ -127,18 +127,20 @@ export function Hero({
               </Link>
             )}
           </div>
-          <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[15px] text-ink-2">
-            {["توصيل في نفس اليوم في أسيوط", "صورة الهدية قبل ما تخرج", "كارت برسالتك مع كل هدية"].map((x) => (
-              <li key={x} className="flex items-center gap-1.5">
-                <Icon name="check" className="size-4 text-brand" />
+          {/* الموقع بيعمل إيه في ٣ خطوات */}
+          <ol className="reveal-stagger mt-5 flex flex-wrap justify-center gap-x-2 gap-y-2 text-[15px] text-ink-2">
+            {["اختار الهدية", "نغلّفها ونكتب كارتك", "نوصّلها في ميعادها"].map((x, i) => (
+              <li key={x} className="flex items-center gap-2">
+                {i > 0 && <Icon name="chevron" className="size-4 text-muted" />}
+                <span className="tabular grid size-6 place-items-center rounded-full bg-brand text-xs font-semibold text-white">{i + 1}</span>
                 {t(x)}
               </li>
             ))}
-          </ul>
+          </ol>
           {seasonName && (
             <Link
               href={seasonHref}
-              className="mt-7 inline-flex -rotate-2 animate-pop-in items-center gap-3 rounded-2xl bg-brand px-5 py-2.5 text-maroon-ink shadow-lg transition-transform [animation-delay:1.2s] hover:rotate-0"
+              className="mt-5 inline-flex -rotate-2 animate-pop-in items-center gap-3 rounded-2xl bg-brand px-4 py-2 text-maroon-ink shadow-lg transition-transform [animation-delay:1.2s] hover:rotate-0"
             >
               <span className="text-sm">{seasonName}</span>
               {daysLeft !== null && <span className="tabular font-heading text-xl">{t("فاضل {n} يوم", { n: daysLeft })}</span>}

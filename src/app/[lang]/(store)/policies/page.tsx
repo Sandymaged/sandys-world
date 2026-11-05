@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
-import { PageHeader } from "@/components/scrapbook";
+import { Icon, type IconName } from "@/components/icons";
 import { getStorefront } from "@/lib/catalog";
 import { periodLabel } from "@/lib/delivery";
 import { GIFT_CARD_VALID_MONTHS } from "@/lib/gift-card";
@@ -40,7 +40,7 @@ export default async function PoliciesPage() {
         },
         {
           id: "returns",
-          title: "Problems and returns",
+          title: "Returns and exchanges",
           items: [
             <>If the gift arrives damaged or different from your order, send us a photo in the chat on your order page within 24 hours of delivery. We&apos;ll replace it or refund its price.</>,
             <>Regular products that are unused and in their original packaging can be returned within 3 days of delivery. The return delivery fee is on the customer.</>,
@@ -94,7 +94,7 @@ export default async function PoliciesPage() {
         },
         {
           id: "returns",
-          title: "المشاكل والاسترجاع",
+          title: "الاسترجاع والاستبدال",
           items: [
             <>لو الهدية وصلت فيها مشكلة أو مختلفة عن اللي طلبته، ابعتلنا صورة في الشات اللي في صفحة طلبك خلال 24 ساعة من التسليم، ونبدّلها أو نرجّعلك تمنها.</>,
             <>المنتجات العادية اللي متستعملتش وفي تغليفها الأصلي ممكن ترجع خلال 3 أيام من التسليم، ومصاريف توصيل المرتجع على العميل.</>,
@@ -135,35 +135,95 @@ export default async function PoliciesPage() {
         },
       ];
 
-  return (
-    <div className="pb-4">
-      <PageHeader tone="lilac"kicker={t(STORE_NAME)} title={t("السياسات")} subtitle={t("كل اللي محتاج تعرفه عن الإلغاء والاسترجاع والتوصيل وبياناتك، بالبساطة.")}>
-        <nav className="mt-5 flex flex-wrap justify-center gap-2">
-          {sections.map((x) => (
-            <a key={x.id} href={`#${x.id}`} className="chip bg-paper hover:border-brand hover:text-brand">
-              {x.title}
-            </a>
-          ))}
-        </nav>
-      </PageHeader>
+  // شكل كل قسم: أيقونة ولون
+  const look: Record<string, { icon: IconName; tone: string; soft: string }> = {
+    cancel: { icon: "close", tone: "text-brand", soft: "bg-brand-soft" },
+    returns: { icon: "route", tone: "text-blue-deep", soft: "bg-blue-soft" },
+    delivery: { icon: "truck", tone: "text-success", soft: "bg-success-soft" },
+    "gift-cards": { icon: "gift", tone: "text-butter", soft: "bg-butter-soft" },
+    privacy: { icon: "key", tone: "text-lilac", soft: "bg-lilac-soft" },
+  };
+  // أهم الأرقام في كروت صغيرة فوق
+  const facts = en
+    ? [
+        { big: "Free", small: "cancel before we start preparing", tone: "bg-brand-soft text-brand" },
+        { big: "24h", small: "to report a problem with a photo", tone: "bg-blue-soft text-blue-deep" },
+        { big: "3 days", small: "to return regular products", tone: "bg-butter-soft text-butter" },
+        { big: "Free", small: "second delivery try the same day", tone: "bg-success-soft text-success" },
+      ]
+    : [
+        { big: "ببلاش", small: "الإلغاء قبل ما نبدأ نجهّز", tone: "bg-brand-soft text-brand" },
+        { big: "24 ساعة", small: "تبلّغ فيهم عن أي مشكلة بصورة", tone: "bg-blue-soft text-blue-deep" },
+        { big: "3 أيام", small: "لاسترجاع المنتجات العادية", tone: "bg-butter-soft text-butter" },
+        { big: "ببلاش", small: "محاولة التوصيل التانية في نفس اليوم", tone: "bg-success-soft text-success" },
+      ];
 
-      <div className="container-x mx-auto max-w-3xl space-y-6 py-10">
-        {sections.map((x) => (
-          <section key={x.id} id={x.id} className="scroll-mt-24 rounded-3xl border border-line bg-paper p-6 shadow-[0_16px_28px_-20px_rgb(60_20_25/0.55)] sm:p-8">
-            <h2 className="text-2xl text-brand">{x.title}</h2>
-            <ul className="mt-4 space-y-3 leading-7">
-              {x.items.map((it, i) => (
-                <li key={i} className="flex gap-3">
-                  <span aria-hidden className="mt-2.5 size-1.5 shrink-0 rounded-full bg-brand" />
-                  <span>{it}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-        <p className="text-center text-sm text-muted">
-          {t("عندك سؤال؟")} <Link href="/track" className="text-brand underline underline-offset-4">{t("كلمنا من صفحة طلبك")}</Link>
-        </p>
+  return (
+    <div className="container-x pt-8 pb-4 sm:pt-12">
+      {/* العنوان وأهم الأرقام */}
+      <header className="grid items-end gap-8 lg:grid-cols-[1fr_1.4fr]">
+        <div className="reveal">
+          <span className="font-script text-3xl text-brand">{t(STORE_NAME)}</span>
+          <h1 className="mt-1 text-5xl leading-tight sm:text-6xl">{t("السياسات")}</h1>
+          <p className="mt-3 max-w-md text-lg leading-8 text-ink-2">{t("كل اللي محتاج تعرفه عن الإلغاء والاسترجاع والتوصيل وبياناتك، بالبساطة.")}</p>
+        </div>
+        <ul className="reveal-stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {facts.map((f, i) => (
+            <li key={i} className={`rounded-3xl p-4 ${f.tone} ${i % 2 ? "rotate-1" : "-rotate-1"}`}>
+              <p className="font-heading text-3xl leading-none">{f.big}</p>
+              <p className="mt-2 text-sm leading-5 text-ink-2">{f.small}</p>
+            </li>
+          ))}
+        </ul>
+      </header>
+
+      <div className="mt-12 grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-14">
+        {/* الأقسام: على الكمبيوتر قايمة ثابتة على جنب، وعلى الموبايل صف بيتسحب */}
+        <nav className="lg:sticky lg:top-40 lg:self-start" aria-label={t("السياسات")}>
+          <ul className="scroll-x lg:mx-0 lg:block lg:space-y-1 lg:px-0">
+            {sections.map((x) => (
+              <li key={x.id} className="shrink-0">
+                <a href={`#${x.id}`} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 font-semibold text-ink-2 transition-colors hover:bg-paper hover:text-ink">
+                  <span className={`grid size-8 place-items-center rounded-full ${look[x.id].soft} ${look[x.id].tone}`}>
+                    <Icon name={look[x.id].icon} className="size-4" />
+                  </span>
+                  {x.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="space-y-6">
+          {sections.map((x) => (
+            <section key={x.id} id={x.id} className="reveal scroll-mt-40 rounded-[2rem] border border-line bg-paper p-6 sm:p-9">
+              <div className="flex items-center gap-4">
+                <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${look[x.id].soft} ${look[x.id].tone}`}>
+                  <Icon name={look[x.id].icon} className="size-6" />
+                </span>
+                <h2 className="text-3xl">{x.title}</h2>
+              </div>
+              <ol className="mt-6 divide-y divide-dashed divide-line">
+                {x.items.map((it, i) => (
+                  <li key={i} className="flex gap-4 py-3.5 leading-7">
+                    <span className={`tabular mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-sm font-semibold ${look[x.id].soft} ${look[x.id].tone}`}>{i + 1}</span>
+                    <span className="text-[17px] text-ink-2">{it}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
+
+          <div className="reveal flex flex-wrap items-center justify-between gap-4 rounded-[2rem] bg-blue-soft p-6 sm:p-8">
+            <div>
+              <p className="font-heading text-2xl">{t("عندك سؤال؟")}</p>
+              <p className="mt-1 text-ink-2">{t("كلمنا من الشات اللي في صفحة طلبك، وهنرد عليك.")}</p>
+            </div>
+            <Link href="/track" className="btn-primary">
+              {t("كلمنا من صفحة طلبك")}
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

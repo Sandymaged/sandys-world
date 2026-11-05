@@ -6,25 +6,20 @@ import { CartButton } from "./cart-button";
 import { LangSwitch } from "./lang-switch";
 import { Logo } from "./logo";
 import { getSiteSettings, linkVisible } from "@/lib/site-settings";
+import { getLocalizedStorefront } from "@/lib/catalog";
 import { Icon } from "./icons";
+import { NavTabs, NavTabsView, type NavTab } from "./nav-tabs";
+import { Suspense } from "react";
 
 const nav = [
+  { href: "/", label: "الرئيسية" },
   { href: "/shop", label: "كل الهدايا" },
-  { href: "/occasions/birthday", label: "أعياد الميلاد" },
-  { href: "/occasions/christmas", label: "الكريسماس" },
   { href: "/box", label: "اعمل البوكس بنفسك" },
   { href: "/gift-card", label: "كارت هدية" },
   { href: "/bride", label: "العروسة والإشبينات" },
   { href: "/kits", label: "ورشة مع الصحاب" },
   { href: "/brands", label: "البراندات المحلية" },
   { href: "/send-to-assiut", label: "ابعت لأهلك في أسيوط" },
-];
-
-const announcements = [
-  "توصيل في نفس اليوم في مدينة أسيوط للطلبات قبل الساعة 1 الضهر",
-  "صورة الهدية قبل ما تخرج وصورة وهي بتتسلم",
-  "ادفع بإنستاباي من أي مكان في مصر أو برّاها",
-  "كارت برسالتك مع كل هدية",
 ];
 
 async function SearchForm({ className = "" }: { className?: string }) {
@@ -45,24 +40,22 @@ async function SearchForm({ className = "" }: { className?: string }) {
 }
 
 export async function SiteHeader() {
-  const [t, site] = await Promise.all([getT(), getSiteSettings()]);
+  const [t, site, sf] = await Promise.all([getT(), getSiteSettings(), getLocalizedStorefront()]);
+  // المناسبات قايمة بتفتح بعد «كل الهدايا»، و«الاسترجاع والاستبدال» في الآخر
+  const links: NavTab[] = nav.filter((n) => linkVisible(n.href, site)).map((n) => ({ href: n.href, label: t(n.label) }));
+  const occasions = sf.occasions.map((o) => ({ href: `/occasions/${o.slug}`, label: o.name })).filter((o) => linkVisible(o.href, site));
+  const tabs: NavTab[] = [
+    ...links.slice(0, 2),
+    ...(occasions.length ? [{ href: "/occasions", label: t("المناسبات"), children: occasions }] : []),
+    ...links.slice(2),
+    { href: "/policies#returns", label: t("الاسترجاع والاستبدال") },
+  ];
   return (
     <header className="sticky top-0 z-30 bg-bg">
-      <div className="group overflow-hidden bg-brand text-white" aria-label={announcements.map((a) => t(a)).join(t("، "))}>
-        {/* نسختين ورا بعض عشان اللفّة تبان متصلة */}
-        <div className="flex h-9 w-max animate-marquee items-center group-hover:[animation-play-state:paused]" aria-hidden>
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex shrink-0 items-center">
-              {announcements.map((a) => (
-                <span key={a} className="flex items-center gap-2 px-8 text-xs whitespace-nowrap">
-                  <span className="size-1.5 rounded-full bg-white/70" />
-                  {t(a)}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* المسار بيتعرف وقت الطلب، فالشريط جوه Suspense وبيظهر من غير تاب متعلّم لحد كده */}
+      <Suspense fallback={<NavTabsView tabs={tabs} />}>
+        <NavTabs tabs={tabs} />
+      </Suspense>
       <div className="border-b border-line">
         <div className="container-x flex h-16 items-center gap-6">
           <Link href="/" aria-label={t(STORE_NAME)} className="shrink-0 text-[15px] text-ink transition-opacity hover:opacity-80">
@@ -75,13 +68,6 @@ export async function SiteHeader() {
             <CartButton />
           </div>
         </div>
-        <nav className="container-x hidden h-12 items-center gap-1 text-[15px] font-medium text-ink-2 md:flex">
-          {nav.filter((n) => linkVisible(n.href, site)).map((n) => (
-            <Link key={n.href} href={n.href} className="rounded-full px-3 py-1.5 transition-colors hover:bg-paper hover:text-brand">
-              {t(n.label)}
-            </Link>
-          ))}
-        </nav>
         <div className="container-x pb-3 md:hidden">
           <SearchForm />
         </div>

@@ -2,18 +2,16 @@ import Image from "next/image";
 import { AssistantPromo } from "@/components/assistant-promo";
 import { BasketReveal } from "@/components/basket-reveal";
 import { BrandCard } from "@/components/brand-card";
-import { CardWriter } from "@/components/card-writer";
 import { EnvelopeSteps } from "@/components/envelope-steps";
-import { Grid, PackageCard, Rail } from "@/components/cards";
-import { GiftArt } from "@/components/gift-art";
+import { PackageCard } from "@/components/cards";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { GiftFinder } from "@/components/gift-finder";
-import { BrandOrbit } from "@/components/brand-orbit";
 import { FeaturePills } from "@/components/feature-pills";
 import { Hero } from "@/components/hero";
 import { Icon } from "@/components/icons";
 import { NoteBoard } from "@/components/note-board";
-import { Pill, Quote, ScrapTitle } from "@/components/scrapbook";
+import { Pill, Polaroid, Quote, ScrapTitle } from "@/components/scrapbook";
+import { ScrollRow } from "@/components/scroll-row";
 import { Link } from "@/i18n/client";
 import { getT } from "@/i18n/server";
 import { getLocalizedStorefront } from "@/lib/catalog";
@@ -24,7 +22,7 @@ import { STORE_NAME } from "@/lib/settings";
 
 /*
  * الصفحة الرئيسية زي صفحات دفتر: كل قسم صفحة مدورة لوحدها على ورق كريمي،
- * وبينهم اقتباسات عن الهدايا. فيها تجربتين صغيرين: نختار الهدية سوا، واكتب كارتك.
+ * وبينهم اقتباسات عن الهدايا. وفيها تجربة صغيرة: نختار الهدية سوا.
  */
 
 // اللي بيوصل مع كل هدية: ورق متثبت على اللوحة
@@ -65,11 +63,31 @@ export default async function HomePage() {
   const heroStickers = [...new Map([...preferred, ...sf.products].filter((p) => p?.images[0]).map((p) => [p!.images[0], p!])).values()]
     .slice(0, 6)
     .map((p, i) => ({ src: p.images[0], alt: p.name, chip: chips[i] }));
-  const bridal = sf.kits.find((k) => k.category === "bridal");
-  const workshop = sf.kits.find((k) => k.category === "workshop");
 
+  const kitSections = [
+    {
+      href: "/bride",
+      images: sf.kits.filter((k) => k.category === "bridal").map((k) => k.images[0]),
+      tone: "bg-blush",
+      kicker: "مبروك يا عروسة",
+      title: "العروسة والإشبينات",
+      tags: ["بالأسامي", "على ألوان الفرح", "للإشبينات ولماما"],
+      cta: "ادخلي القسم",
+    },
+    {
+      href: "/kits",
+      images: sf.kits.filter((k) => k.category === "workshop").map((k) => k.images[0]),
+      tone: "bg-blue-soft",
+      kicker: "قعدة بنات؟",
+      title: "ورشة مع الصحاب",
+      tags: ["كل الأدوات في الكيت", "من غير خبرة", "لكل الشلة"],
+      cta: "اختاروا الكيت",
+    },
+  ].filter((c) => (c.href === "/bride" ? on.bride : on.kits));
+
+  // الصفحة متنوعة: أقسام بعرض الشاشة كلها (شرايط ملونة)، وأقسام كروت، وأقسام على الورق من غير خلفية
   return (
-    <div className="space-y-16 overflow-x-clip pb-4 sm:space-y-24">
+    <div className="space-y-14 overflow-x-clip pb-4 sm:space-y-20">
       <Hero
         showBox={on.box}
         stickers={heroStickers}
@@ -80,65 +98,52 @@ export default async function HomePage() {
 
       <FeaturePills />
 
-      {/* نختار الهدية سوا */}
-      <section className="container-x">
-        <div className="panel grain grid gap-10 bg-blue-soft px-6 py-10 sm:px-12 sm:py-14 lg:grid-cols-[0.8fr_1.2fr]">
+      {/* نختار الهدية سوا: شريط أزرق بعرض الصفحة */}
+      <section className="grain bg-blue-soft py-12 sm:py-16">
+        <div className="container-x grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="reveal">
             <Pill>{t("محتار تجيب إيه؟")}</Pill>
             <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("يلا نختار الهدية سوا")}</h2>
             <p className="mt-3 text-lg leading-8 text-ink-2">{t("جاوب على ٣ أسئلة صغيرين، وهنوريك الهدايا اللي تناسبك على طول.")}</p>
           </div>
-          <GiftFinder occasions={sf.occasions.map((o) => ({ slug: o.slug, name: o.name }))} />
+          <div className="reveal">
+            <GiftFinder occasions={sf.occasions.map((o) => ({ slug: o.slug, name: o.name }))} />
+          </div>
         </div>
       </section>
 
-      {/* مع كل هدية: لوحة الورق المتثبت */}
+      {/* مع كل هدية: لوحة الورق المتثبت على الورق نفسه */}
       <section className="container-x">
         <ScrapTitle kicker={t("مش بس هدية")} title={t("هتاخد إيه مع كل هدية؟")} className="mb-10" />
         <NoteBoard notes={notes.map((n) => ({ title: t(n.title), body: t(n.body) }))} />
       </section>
 
-      <section className="container-x">
-        {quote("red").text && (
-          <Quote tone="red" by={quote("red").sub || undefined}>
-            {quote("red").text}
-          </Quote>
-        )}
-      </section>
-
-      {/* المناسبات */}
-      <section className="container-x">
-        <ScrapTitle kicker={t("بتحتفل بإيه؟")} title={t("تسوّق حسب المناسبة")} />
-        <div className="scroll-x mt-10 gap-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-9 lg:px-0">
-          {sf.occasions.map((o) => (
-            <Link key={o.slug} href={`/occasions/${o.slug}`} className="group block w-28 shrink-0 text-center lg:w-auto">
-              <div className="mx-auto overflow-hidden rounded-full border-4 border-paper shadow-[0_14px_24px_-18px_rgb(60_30_20/0.6)] transition-transform group-hover:-translate-y-1">
-                <GiftArt image={o.image} label={o.name} className="aspect-square" sizes="120px" zoom />
-              </div>
-              <span className="mt-3 block text-[15px] font-semibold text-ink group-hover:text-brand">{o.name}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {quote("red").text && (
+        <Quote band tone="red" by={quote("red").sub || undefined}>
+          {quote("red").text}
+        </Quote>
+      )}
 
       {/* إيه اللي جوه: باكدج واحد بالتفصيل */}
       {spotlight && (
         <section className="container-x">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
             <div className="reveal order-2 lg:order-1">
               <Pill tone="blue">{t("بصي من قريب")}</Pill>
               <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("كل باكدج متجمع بإيد، من براندات محلية")}</h2>
               <p className="mt-4 text-lg leading-8 text-ink-2">
                 {t("كل حاجة جوه الباكدج جاية من براند صغير من أسيوط، ومكتوب جنبها اسمه. بنغلفها ونكتب الكارت ونبعتلك صورتها قبل ما تخرج.")}
               </p>
-              <ul className="mt-6 space-y-3">
+              <ul className="reveal-stagger mt-6 grid gap-3 sm:grid-cols-2">
                 {spotlight.products.slice(0, 4).map((p) => (
                   <li key={p.id} className="flex items-center gap-3 text-[15px]">
                     <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-soft text-blue-deep">
                       <Icon name="check" className="size-4" />
                     </span>
-                    <span className="font-semibold">{p.name}</span>
-                    {p.brand && <span className="text-muted">· {p.brand}</span>}
+                    <span>
+                      <span className="font-semibold">{p.name}</span>
+                      {p.brand && <span className="block text-xs text-muted">{p.brand}</span>}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -158,19 +163,15 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* الموسم: الصفحة الحمرا الغامقة */}
+      {/* الموسم: شريط أحمر غامق بعرض الصفحة، والهدايا صف بيتسحب */}
       {seasonPackages.length > 0 && season && (
-        <section className="container-x">
-          <div className="panel bg-maroon px-5 py-12 text-maroon-ink sm:px-10 sm:py-16">
-            <ScrapTitle kicker={t("متاحة لحد آخر ميعاد طلب بس")} title={t("هدايا {name}", { name: season.name })} ink="text-maroon-ink" kickerTone="light" />
-            <div className="mt-10">
-              <Rail>
-                {seasonPackages.map((p, i) => (
-                  <PackageCard key={p.id} pkg={p} priority={i < 2} />
-                ))}
-              </Rail>
-            </div>
-            <div className="mt-8 text-center">
+        <section className="bg-maroon py-12 text-maroon-ink sm:py-16">
+          <div className="container-x">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <Pill tone="light">{t("متاحة لحد آخر ميعاد طلب بس")}</Pill>
+                <h2 className="mt-3 text-4xl text-maroon-ink sm:text-5xl">{t("هدايا {name}", { name: season.name })}</h2>
+              </div>
               <Link
                 href={season.occasionSlug ? `/occasions/${season.occasionSlug}` : "/shop"}
                 className="btn border border-maroon-ink/50 text-maroon-ink hover:bg-maroon-ink hover:text-maroon"
@@ -178,159 +179,113 @@ export default async function HomePage() {
                 {t("شوف كل هدايا الموسم")}
               </Link>
             </div>
+            <ScrollRow label={t("هدايا {name}", { name: season.name })}>
+              {seasonPackages.map((p, i) => (
+                <PackageCard key={p.id} pkg={p} priority={i < 2} />
+              ))}
+            </ScrollRow>
           </div>
         </section>
       )}
 
-      {/* الأكثر طلباً */}
-      <section className="container-x">
-        <ScrapTitle kicker={t("باكدجات جاهزة، والسعر شامل التغليف")} title={t("الأكثر طلباً")} />
-        <div className="mt-10">
-          <Grid>
-            {featured.slice(0, 8).map((p) => (
-              <PackageCard key={p.id} pkg={p} />
-            ))}
-          </Grid>
-        </div>
-        <div className="mt-10 text-center">
-          <Link href="/shop" className="btn border border-ink/15 bg-paper text-ink hover:border-brand hover:text-brand">
-            {t("شوف كل الهدايا")}
-          </Link>
-        </div>
-      </section>
-
-      {/* كارت الهدية: لما تبقى مش عارف تجيب إيه */}
-      {on.giftCard && (
-        <section className="container-x">
-          <div className="panel grain grid items-center gap-10 overflow-hidden border border-line bg-paper px-6 py-12 sm:px-12 sm:py-16 lg:grid-cols-2">
-            <div className="relative mx-auto w-full max-w-md py-4">
-              <div className="animate-float">
-                <GiftCardArt
-                  design="classic"
-                  title={t("كارت هدية")}
-                  storeName={t(STORE_NAME)}
-                  className="[transform:perspective(1000px)_rotateY(-16deg)_rotate(-8deg)]"
-                />
+      {/* كارت الهدية وورشة مع الصحاب/العروسة: كروت جنب بعض */}
+      {(on.giftCard || kitSections.length > 0) && (
+        <section className="reveal-stagger container-x grid gap-6 lg:grid-cols-2">
+          {on.giftCard && (
+            <div className="panel grain grid items-center gap-6 overflow-hidden border border-line bg-paper px-6 py-10 sm:grid-cols-[0.9fr_1.1fr] sm:px-10">
+              <div className="animate-float mx-auto w-full max-w-[16rem]">
+                <GiftCardArt design="classic" title={t("كارت هدية")} storeName={t(STORE_NAME)} className="[transform:perspective(1000px)_rotateY(-16deg)_rotate(-8deg)]" />
               </div>
-              <div className="mx-auto mt-4 h-5 w-2/3 rounded-full bg-ink/10 blur-md" aria-hidden />
+              <div className="reveal text-center sm:text-start">
+                <span className="font-script text-3xl text-brand">{t("مش عارف تجيب إيه؟")}</span>
+                <h2 className="mt-1 text-3xl leading-tight sm:text-4xl">{t("خليه هو يختار")}</h2>
+                <p className="mt-3 text-ink-2">{t("كارت هدية بالمبلغ اللي تحبه، بيوصله على واتساب.")}</p>
+                <Link href="/gift-card" className="btn-primary mt-6">
+                  {t("اشتري كارت هدية")}
+                </Link>
+              </div>
             </div>
-            <div className="reveal">
-              <Pill>{t("كارت هدية")}</Pill>
-              <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("لما تبقى مش عارف تجيبله إيه… خليه هو يختار.")}</h2>
-              <p className="mt-4 text-lg leading-8 text-ink-2">
-                {t("ابعتله كارت هدية بالمبلغ اللي تحبه، بيوصله على واتساب برسالتك، ويختار بيه اللي يعجبه من الموقع كله.")}
-              </p>
-              <Link href="/gift-card" className="btn-primary mt-7">
-                {t("اشتري كارت هدية")}
+          )}
+          {kitSections.map((c, i) => {
+            const pics = c.images.filter(Boolean).slice(0, 3);
+            return (
+              <div key={c.href} className={`panel grain grid items-center gap-6 overflow-hidden px-6 py-10 sm:grid-cols-[1fr_1fr] sm:px-10 ${c.tone} ${!on.giftCard && kitSections.length === 1 ? "lg:col-span-2" : ""} ${on.giftCard && kitSections.length === 2 && i === 1 ? "lg:col-span-2" : ""}`}>
+                <div className="relative mx-auto h-52 w-full max-w-xs">
+                  {pics.map((src, j) => (
+                    <Polaroid
+                      key={src}
+                      rotate={[-18, 15, -6][j]}
+                      delay={j * 0.12}
+                      tape={(["pink", "butter", "lilac"] as const)[j]}
+                      className={`absolute w-32 ${["start-0 top-2", "end-0 top-0", "start-1/2 bottom-0 -translate-x-1/2 rtl:translate-x-1/2"][j]}`}
+                    >
+                      <div className="relative aspect-square overflow-hidden">
+                        <Image src={src} alt="" fill sizes="140px" className="object-cover" />
+                      </div>
+                    </Polaroid>
+                  ))}
+                </div>
+                <div className="reveal text-center sm:text-start">
+                  <span className="font-script text-3xl text-brand">{t(c.kicker)}</span>
+                  <h2 className="mt-1 text-3xl leading-tight sm:text-4xl">{t(c.title)}</h2>
+                  <ul className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                    {c.tags.map((x, j) => (
+                      <li key={x} className={`rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-ink shadow-sm ${j % 2 ? "rotate-2" : "-rotate-2"}`}>
+                        {t(x)}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={c.href} className="btn-primary mt-6">
+                    {t(c.cta)}
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {quote("blue").text && (
+        <Quote band tone="blue" by={quote("blue").sub || undefined}>
+          {quote("blue").text}
+        </Quote>
+      )}
+
+      {/* البراندات المحلية: شريط بعرض الصفحة، الكلام والدواير جنب بعض، وتحتهم صف البراندات */}
+      {on.brands && (
+        <section className="grain bg-blue-soft py-12 sm:py-16">
+          <div className="container-x">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="reveal max-w-2xl">
+                <Pill>{t("ورا كل هدية حد عملها بحب")}</Pill>
+                <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("براندات من أسيوط")}</h2>
+                <p className="mt-3 text-lg leading-8 text-ink-2">
+                  {t("كل منتج عندنا جاي من براند محلي صغير. اعرف مين عمله، واشتري منه أو اعمل هديتك كلها من منتجاته.")}
+                </p>
+              </div>
+              <Link href="/brands" className="btn-primary">
+                {t("كل البراندات")}
               </Link>
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* اكتب كارتك */}
-      <section className="container-x">
-        <div className="panel grain bg-blush px-6 py-10 sm:px-12 sm:py-14">
-          <div className="reveal mb-8 max-w-xl">
-            <Pill>{t("مع كل هدية كارت")}</Pill>
-            <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("جرّب تكتب كارتك")}</h2>
-            <p className="mt-3 text-lg leading-8 text-ink-2">
-              {t("اكتب رسالتك وشوفها على الكارت. وإنت بتطلب هتكتبها، وإحنا نكتبها بخط حلو ونحطها مع الهدية.")}
-            </p>
-          </div>
-          <CardWriter />
-        </div>
-      </section>
-
-      <section className="container-x">
-        {quote("blue").text && (
-          <Quote tone="blue" by={quote("blue").sub || undefined}>
-            {quote("blue").text}
-          </Quote>
-        )}
-      </section>
-
-      {/* البراندات المحلية */}
-      {on.brands && (
-        <section className="container-x">
-          <div className="panel grain bg-blue-soft px-5 py-12 sm:px-10 sm:py-16">
-          <ScrapTitle
-            kicker={t("ورا كل هدية حد عملها بحب")}
-            title={t("براندات من أسيوط")}
-            subtitle={t("كل منتج عندنا جاي من براند محلي صغير. اعرف مين عمله، واشتري منه أو اعمل هديتك كلها من منتجاته.")}
-          />
-          <div className="mt-10">
-            <BrandOrbit brands={sf.brands} image={spotlight?.images[0] ?? sf.products.find((p) => p.brandSlug && p.images[0])?.images[0] ?? null} />
-          </div>
-          <div className="mt-12">
-            <Rail>
-              {sf.brands.slice(0, 8).map((b) => (
-                <BrandCard key={b.id} brand={b} />
-              ))}
-            </Rail>
-          </div>
-          <div className="mt-8 text-center">
-            <Link href="/brands" className="btn border border-ink/15 bg-paper text-ink hover:border-brand hover:text-brand">
-              {t("كل البراندات")}
-            </Link>
-          </div>
-          </div>
-        </section>
-      )}
-
-      {/* العروسة + ورشة مع الصحاب: صفحتين جنب بعض */}
-      <section className="container-x grid gap-6 md:grid-cols-2">
-        {[
-          {
-            href: "/bride",
-            img: bridal?.images[0],
-            tone: "bg-blush",
-            pill: "brand" as const,
-            kicker: "مبروك يا عروسة",
-            title: "العروسة والإشبينات",
-            body: "بوكسات «هتكوني إشبينتي؟» بالأسامي، وهدايا ليكي ولماما، وتوزيعات الفرح على ألوانك.",
-            cta: "ادخلي القسم",
-          },
-          {
-            href: "/kits",
-            img: workshop?.images[0],
-            tone: "bg-blue-soft",
-            pill: "blue" as const,
-            kicker: "قعدة بنات؟",
-            title: "ورشة مع الصحاب",
-            body: "كيتات جاهزة بكل الأدوات، تعملوا بيها حاجة بإيديكم في قعدة حلوة.",
-            cta: "كل الكيتات",
-          },
-        ]
-          .filter((c) => (c.href === "/bride" ? on.bride : on.kits))
-          .map((c) => (
-          <Link key={c.href} href={c.href} className={`reveal panel group flex flex-col overflow-hidden ${c.tone}`}>
-            {c.img && (
-              <div className="relative aspect-[16/9] overflow-hidden">
-                <Image src={c.img} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-              </div>
-            )}
-            <div className="flex-1 px-7 py-8 sm:px-10">
-              <Pill tone={c.pill}>{t(c.kicker)}</Pill>
-              <h2 className="mt-3 text-3xl sm:text-4xl">{t(c.title)}</h2>
-              <p className="mt-2 text-lg leading-8 text-ink-2">{t(c.body)}</p>
-              <span className="mt-4 inline-flex items-center gap-1 font-semibold text-brand">
-                {t(c.cta)}
-                <Icon name="chevron" className="size-4 transition-transform group-hover:-translate-x-1" />
-              </span>
+            <div className="mt-10">
+              <ScrollRow label={t("براندات من أسيوط")}>
+                {sf.brands.map((b) => (
+                  <BrandCard key={b.id} brand={b} />
+                ))}
+              </ScrollRow>
             </div>
-          </Link>
-        ))}
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* مساعد الهدايا */}
       <section className="container-x">
         <AssistantPromo />
       </section>
 
-      {/* إزاي بتوصل */}
-      <section className="container-x">
-        <div className="panel grain bg-paper px-6 py-12 sm:px-12 sm:py-16">
+      {/* إزاي بتوصل: على الورق، بخط فاصل فوق وتحت */}
+      <section className="border-y border-dashed border-line py-12 sm:py-16">
+        <div className="container-x">
           <ScrapTitle kicker={t("بسيطة خالص")} title={t("إزاي بتوصل الهدية")} kickerTone="blue" />
           <div className="mt-12">
             <EnvelopeSteps steps={steps.map(([title, body]) => ({ title: t(title), body: t(body) }))} />
@@ -338,17 +293,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container-x">
+      <section className="container-x text-center">
         {quote("paper").text && (
           <Quote by={quote("paper").sub || undefined}>
             {quote("paper").text}
           </Quote>
         )}
-        <div className="mt-8 text-center">
-          <Link href="/shop" className="btn-primary px-10">
-            {t("يلا نبدأ")}
-          </Link>
-        </div>
+        <Link href="/shop" className="btn-primary mt-8 px-10">
+          {t("يلا نبدأ")}
+        </Link>
       </section>
     </div>
   );

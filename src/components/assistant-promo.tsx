@@ -10,29 +10,30 @@ const examples = ["هدية لماما بـ 600", "عيد ميلاد صاحبت�
 export function AssistantPromo() {
   const t = useT();
   return (
-    <div className="reveal panel relative bg-paper px-6 py-10 sm:px-12 sm:py-12">
-      <div className="flex flex-wrap items-center gap-4">
+    // شريط عريض وقصير: العنوان على جنب، والأمثلة والزرار على الجنب التاني
+    <div className="reveal panel relative mx-auto grid max-w-6xl items-center gap-6 bg-paper px-6 py-8 shadow-[0_16px_28px_-22px_rgb(60_20_25/0.55)] sm:px-10 lg:grid-cols-[auto_1fr] lg:gap-12">
+      <div className="flex items-center gap-4">
         <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft">
           <Bow className="w-10 text-brand" />
         </span>
-        <div className="min-w-0 flex-1">
+        <div>
           <p className="font-script text-2xl text-candy">{t("محتارة تجيبي إيه؟")}</p>
           <h2 className="text-3xl leading-tight text-brand sm:text-4xl">{t("اسألي مساعد الهدايا")}</h2>
+          <p className="mt-1 text-ink-2">{t("قوليله الهدية لمين وميزانيتك كام، وهو يقترحلك.")}</p>
         </div>
       </div>
-      <p className="mt-4 leading-8 text-ink-2">
-        {t("اكتبيله بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام. وهو يجمعلك بوكسات من البراندات المحلية في حدود الميزانية، وتضيفيها للسلة بدوسة.")}
-      </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        {examples.map((e) => (
-          <button key={e} type="button" onClick={() => openGiftAssistant(t(e))} className="chip border-brand/40 bg-bg text-brand transition-colors hover:bg-brand-soft">
-            «{t(e)}»
-          </button>
-        ))}
+      <div className="flex flex-col gap-4 lg:items-end">
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          {examples.map((e) => (
+            <button key={e} type="button" onClick={() => openGiftAssistant(t(e))} className="chip border-brand/40 bg-bg text-brand transition-colors hover:bg-brand-soft">
+              «{t(e)}»
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={() => openGiftAssistant()} className="btn-primary self-start lg:self-end">
+          {t("ابدئي المحادثة")}
+        </button>
       </div>
-      <button type="button" onClick={() => openGiftAssistant()} className="btn-primary mt-6">
-        {t("ابدئي المحادثة")}
-      </button>
     </div>
   );
 }

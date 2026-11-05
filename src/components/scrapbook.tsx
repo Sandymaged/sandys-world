@@ -175,20 +175,46 @@ export function ScrapTitle({
 }
 
 /** اقتباس كبير بين الأقسام: علامة تنصيص، والجملة بخط مكتوب باليد */
-export function Quote({ children, by, tone = "paper" }: { children: React.ReactNode; by?: string; tone?: "paper" | "red" | "blue" }) {
+export function Quote({ children, by, tone = "paper", band = false }: { children: React.ReactNode; by?: string; tone?: "paper" | "red" | "blue"; band?: boolean }) {
   const tones = {
     paper: "bg-paper text-ink",
     red: "bg-brand text-maroon-ink",
     blue: "bg-blue text-white",
   };
+  // band: شريط مقلّم بعرض الصفحة، وعليه ورقة كريمي مايلة متلزقة بشريط لاصق والجملة مكتوبة عليها بخط الإيد
+  if (band) {
+    const bg = { paper: "bg-blush", red: "bg-brand", blue: "bg-blue" };
+    return (
+      <figure
+        className={`relative overflow-hidden px-6 py-12 sm:py-14 ${bg[tone]}`}
+        style={{ backgroundImage: "repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.09) 0 14px, transparent 14px 28px)" }}
+      >
+        {/* الورقة بتتنطط وتتلزق لما توصلها */}
+        <div
+          className="reveal-pop relative mx-auto max-w-3xl bg-paper px-8 pt-10 pb-8 text-center shadow-[0_20px_34px_-18px_rgb(30_10_15/0.55)] sm:px-16"
+          style={{ ["--r" as string]: "-1deg" }}
+        >
+          <Tape tone="butter" className="-top-2 start-8 -rotate-6" />
+          <Tape tone="pink" className="-top-2 end-8 rotate-6" />
+          <span aria-hidden className="absolute top-1 start-4 font-heading text-6xl leading-none text-brand/25">”</span>
+          <blockquote className="relative font-script text-3xl leading-[1.6] text-ink sm:text-4xl">{children}</blockquote>
+          {by && <figcaption className="relative mt-3 text-sm font-semibold text-muted">— {by}</figcaption>}
+          <svg viewBox="0 0 24 24" aria-hidden className="mx-auto mt-4 size-5 text-brand" fill="currentColor">
+            <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.9 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.6.8-1.4 2.3-2.6 4.4-2.6 3.7 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21Z" />
+          </svg>
+        </div>
+      </figure>
+    );
+  }
+  const shape = "panel mx-auto max-w-4xl px-8 py-12 sm:px-16 sm:py-16";
   return (
-    <figure className={`reveal panel relative mx-auto max-w-4xl overflow-hidden px-8 py-12 text-center sm:px-16 sm:py-16 ${tones[tone]}`}>
+    <figure className={`reveal relative overflow-hidden text-center ${shape} ${tones[tone]}`}>
       {/* دواير هادية بتطفو ورا الكلام */}
       <span aria-hidden className="absolute -top-10 -end-8 size-36 animate-float rounded-full bg-current opacity-[0.07]" />
       <span aria-hidden className="absolute -bottom-12 start-[12%] size-28 animate-float rounded-full bg-current opacity-[0.06] [animation-delay:-2.5s]" />
       <span aria-hidden className="absolute top-[30%] start-[4%] size-10 animate-float rounded-full bg-current opacity-[0.08] [animation-delay:-5s]" />
       <span aria-hidden className="absolute top-4 start-6 font-heading text-7xl leading-none opacity-25 sm:text-8xl">”</span>
-      <blockquote className="relative font-script text-3xl leading-[1.6] sm:text-4xl">{children}</blockquote>
+      <blockquote className="relative mx-auto max-w-4xl font-script text-3xl leading-[1.6] sm:text-4xl">{children}</blockquote>
       {by && <figcaption className="relative mt-5 text-sm font-semibold tracking-wide opacity-80">{by}</figcaption>}
     </figure>
   );
