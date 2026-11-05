@@ -6,13 +6,13 @@ import { AddKit } from "@/components/add-kit";
 import { GiftArt } from "@/components/gift-art";
 import { Icon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/product-info";
-import { getLocalizedStorefront, getStorefront } from "@/lib/catalog";
+import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { prepLabel } from "@/lib/format";
 import { Polaroid } from "@/components/scrapbook";
 
 export async function generateStaticParams() {
   const sf = await getStorefront();
-  return sf.kits.map((k) => ({ slug: k.slug }));
+  return atLeastOne(sf.kits.map((k) => ({ slug: k.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/kits/[slug]">): Promise<Metadata> {

@@ -230,6 +230,14 @@ async function getCatalog(): Promise<Catalog> {
   return loadFromSupabase();
 }
 
+/**
+ * generateStaticParams لازم يرجّع حاجة واحدة على الأقل (Cache Components)، وإلا الـ build بيقع.
+ * لو القايمة فاضية (متجر لسه بيدخل بياناته) بنرجّع رابط وهمي صفحته بتطلع 404
+ */
+export function atLeastOne(params: { slug: string }[]) {
+  return params.length ? params : [{ slug: "_" }];
+}
+
 /** كل المناسبات (حتى المخفية) — للوحة التحكم */
 export async function getAllOccasions(): Promise<Occasion[]> {
   return (await getCatalog()).occasions;

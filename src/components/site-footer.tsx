@@ -4,6 +4,7 @@ import { STORE_NAME } from "@/lib/settings";
 import { Bow } from "./decor";
 import { Logo } from "./logo";
 import { getSiteSettings, linkVisible } from "@/lib/site-settings";
+import { getLocalizedStorefront } from "@/lib/catalog";
 import { Icon } from "./icons";
 import { Pill } from "./scrapbook";
 
@@ -15,13 +16,6 @@ const shop = [
   { href: "/kits", label: "ورشة مع الصحاب" },
   { href: "/brands", label: "البراندات المحلية" },
   { href: "/send-to-assiut", label: "ابعت لأهلك في أسيوط" },
-];
-
-const occasions = [
-  { href: "/occasions/birthday", label: "أعياد الميلاد" },
-  { href: "/occasions/success", label: "نجاح وتخرج" },
-  { href: "/occasions/newborn", label: "مولود جديد" },
-  { href: "/occasions/engagement", label: "خطوبة وجواز" },
 ];
 
 const delivery = ["مدينة أسيوط ومراكزها بمندوب خاص", "باقي المحافظات بشركة شحن", "الدفع بإنستاباي، أو كاش لو إنت المستلم"];
@@ -42,8 +36,13 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
  * اللوجو وجملة عن المتجر، وعواميد اللينكات، وتحتهم سطر الحقوق.
  */
 export async function SiteFooter() {
-  const [t, site] = await Promise.all([getT(), getSiteSettings()]);
+  const [t, site, sf] = await Promise.all([getT(), getSiteSettings(), getLocalizedStorefront()]);
   const name = t(STORE_NAME);
+  // أول 4 مناسبات من اللي متضافة في اللوحة
+  const occasions = sf.occasions
+    .map((o) => ({ href: `/occasions/${o.slug}`, label: o.name }))
+    .filter((l) => linkVisible(l.href, site))
+    .slice(0, 4);
   return (
     <footer className="mt-24">
       {/* الكارت البوستال */}
@@ -105,16 +104,18 @@ export async function SiteFooter() {
               ))}
             </ul>
           </div>
-          <div>
-            <p className="mb-4 font-heading text-lg text-white">{t("المناسبات")}</p>
-            <ul className="space-y-2.5">
-              {occasions.filter((l) => linkVisible(l.href, site)).map((l) => (
-                <FooterLink key={l.href} href={l.href}>
-                  {t(l.label)}
-                </FooterLink>
-              ))}
-            </ul>
-          </div>
+          {occasions.length > 0 && (
+            <div>
+              <p className="mb-4 font-heading text-lg text-white">{t("المناسبات")}</p>
+              <ul className="space-y-2.5">
+                {occasions.map((l) => (
+                  <FooterLink key={l.href} href={l.href}>
+                    {l.label}
+                  </FooterLink>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="col-span-2 lg:col-span-1">
             <p className="mb-4 font-heading text-lg text-white">{t("التوصيل والدفع")}</p>
             <ul className="space-y-3 leading-6">

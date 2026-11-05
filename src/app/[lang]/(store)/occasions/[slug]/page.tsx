@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Grid, PackageCard, ProductCard, SectionHeading } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
-import { filterCatalog, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
+import { atLeastOne, filterCatalog, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { PageHeader } from "@/components/scrapbook";
 
 export async function generateStaticParams() {
   const sf = await getStorefront();
-  return sf.occasions.map((o) => ({ slug: o.slug }));
+  return atLeastOne(sf.occasions.map((o) => ({ slug: o.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/occasions/[slug]">): Promise<Metadata> {

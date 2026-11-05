@@ -26,6 +26,10 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
       { href: "/admin/catalog/kits", label: "الكيتات", icon: "layers" },
       { href: "/admin/catalog/packages", label: "الباكدجات", icon: "box" },
       { href: "/admin/packaging", label: "البوكسات والتغليف", icon: "gift" },
+      { href: "/admin/catalog/occasions", label: "المناسبات", icon: "calendar" },
+      { href: "/admin/catalog/seasons", label: "المواسم", icon: "sparkle" },
+      { href: "/admin/zones", label: "مناطق التوصيل", icon: "route" },
+      { href: "/admin/coupons", label: "أكواد الخصم", icon: "tag" },
     ],
   },
   {
@@ -34,7 +38,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
       { href: "/admin/reports", label: "التقارير", icon: "chart" },
       { href: "/admin/settlements", label: "حسابات البراندات", icon: "handshake" },
       { href: "/admin/expenses", label: "المصاريف", icon: "receipt" },
-      { href: "/admin/costs", label: "مناطق التوصيل والتكاليف", icon: "route" },
+      { href: "/admin/costs", label: "التكاليف", icon: "receipt" },
     ],
   },
   {

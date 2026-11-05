@@ -8,14 +8,14 @@ import { tierStyles } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
 import { Icon } from "@/components/icons";
 import { Breadcrumbs, PolicyDetails } from "@/components/product-info";
-import { getLocalizedStorefront, getStorefront } from "@/lib/catalog";
+import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { egp, prepLabel, tierLabels } from "@/lib/format";
 
 import { BasketReveal } from "@/components/basket-reveal";
 
 export async function generateStaticParams() {
   const sf = await getStorefront();
-  return sf.packages.map((p) => ({ slug: p.slug }));
+  return atLeastOne(sf.packages.map((p) => ({ slug: p.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/packages/[slug]">): Promise<Metadata> {

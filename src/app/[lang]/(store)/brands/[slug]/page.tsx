@@ -11,11 +11,11 @@ import { Breadcrumbs } from "@/components/product-info";
 import { StickyNote } from "@/components/scrapbook";
 import { Link } from "@/i18n/client";
 import { getT } from "@/i18n/server";
-import { getLocalizedStorefront, getStorefront } from "@/lib/catalog";
+import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 
 export async function generateStaticParams() {
   const sf = await getStorefront();
-  return sf.brands.map((b) => ({ slug: b.slug }));
+  return atLeastOne(sf.brands.map((b) => ({ slug: b.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/brands/[slug]">): Promise<Metadata> {

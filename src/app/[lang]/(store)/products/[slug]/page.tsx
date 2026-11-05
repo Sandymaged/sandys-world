@@ -7,14 +7,14 @@ import { PackageCard, Rail, SectionHeading } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
 import { Icon } from "@/components/icons";
 import { Breadcrumbs, PolicyDetails } from "@/components/product-info";
-import { getLocalizedStorefront, getStorefront } from "@/lib/catalog";
+import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { egp, prepLabel } from "@/lib/format";
 import { Polaroid } from "@/components/scrapbook";
 import { Link } from "@/i18n/client";
 
 export async function generateStaticParams() {
   const sf = await getStorefront();
-  return sf.products.map((p) => ({ slug: p.slug }));
+  return atLeastOne(sf.products.map((p) => ({ slug: p.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/products/[slug]">): Promise<Metadata> {
