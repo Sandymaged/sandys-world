@@ -16,7 +16,7 @@ import type { OrderStatus } from "@/lib/db/types";
 import { periodLabel } from "@/lib/delivery";
 import { waLink } from "@/lib/admin-format";
 import { egp, formatDay } from "@/lib/format";
-import { GIFT_CARD_VALID_DAYS, giftCardShareText } from "@/lib/gift-card";
+import { GIFT_CARD_VALID_DAYS, giftCardShareText, validityText } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -86,7 +86,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
     const expires = gc.expiresAt ? dateFmt.format(new Date(gc.expiresAt)) : null;
     const cardUrl = gc.code && !gc.asGift ? `${site}/card/${gc.code}` : "";
     const text = cardUrl ? giftCardShareText(t, { ...gc, amountLabel: egp(gc.amount, t), store: t(STORE_NAME), link: cardUrl, expires }) : "";
-    return { gc, expires, text, cardUrl, sent: gc.sentAt ? sentFmt.format(new Date(gc.sentAt)) : null };
+    const validity = gc.expiresAt && expires ? validityText(t, gc.expiresAt, expires) : null;
+    return { gc, validity, text, cardUrl, sent: gc.sentAt ? sentFmt.format(new Date(gc.sentAt)) : null };
   });
   const cardsSection =
     cards.length > 0 ? (
@@ -100,7 +101,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           </p>
         )}
         <ul className="mt-4 divide-y divide-dashed divide-line">
-          {shared.map(({ gc, expires, text, cardUrl, sent }, i) => (
+          {shared.map(({ gc, validity, text, cardUrl, sent }, i) => (
             <li key={gc.code ?? i} className="space-y-2 py-4 first:pt-0 last:pb-0">
               <p className="text-sm text-ink-2">
                 <b className="tabular text-ink">{egp(gc.amount, t)}</b> ·{" "}
@@ -136,7 +137,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                     <p className="tabular font-heading text-2xl tracking-[0.12em] text-brand select-all" dir="ltr">{gc.code}</p>
                     <CopyButton value={gc.code} />
                   </div>
-                  {expires && <p className="text-sm font-semibold text-brand">{t("صالح {days} أيام بس، لحد {date}", { days: GIFT_CARD_VALID_DAYS, date: expires })}</p>}
+                  {validity && <p className="text-sm font-semibold text-brand">{validity}</p>}
                   <a href={cardUrl} className="btn btn-sm me-2 border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
                     {t("شوف الكارت")}
                   </a>

@@ -54,13 +54,22 @@ export function giftCardProblems(c: Omit<CartGiftCard, "id">): string[] {
 /** الكود بيتكتب بحروف كابيتال ومن غير مسافات: GC-7KQ2-M9XA */
 type Tr = (key: string, vars?: Record<string, string | number>) => string;
 
+/** فاضل كام يوم على ما الكارت يخلص (بالتقريب لفوق، وصفر لو خلص) */
+export const daysLeft = (expiresAt: string) => Math.max(0, Math.ceil((Date.parse(expiresAt) - Date.now()) / 86_400_000));
+
+/** «صالح لحد … (فاضل … يوم)» من تاريخ الكارت الحقيقي */
+export function validityText(t: Tr, expiresAt: string, date: string) {
+  const n = daysLeft(expiresAt);
+  return n > 0 ? t("صالح لحد {date} (فاضل {n} يوم)", { date, n }) : t("الكارت خلص في {date}", { date });
+}
+
 /**
  * رسالة واتساب اللي بتتبعت مع الكارت: بتفرّح وفيها لينك صفحة الكارت
  * (الصفحة فيها الكارت صورة بوشّين، والكود، وإزاي يستخدمه)
  */
 export function giftCardShareText(
   t: Tr,
-  c: { asGift: boolean; toName: string; fromName: string; message: string; amountLabel: string; store: string; link: string; expires: string | null },
+  c: { asGift: boolean; toName: string; fromName: string; message: string; amountLabel: string; store: string; link: string; expires: string | null; expiresAt: string | null },
 ) {
   const to = c.asGift && c.toName ? c.toName : "";
   const lines = [
@@ -71,7 +80,7 @@ export function giftCardShareText(
   ];
   if (c.asGift && c.message) lines.push("", `«${c.message}»`);
   lines.push("", t("افتح الكارت من هنا 👇"), c.link);
-  if (c.expires) lines.push("", t("⏳ الكارت صالح {days} أيام بس، لحد {date}. استخدمه قبلها!", { days: GIFT_CARD_VALID_DAYS, date: c.expires }));
+  if (c.expires && c.expiresAt) lines.push("", t("⏳ الكارت صالح لحد {date} (فاضل {n} يوم). استخدمه قبلها!", { date: c.expires, n: daysLeft(c.expiresAt) }));
   lines.push("", t("اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝"));
   return lines.join("\n");
 }

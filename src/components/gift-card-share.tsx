@@ -24,6 +24,9 @@ export interface CardFace {
   site: string;
   /** «صالح … لحد …» جاهزة بلغة الصفحة */
   validity: string | null;
+  /** رسالة المشتري ومن مين (بتتكتب على ضهر الكارت) */
+  message: string;
+  fromName: string;
 }
 
 /** خطوط الموقع نفسها (next/font) بأساميها الحقيقية عشان الـ canvas يرسم بيها */
@@ -100,42 +103,58 @@ function drawFront(ctx: CanvasRenderingContext2D, c: CardFace, l: { title: strin
   ctx.font = `400 ${11 * CQ}px ${f.hand}`;
   ctx.fillText(l.title, W * 0.66, H * 0.4 + 11 * CQ * 0.95);
 
-  // لمين والمبلغ والكود: بلوك بيبدأ من 42% من العرض وتحت بـ 8%
-  ctx.font = `700 ${3.4 * CQ}px ${f.body}`;
-  ctx.letterSpacing = `${0.14 * 3.4 * CQ}px`;
-  const codeW = c.code ? ctx.measureText(c.code).width : 0;
-  ctx.letterSpacing = "0px";
-  ctx.font = `600 ${4.8 * CQ}px ${f.body}`;
-  const amountW = ctx.measureText(c.amountLabel).width;
-  const left = W * 0.42;
-  const edge = f.rtl ? left + Math.max(codeW, amountW) : left;
-  ctx.textAlign = f.rtl ? "right" : "left";
+  // لمين والمبلغ والكود: تحت على اليمين بعيد عن الشريطة، ومتظبطين على نفس الحافة
+  const codeSize = 2.6 * CQ;
+  const codeSpace = 0.12 * codeSize;
+  const edge = W * 0.94;
+  ctx.textAlign = "right";
   let y = H * 0.92;
   if (c.code) {
-    ctx.direction = "ltr";
-    ctx.textAlign = f.rtl ? "right" : "left";
-    ctx.font = `700 ${3.4 * CQ}px ${f.body}`;
-    ctx.letterSpacing = `${0.14 * 3.4 * CQ}px`;
-    ctx.fillText(c.code, f.rtl ? edge + 0.14 * 3.4 * CQ : edge, y - 1.2 * CQ);
+    // الكود في كبسولة متقطعة زي الكوبون (العرض بيتحسب من غير المسافات وبعدين بنزودها بإيدينا)
+    ctx.font = `700 ${codeSize}px ${f.body}`;
     ctx.letterSpacing = "0px";
+    const textW = ctx.measureText(c.code).width + codeSpace * (c.code.length - 1);
+    const pillW = textW + 4.4 * CQ;
+    const pillH = codeSize + 2 * CQ;
+    const x0 = edge - pillW;
+    const y0 = y - pillH;
+    ctx.beginPath();
+    ctx.roundRect(x0, y0, pillW, pillH, pillH / 2);
+    ctx.fillStyle = "rgba(255,253,249,0.75)";
+    ctx.fill();
+    ctx.lineWidth = 0.25 * CQ;
+    ctx.setLineDash([0.9 * CQ, 0.6 * CQ]);
+    ctx.strokeStyle = look.ink;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = look.ink;
+    ctx.direction = "ltr";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `700 ${codeSize}px ${f.body}`;
+    ctx.letterSpacing = `${codeSpace}px`;
+    ctx.fillText(c.code, x0 + pillW / 2 + codeSpace / 2, y0 + pillH / 2 + 0.1 * CQ);
+    ctx.letterSpacing = "0px";
+    ctx.textBaseline = "alphabetic";
     ctx.direction = f.rtl ? "rtl" : "ltr";
-    y -= 3.4 * CQ * 1.5 + 4;
+    ctx.textAlign = "right";
+    y = y0 - 2.4 * CQ;
   }
   ctx.font = `600 ${4.8 * CQ}px ${f.body}`;
-  ctx.fillText(c.amountLabel, edge, y - 1.6 * CQ);
-  y -= 4.8 * CQ * 1.5;
+  ctx.fillText(c.amountLabel, edge, y);
+  y -= 4.8 * CQ + 1.4 * CQ;
   if (c.toName) {
     ctx.globalAlpha = 0.8;
-    ctx.font = `400 ${3.4 * CQ}px ${f.body}`;
-    ctx.fillText(l.to, edge, y - 1.2 * CQ);
+    ctx.font = `400 ${3.2 * CQ}px ${f.body}`;
+    ctx.fillText(l.to, edge, y);
     ctx.globalAlpha = 1;
   }
 
-  // اسم المتجر تحت على اليمين
+  // اسم المتجر فوق على اليمين (المساحة اللي تحت للمبلغ والكود)
   ctx.direction = "ltr";
   ctx.textAlign = "right";
   ctx.font = `400 ${6 * CQ}px ${f.hand}`;
-  ctx.fillText("giftful", W * 0.94, H * 0.93);
+  ctx.fillText("giftful", W * 0.94, H * 0.07 + 6 * CQ * 0.78);
 }
 
 /** ضهر الكارت: الفيونكة واللوجو وأمنياتنا، وإزاي يستخدمه */
@@ -156,8 +175,8 @@ function drawBack(ctx: CanvasRenderingContext2D, c: CardFace, l: { tagline: stri
 
   // الفيونكة
   ctx.save();
-  ctx.translate(W / 2 - 102, 70);
-  ctx.scale(1.7, 1.7);
+  ctx.translate(W / 2 - 66, 60);
+  ctx.scale(1.1, 1.1);
   ctx.fillStyle = "#fff";
   for (const d of [bow.tailL, bow.tailR, bow.loopL, bow.loopR]) ctx.fill(new Path2D(d));
   ctx.fillStyle = "rgba(0,0,0,0.18)";
@@ -172,11 +191,11 @@ function drawBack(ctx: CanvasRenderingContext2D, c: CardFace, l: { tagline: stri
   ctx.textAlign = "center";
   ctx.direction = "ltr";
   ctx.fillStyle = "#fff";
-  ctx.font = `italic 600 130px ${f.logo}`;
-  ctx.fillText("giftful", W / 2, 385);
+  ctx.font = `italic 600 92px ${f.logo}`;
+  ctx.fillText("giftful", W / 2, 270);
   ctx.save();
-  ctx.translate(W / 2 - 200, 398);
-  ctx.scale(2, 2);
+  ctx.translate(W / 2 - 140, 280);
+  ctx.scale(1.4, 1.4);
   ctx.strokeStyle = PINK;
   ctx.lineWidth = 2.4;
   ctx.lineCap = "round";
@@ -184,17 +203,36 @@ function drawBack(ctx: CanvasRenderingContext2D, c: CardFace, l: { tagline: stri
   ctx.restore();
 
   ctx.direction = f.rtl ? "rtl" : "ltr";
-  ctx.fillStyle = PINK;
-  ctx.font = `400 52px ${f.hand}`;
-  ctx.fillText(l.tagline, W / 2, 525);
 
-  // أمنياتنا
-  ctx.fillStyle = "#fff";
-  ctx.font = `600 44px ${f.head}`;
-  let y = 610;
-  for (const line of wrap(ctx, l.wishes, 1250).slice(0, 3)) {
+  // رسالة المشتري بخط اليد في النص (ولو مفيش رسالة: «هدية متغلفة بحب»)
+  ctx.font = `400 58px ${f.hand}`;
+  const msg = c.message ? wrap(ctx, `«${c.message}»`, 1260).slice(0, 3) : [];
+  const block = msg.length ? msg.length * 76 + (c.fromName ? 60 : 0) : 70;
+  let y = 340 + Math.max(0, (290 - block) / 2) + 56;
+  if (msg.length) {
+    ctx.fillStyle = "#fff";
+    for (const line of msg) {
+      ctx.fillText(line, W / 2, y);
+      y += 76;
+    }
+    if (c.fromName) {
+      ctx.fillStyle = PINK;
+      ctx.font = `600 38px ${f.head}`;
+      ctx.fillText(`— ${c.fromName}`, W / 2, y - 6);
+    }
+  } else {
+    ctx.fillStyle = PINK;
+    ctx.font = `400 60px ${f.hand}`;
+    ctx.fillText(l.tagline, W / 2, y);
+  }
+
+  // أمنياتنا (جملة واحدة تنفع لكل المناسبات)
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = `600 34px ${f.head}`;
+  y = 700;
+  for (const line of wrap(ctx, l.wishes, 1250).slice(0, 2)) {
     ctx.fillText(line, W / 2, y);
-    y += 62;
+    y += 48;
   }
 
   // المدة (قصيرة، فلازم تبان)
@@ -243,7 +281,7 @@ export function GiftCardShare({ card, shareText, waHref, fileName }: { card: Car
     title: t("كارت هدية"),
     to: t("لـ {name}", { name: card.toName }),
     tagline: t("هدية متغلفة بحب"),
-    wishes: t("كل سنة وإنت طيب، ودايماً حواليك ناس بتحبك وبتفتكرك. الكارت ده مستنيك تختار بيه اللي يفرّحك، وإحنا علينا نغلّفهولك ونوصّلهولك بحب."),
+    wishes: t("في حد بيحبك وافتكرك بالهدية دي 💝 اختار بيها اللي يفرّحك، وإحنا علينا نغلّفهولك ونوصّلهولك بحب."),
     how: t("اختار هديتك من الموقع، واكتب الكود اللي على وش الكارت وإنت بتدفع."),
   };
   const key = JSON.stringify([card, labels]);

@@ -79,16 +79,22 @@ export function GiftCardArt({
       {/* الأماكن ثابتة (شمال/يمين) عشان الكلام ميركبش على الشريطة في العربي والإنجليزي */}
       <div className="absolute inset-0" style={{ color: l.ink }}>
         <p className="absolute top-[40%] right-[6%] left-[38%] text-center font-script text-[11cqw] leading-tight whitespace-nowrap">{title}</p>
-        <div className="absolute bottom-[8%] left-[42%] max-w-[34%]" dir="auto">
-          {toName && <p className="truncate text-[3.4cqw] opacity-80">{toName}</p>}
-          {amount != null && <p className="tabular text-[4.8cqw] font-semibold tracking-wide">{amountLabel ?? amount}</p>}
+        {/* لمين والمبلغ والكود: تحت على اليمين بعيد عن الشريطة، ومتظبطين على نفس الحافة */}
+        <div className="absolute right-[6%] bottom-[8%] flex max-w-[50%] flex-col items-end" dir="ltr">
+          {toName && <p className="max-w-full truncate text-[3.2cqw] leading-snug opacity-80" dir="auto">{toName}</p>}
+          {amount != null && <p className="tabular text-[4.8cqw] leading-tight font-semibold tracking-wide" dir="auto">{amountLabel ?? amount}</p>}
           {code && (
-            <p className="tabular mt-1 text-[3.4cqw] font-bold tracking-[0.14em] whitespace-nowrap" dir="ltr">
+            // الكود في كبسولة متقطعة زي الكوبون
+            <p
+              className="tabular mt-[1.4cqw] rounded-full border-[0.25cqw] border-dashed bg-[#fffdf9]/75 px-[2.2cqw] py-[1cqw] text-[2.6cqw] leading-none font-bold tracking-[0.12em] whitespace-nowrap"
+              style={{ borderColor: l.ink }}
+            >
               {code}
             </p>
           )}
         </div>
-        <p className="absolute right-[6%] bottom-[7%] font-script text-[6cqw] leading-none">{storeName}</p>
+        {/* اسم المتجر فوق على اليمين (المساحة اللي تحت للمبلغ والكود) */}
+        <p className="absolute top-[7%] right-[6%] font-script text-[6cqw] leading-none" dir="ltr">{storeName}</p>
       </div>
     </div>
   );
