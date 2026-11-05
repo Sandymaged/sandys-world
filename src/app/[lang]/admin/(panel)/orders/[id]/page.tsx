@@ -15,8 +15,9 @@ import { addDays, cairoNow, periodLabel } from "@/lib/delivery";
 import { brandOrderOf } from "@/lib/brand-portal";
 import { loadCatalogData } from "@/lib/db/catalog-store";
 import { addRefundAction } from "@/lib/finance-actions";
-import { formatDay } from "@/lib/format";
-import { giftCardDesigns } from "@/lib/gift-card";
+import { egp, formatDay } from "@/lib/format";
+import { giftCardDesigns, giftCardShareText } from "@/lib/gift-card";
+import { translator } from "@/i18n/t";
 import { STORE_NAME } from "@/lib/settings";
 
 export const instant = false;
@@ -49,15 +50,9 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
     (order.giftCards ?? []).map(async (gc) => ({
       gc,
       record: gc.code ? await repo().getGiftCard(gc.code) : null,
+      cardUrl: gc.code ? `${siteUrl}/card/${gc.code}` : "",
       message: gc.code
-        ? [
-            gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
-            `كارت هدية من ${STORE_NAME} بقيمة ${money(gc.amount)}`,
-            `الكود: ${gc.code}`,
-            `اختار هديتك من ${siteUrl} واكتب الكود وإنت بتدفع.`,
-          ]
-            .filter(Boolean)
-            .join("\n")
+        ? giftCardShareText(translator(order.locale), { ...gc, amountLabel: egp(gc.amount, translator(order.locale)), store: translator(order.locale)(STORE_NAME), link: `${siteUrl}/card/${gc.code}` })
         : "",
     })),
   );
@@ -74,7 +69,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-6">
-          {cards.map(({ gc, record: card, message: gcMessage }) => (
+          {cards.map(({ gc, record: card, message: gcMessage, cardUrl }) => (
             <section key={gc.code ?? `${gc.design}-${gc.amount}-${gc.toPhone}`} className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
               <h2 className="text-2xl text-brand">كارت هدية · <span className="tabular">{money(gc.amount)}</span></h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-[1fr_1.1fr] sm:items-center">
@@ -95,8 +90,12 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                       <p className="pt-2">الكود: <b className="tabular tracking-wider" dir="ltr">{gc.code}</b></p>
                       {card && <p>الرصيد الباقي: <b className="tabular">{money(card.balance)}</b> من {money(card.amount)}</p>}
                       <a href={waLink(gc.asGift && gc.toPhone ? gc.toPhone : order.sender.phone, gcMessage)} target="_blank" rel="noreferrer" className="chip mt-2 border-success bg-success-soft text-success hover:bg-success hover:text-white">
-                        {gc.asGift ? `ابعت الكارت لـ ${gc.toName} على واتساب` : "ابعت الكود للمشتري على واتساب"}
+                        {gc.asGift ? `ابعت الكارت لـ ${gc.toName} على واتساب` : "ابعت الكارت للمشتري على واتساب"}
                       </a>
+                      <a href={cardUrl} target="_blank" rel="noreferrer" className="chip mt-2 ms-2 border-line bg-white text-ink-2 hover:border-brand hover:text-brand">
+                        صفحة الكارت (صور)
+                      </a>
+                      <p className="text-xs text-muted">الرسالة فيها لينك صفحة الكارت. من الموبايل تقدري تفتحي الصفحة وتبعتي الكارت صورتين (الوش والضهر).</p>
                     </>
                   ) : (
                     <p className="pt-2 text-butter">الكود هيتعمل أول ما تأكدي الدفع.</p>

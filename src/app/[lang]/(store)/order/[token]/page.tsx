@@ -16,6 +16,7 @@ import type { OrderStatus } from "@/lib/db/types";
 import { periodLabel } from "@/lib/delivery";
 import { waLink } from "@/lib/admin-format";
 import { egp, formatDay } from "@/lib/format";
+import { giftCardShareText } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -81,17 +82,9 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
   // رسالة كل كارت اللي بتتبعت على واتساب (للي هيوصله لو إحنا بنبعته، أو المشتري يبعتها بنفسه)
   const shared = cards.map((gc) => {
     const expires = gc.expiresAt ? dateFmt.format(new Date(gc.expiresAt)) : null;
-    const text = gc.code
-      ? [
-          gc.asGift && gc.message ? `«${gc.message}»${gc.fromName ? ` — ${gc.fromName}` : ""}` : null,
-          t("كارت هدية من {store} بقيمة {amount}", { store: t(STORE_NAME), amount: egp(gc.amount, t) }),
-          t("الكود: {code}", { code: gc.code }),
-          t("اختار هديتك من {url} واكتب الكود وإنت بتدفع (صالح لحد {date}).", { url: site, date: expires ?? "" }),
-        ]
-          .filter(Boolean)
-          .join("\n")
-      : "";
-    return { gc, expires, text };
+    const cardUrl = gc.code ? `${site}/card/${gc.code}` : "";
+    const text = gc.code ? giftCardShareText(t, { ...gc, amountLabel: egp(gc.amount, t), store: t(STORE_NAME), link: cardUrl }) : "";
+    return { gc, expires, text, cardUrl };
   });
   const cardsSection =
     cards.length > 0 ? (
@@ -105,7 +98,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           </p>
         )}
         <ul className="mt-4 divide-y divide-dashed divide-line">
-          {shared.map(({ gc, expires, text }, i) => (
+          {shared.map(({ gc, expires, text, cardUrl }, i) => (
             <li key={gc.code ?? i} className="space-y-2 py-4 first:pt-0 last:pb-0">
               <p className="text-sm text-ink-2">
                 <b className="tabular text-ink">{egp(gc.amount, t)}</b> ·{" "}
@@ -118,6 +111,9 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                     <CopyButton value={gc.code} />
                   </div>
                   {expires && <p className="text-sm text-ink-2">{t("صالح لحد {date}", { date: expires })}</p>}
+                  <a href={cardUrl} className="btn btn-sm me-2 border border-ink/15 bg-bg text-ink hover:border-brand hover:text-brand">
+                    {t("شوف الكارت")}
+                  </a>
                   <a
                     href={gc.asGift && gc.toPhone ? waLink(gc.toPhone, text) : `https://wa.me/?text=${encodeURIComponent(text)}`}
                     target="_blank"

@@ -52,6 +52,28 @@ export function giftCardProblems(c: Omit<CartGiftCard, "id">): string[] {
 }
 
 /** الكود بيتكتب بحروف كابيتال ومن غير مسافات: GC-7KQ2-M9XA */
+type Tr = (key: string, vars?: Record<string, string | number>) => string;
+
+/**
+ * رسالة واتساب اللي بتتبعت مع الكارت: بتفرّح وفيها لينك صفحة الكارت
+ * (الصفحة فيها الكارت صورة بوشّين، والكود، وإزاي يستخدمه)
+ */
+export function giftCardShareText(
+  t: Tr,
+  c: { asGift: boolean; toName: string; fromName: string; message: string; amountLabel: string; store: string; link: string },
+) {
+  const to = c.asGift && c.toName ? c.toName : "";
+  const lines = [
+    to ? t("🎁 {name}، ليك هدية!", { name: to }) : t("🎁 ليك هدية!"),
+    c.asGift && c.fromName
+      ? t("{from} بعتلك كارت هدية من {store} بقيمة {amount}", { from: c.fromName, store: c.store, amount: c.amountLabel })
+      : t("وصلك كارت هدية من {store} بقيمة {amount}", { store: c.store, amount: c.amountLabel }),
+  ];
+  if (c.asGift && c.message) lines.push("", `«${c.message}»`);
+  lines.push("", t("افتح الكارت من هنا 👇"), c.link, "", t("اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝"));
+  return lines.join("\n");
+}
+
 export const normalizeGiftCardCode = (code: string) =>
   code
     .toUpperCase()
