@@ -143,6 +143,41 @@ export async function deleteZone(id: string): Promise<SaveResult> {
   return error ? dbError(error, "المنطقة دي عليها طلبات قبل كده، اقفليها بدل ما تمسحيها") : done(id);
 }
 
+// ───────────── خصم الجروبات على الكيتات ─────────────
+
+export async function saveGroupDiscounts(f: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  if (!setupOnSupabase()) return { ok: false, error: NEED_DB };
+  const tiers: { minQty: number; rate: number }[] = [];
+  for (let i = 0; i < 4; i++) {
+    const qty = str(f, `qty_${i}`);
+    const pct = str(f, `pct_${i}`);
+    if (!qty && !pct) continue;
+    const q = num(f, `qty_${i}`);
+    const p = num(f, `pct_${i}`);
+    if (!(Number.isInteger(q) && q >= 2 && q <= 200)) return { ok: false, error: `الشريحة ${i + 1}: العدد لازم يكون رقم صحيح من 2 لـ 200` };
+    if (!(p > 0 && p <= 50)) return { ok: false, error: `الشريحة ${i + 1}: الخصم لازم يكون من 1 لـ 50٪` };
+    if (tiers.some((t) => t.minQty === q)) return { ok: false, error: `العدد ${q} متكرر في شريحتين` };
+    tiers.push({ minQty: q, rate: Math.round(p * 10) / 1000 });
+  }
+  tiers.sort((a, b) => a.minQty - b.minQty);
+  // العدد الأكبر لازم خصمه أكبر، وإلا العميل اللي بيزوّد ياخد خصم أقل
+  for (let i = 1; i < tiers.length; i++) {
+    if (tiers[i].rate <= tiers[i - 1].rate) return { ok: false, error: `خصم ${tiers[i].minQty} لازم يكون أكبر من خصم ${tiers[i - 1].minQty}` };
+  }
+  const enabled = bool(f, "enabled");
+  if (enabled && !tiers.length) return { ok: false, error: "اكتبي شريحة واحدة على الأقل، أو اقفلي الخصم" };
+  const { error } = await adminClient()
+    .from("settings")
+    .upsert([
+      { key: "groupDiscounts", value: { enabled, tiers } },
+      { key: "weddingDiscounts", value: enabled ? tiers : [] },
+    ]);
+  if (error) return { ok: false, error: `ماتحفظش: ${error.message}` };
+  updateTag("catalog");
+  return { ok: true };
+}
+
 // ───────────── أكواد الخصم ─────────────
 
 export async function saveCoupon(code: string | null, f: FormData): Promise<SaveResult> {

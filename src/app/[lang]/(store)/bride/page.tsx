@@ -144,7 +144,15 @@ export default async function BridePage() {
               {t("قوليلنا نوع الطلب والعدد وميعاد الفرح وألوانه، وهيوصلك عرض سعر بلينك على واتساب. توافقي وتدفعي عربون 50% والباقي قبل التسليم.")}
             </p>
             <ul className="mt-5 space-y-2 font-script text-xl text-lilac lg:text-start">
-              <li>✦ {t("خصم 5% من 6 قطع، و10% من 10 قطع")}</li>
+              {sf.settings.weddingDiscounts.length > 0 && (
+                <li>
+                  ✦{" "}
+                  {[...sf.settings.weddingDiscounts]
+                    .sort((a, b) => a.minQty - b.minQty)
+                    .map((d) => t("خصم {p}% من {n} قطع", { p: Math.round(d.rate * 100), n: d.minQty }))
+                    .join(t("، و"))}
+                </li>
+              )}
               <li>✦ {t("هنبعتلك شكل التصميم توافقي عليه قبل التنفيذ")}</li>
               <li>✦ {t("يفضل الطلب قبل الفرح بأسبوعين على الأقل")}</li>
             </ul>

@@ -240,6 +240,8 @@ export const en: Record<string, string> = {
   "من {min} لـ {max} · {price} للفرد": "{min} to {max} people · {price} per person",
   "خصم الكمية {p}%": "Group discount {p}%",
   "زوّدي {n} وخدي خصم {p}% على الكل": "Add {n} more for {p}% off everything",
+  "خصم {p}% من {n} قطع": "{p}% off from {n} pieces",
+  "، و": ", and ",
   "الأسماء على الكروت": "Names for the cards",
   "(اختياري، كل اسم في سطر)": "(optional, one name per line)",
   "سارة\nمريم\nنور": "Sara\nMariam\nNour",

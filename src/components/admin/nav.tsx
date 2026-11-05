@@ -30,6 +30,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
       { href: "/admin/catalog/seasons", label: "المواسم", icon: "sparkle" },
       { href: "/admin/zones", label: "مناطق التوصيل", icon: "route" },
       { href: "/admin/coupons", label: "أكواد الخصم", icon: "tag" },
+      { href: "/admin/catalog/group-discounts", label: "خصم الجروبات", icon: "users" },
     ],
   },
   {

@@ -1,5 +1,6 @@
 import "server-only";
 import * as seed from "./seed-data";
+import { DEFAULT_SETTINGS } from "./settings";
 import { adminClient } from "./supabase/admin";
 import type { Occasion, Season, Zone } from "./types";
 
@@ -87,6 +88,26 @@ export async function listCoupons(): Promise<AdminCoupon[]> {
   }));
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
+ * خصم الجروبات على الكيتات (الورشة والعروسة): كل ما العدد يزيد الخصم يزيد.
+ * «groupDiscounts» فيها الشرايح ومفتوح ولا لأ (عشان لو اتقفل الشرايح متضيعش)،
+ * و«weddingDiscounts» هي اللي الموقع بيقرا منها: الشرايح لو مفتوح، وفاضية لو مقفول (من غير خصم).
+ */
+export interface GroupDiscounts {
+  enabled: boolean;
+  tiers: { minQty: number; rate: number }[];
+}
+
+export async function loadGroupDiscounts(): Promise<GroupDiscounts> {
+  if (!setupOnSupabase()) return { enabled: true, tiers: DEFAULT_SETTINGS.weddingDiscounts };
+  const { data, error } = await adminClient().from("settings").select("key, value").in("key", ["groupDiscounts", "weddingDiscounts"]);
+  if (error) throw new Error(error.message);
+  const map = Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
+  if (map.groupDiscounts) return map.groupDiscounts as GroupDiscounts;
+  const live = (map.weddingDiscounts as GroupDiscounts["tiers"] | undefined) ?? DEFAULT_SETTINGS.weddingDiscounts;
+  return { enabled: live.length > 0, tiers: live };
+}
 
 /** يوم بتوقيت القاهرة (YYYY-MM-DD) من تاريخ ووقت محفوظ */
 export function cairoDay(iso: string | null | undefined) {
