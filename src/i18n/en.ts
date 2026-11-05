@@ -737,6 +737,8 @@ export const en: Record<string, string> = {
   "اختاروا الكيت": "Pick your kit",
   "مش عارف تجيب إيه؟": "Not sure what to get?",
   "خليه هو يختار": "Let them choose",
+  "بوكسات وهدايا للفرح، على ذوقك وبالأسامي.": "Wedding boxes and gifts, your style and with names.",
+  "كيت فيه كل حاجة، تعملوا بيه حاجة بإيديكم في قعدة حلوة.": "A kit with everything inside, to make something together on a fun night in.",
   "كلمنا من الشات اللي في صفحة طلبك، وهنرد عليك.": "Message us from the chat on your order page and we'll get back to you.",
   "قوليله الهدية لمين وميزانيتك كام، وهو يقترحلك.": "Tell it who the gift is for and your budget, and it'll suggest ideas.",
   "كارت هدية بالمبلغ اللي تحبه، بيوصله على واتساب.": "A gift card for any amount, delivered on WhatsApp.",

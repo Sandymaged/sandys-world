@@ -63,7 +63,8 @@ export function GiftCardArt({
   const l = looks[design];
   return (
     <div
-      className={`relative aspect-[1.586] overflow-hidden rounded-[1.4rem] shadow-[0_30px_50px_-30px_rgb(60_30_20/0.55)] ${className}`}
+      // @container: مقاس الكلام بيتحسب من عرض الكارت نفسه (cqw)، فالكارت الصغير كلامه صغير ومش بيركب على بعضه
+      className={`@container relative aspect-[1.586] overflow-hidden rounded-[1.4rem] shadow-[0_30px_50px_-30px_rgb(60_30_20/0.55)] ${className}`}
       style={{
         backgroundColor: l.bg,
         backgroundImage: l.dots ? `radial-gradient(${l.dots} 2px, transparent 2.5px)` : undefined,
@@ -73,17 +74,17 @@ export function GiftCardArt({
       <RibbonBow ink={l.ink} bg={l.bg} />
       {/* الأماكن ثابتة (شمال/يمين) عشان الكلام ميركبش على الشريطة في العربي والإنجليزي */}
       <div className="absolute inset-0" style={{ color: l.ink }}>
-        <p className="absolute top-[36%] right-[6%] left-[38%] text-center font-script text-[clamp(1.5rem,6.5vw,3rem)] leading-none">{title}</p>
+        <p className="absolute top-[40%] right-[6%] left-[38%] text-center font-script text-[11cqw] leading-tight whitespace-nowrap">{title}</p>
         <div className="absolute bottom-[8%] left-[42%] max-w-[34%]" dir="auto">
-          {toName && <p className="truncate text-[clamp(0.7rem,2.2vw,0.95rem)] opacity-80">{toName}</p>}
-          {amount != null && <p className="tabular text-[clamp(0.95rem,3vw,1.35rem)] font-semibold tracking-wide">{amountLabel ?? amount}</p>}
+          {toName && <p className="truncate text-[3.4cqw] opacity-80">{toName}</p>}
+          {amount != null && <p className="tabular text-[4.8cqw] font-semibold tracking-wide">{amountLabel ?? amount}</p>}
           {code && (
-            <p className="tabular mt-1 text-[clamp(0.7rem,2.2vw,0.95rem)] font-bold tracking-[0.14em] whitespace-nowrap" dir="ltr">
+            <p className="tabular mt-1 text-[3.4cqw] font-bold tracking-[0.14em] whitespace-nowrap" dir="ltr">
               {code}
             </p>
           )}
         </div>
-        <p className="absolute right-[6%] bottom-[8%] font-script text-[clamp(1.1rem,4vw,1.8rem)] leading-none">{storeName}</p>
+        <p className="absolute right-[6%] bottom-[7%] font-script text-[6cqw] leading-none">{storeName}</p>
       </div>
     </div>
   );

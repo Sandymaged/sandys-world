@@ -71,6 +71,7 @@ export default async function HomePage() {
       tone: "bg-blush",
       kicker: "مبروك يا عروسة",
       title: "العروسة والإشبينات",
+      line: "بوكسات وهدايا للفرح، على ذوقك وبالأسامي.",
       tags: ["بالأسامي", "على ألوان الفرح", "للإشبينات ولماما"],
       cta: "ادخلي القسم",
     },
@@ -80,6 +81,7 @@ export default async function HomePage() {
       tone: "bg-blue-soft",
       kicker: "قعدة بنات؟",
       title: "ورشة مع الصحاب",
+      line: "كيت فيه كل حاجة، تعملوا بيه حاجة بإيديكم في قعدة حلوة.",
       tags: ["كل الأدوات في الكيت", "من غير خبرة", "لكل الشلة"],
       cta: "اختاروا الكيت",
     },
@@ -228,9 +230,13 @@ export default async function HomePage() {
                 <div className="reveal text-center sm:text-start">
                   <span className="font-script text-3xl text-brand">{t(c.kicker)}</span>
                   <h2 className="mt-1 text-3xl leading-tight sm:text-4xl">{t(c.title)}</h2>
-                  <ul className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
-                    {c.tags.map((x, j) => (
-                      <li key={x} className={`rounded-full bg-paper px-3.5 py-1 text-sm font-semibold text-ink shadow-sm ${j % 2 ? "rotate-2" : "-rotate-2"}`}>
+                  <p className="mt-2 text-ink-2">{t(c.line)}</p>
+                  <ul className="mt-4 space-y-1.5 text-[15px] font-semibold text-ink">
+                    {c.tags.map((x) => (
+                      <li key={x} className="flex items-center justify-center gap-2 sm:justify-start">
+                        <span className="grid size-5 place-items-center rounded-full bg-paper text-brand shadow-sm">
+                          <Icon name="check" className="size-3.5" />
+                        </span>
                         {t(x)}
                       </li>
                     ))}
