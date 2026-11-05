@@ -14,8 +14,8 @@ export type GiftCardDesign = (typeof giftCardDesigns)[number]["id"];
 export const giftCardAmounts = [300, 500, 750, 1000, 1500, 2000];
 export const GIFT_CARD_MIN = 200;
 export const GIFT_CARD_MAX = 10000;
-/** صالح 10 أيام من يوم ما الكود يتعمل (لما الدفع يتأكد) */
-export const GIFT_CARD_VALID_DAYS = 10;
+/** صالح 30 يوم من يوم ما الكود يتعمل (لما الدفع يتأكد) */
+export const GIFT_CARD_VALID_DAYS = 30;
 export const GIFT_CARD_MAX_MESSAGE = 160;
 
 export const isGiftCardDesign = (v: string): v is GiftCardDesign => giftCardDesigns.some((d) => d.id === v);

@@ -647,8 +647,8 @@ export const en: Record<string, string> = {
   "هيتبعت لـ {name} على واتساب أول ما الدفع يتأكد.": "It'll be sent to {name} on WhatsApp once payment is confirmed.",
   "بنجهّزه ونبعته لـ {name} على واتساب.": "We're getting it ready to send to {name} on WhatsApp.",
   "الكود بيوصل لـ {name} بس، عشان يفضل مفاجأة ومحدش غيره يستخدمه.": "Only {name} gets the code, so it stays a surprise and no one else can use it.",
-  "الكارت صالح {days} أيام بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.": "The card is valid for {days} days only from when it's sent, so tell {name} to use it soon.",
-  "الكارت صالح {days} أيام بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.": "The card is valid for {days} days only from when it's sent — send it and use it soon.",
+  "الكارت صالح {days} يوم بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.": "The card is valid for {days} days only from when it's sent, so tell {name} to use it soon.",
+  "الكارت صالح {days} يوم بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.": "The card is valid for {days} days only from when it's sent — send it and use it soon.",
   "اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝": "Pick something that makes you happy, and we'll wrap it and deliver it 💝",
   "{name}، ليك هدية!": "{name}, you've got a gift!",
   "ليك هدية!": "You've got a gift!",
@@ -707,7 +707,7 @@ export const en: Record<string, string> = {
   "كارت هدية من {store} بقيمة {amount}": "A {amount} gift card from {store}",
   "لما تبقى مش عارف تجيبله إيه… خليه هو يختار.": "For when you don't know what to get them… let them choose.",
   "مبلغ تاني": "Other amount",
-  "مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} أيام.": "Not sure what to get them? Send a gift card so they can choose — delivered on WhatsApp and valid for {days} days.",
+  "مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} يوم.": "Not sure what to get them? Send a gift card so they can choose — delivered on WhatsApp and valid for {days} days.",
   "من {min} لـ {max}": "From {min} to {max}",
 
   // ── اختيارات المنتج والمخزون والأقسام المقفولة
@@ -778,7 +778,7 @@ export const en: Record<string, string> = {
   "هبعته بنفسي": "I'll send it myself",
   "الكود يوصلك إنت على واتساب، وتبعته لمين ما تحب.": "You get the code on WhatsApp and send it to whoever you like.",
   "من غير مصاريف شحن. بيتبعت على واتساب أول ما الدفع يتأكد.": "No shipping fee. Sent on WhatsApp once payment is confirmed.",
-  "كود بيتبعت على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح {days} أيام بس من يوم ما يتبعت، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده لحد ما المدة تخلص.": "A code sent on WhatsApp once payment is confirmed, so they can pick anything they like from the whole site. It's valid for only {days} days from when it's sent, and whatever they don't spend stays on the balance until then.",
+  "كود بيتبعت على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح {days} يوم بس من يوم ما يتبعت، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده لحد ما المدة تخلص.": "A code sent on WhatsApp once payment is confirmed, so they can pick anything they like from the whole site. It's valid for only {days} days from when it's sent, and whatever they don't spend stays on the balance until then.",
   "المبلغ مش مظبوط": "The amount isn't right",
   "هيتبعت لـ {name} على واتساب": "Will be sent to {name} on WhatsApp",
   "الكود هيوصلك على واتساب": "You'll get the code on WhatsApp",

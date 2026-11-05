@@ -120,7 +120,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                   </p>
                   <p className="text-xs leading-5 text-muted">
                     {t("الكود بيوصل لـ {name} بس، عشان يفضل مفاجأة ومحدش غيره يستخدمه.", { name: gc.toName })}{" "}
-                    {t("الكارت صالح {days} أيام بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS, name: gc.toName })}
+                    {t("الكارت صالح {days} يوم بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS, name: gc.toName })}
                   </p>
                 </>
               )}
@@ -130,7 +130,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                   {t("اتبعتلك على واتساب {when}", { when: sent })}
                 </p>
               )}
-              {!gc.asGift && !gc.code && <p className="text-xs leading-5 text-muted">{t("الكارت صالح {days} أيام بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS })}</p>}
+              {!gc.asGift && !gc.code && <p className="text-xs leading-5 text-muted">{t("الكارت صالح {days} يوم بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS })}</p>}
               {gc.code && !gc.asGift && (
                 <>
                   <div className="flex flex-wrap items-center gap-3">

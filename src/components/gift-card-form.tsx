@@ -84,7 +84,7 @@ export function GiftCardForm() {
         <div>
           <h2 className="text-4xl leading-tight">{t("كارت الهدية")}</h2>
           <p className="tabular mt-2 font-heading text-3xl text-brand">{value ? egp(value, t) : "—"}</p>
-          <p className="mt-2 leading-7 text-ink-2">{t("كود بيتبعت على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح {days} أيام بس من يوم ما يتبعت، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده لحد ما المدة تخلص.", { days: GIFT_CARD_VALID_DAYS })}</p>
+          <p className="mt-2 leading-7 text-ink-2">{t("كود بيتبعت على واتساب بعد ما الدفع يتأكد، وصاحبه يختار بيه اللي يعجبه من الموقع كله. صالح {days} يوم بس من يوم ما يتبعت، ولو ماصرفهوش مرة واحدة الباقي بيفضل في رصيده لحد ما المدة تخلص.", { days: GIFT_CARD_VALID_DAYS })}</p>
         </div>
 
         <fieldset>

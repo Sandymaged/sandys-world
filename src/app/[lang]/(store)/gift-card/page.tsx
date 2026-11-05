@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
   return {
     title: t("كارت هدية"),
-    description: t("مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} أيام.", { days: GIFT_CARD_VALID_DAYS }),
+    description: t("مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} يوم.", { days: GIFT_CARD_VALID_DAYS }),
   };
 }
 
