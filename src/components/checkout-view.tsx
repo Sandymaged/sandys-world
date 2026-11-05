@@ -246,6 +246,9 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
       </div>
 
       <aside className="space-y-4 rounded-3xl border border-line bg-paper p-6 shadow-[0_18px_36px_-28px_rgb(60_30_20/0.45)] lg:sticky lg:top-36">
+        {!hasGifts ? (
+          <p className="rounded-xl bg-bg p-3 text-xs leading-5 text-ink-2">{t("أكواد الخصم وكروت الهدايا القديمة بتتطبق على الهدايا بس، مش على شراء كروت هدايا جديدة.")}</p>
+        ) : (
         <div>
           <label className="label" htmlFor="cc">{t("كود خصم")}</label>
           <div className="flex gap-2">
@@ -263,7 +266,9 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
           </div>
           {couponMsg && <p className="mt-1 text-xs text-brand">{couponMsg}</p>}
           {coupon && <p className="mt-1 text-xs text-success">{t("تم تطبيق الكود")}</p>}
+          {cards.length > 0 && <p className="mt-1 text-xs text-muted">{t("الخصم على الهدايا بس، مش على كارت الهدية.")}</p>}
         </div>
+        )}
 
         {hasGifts && (
         <div>
@@ -284,6 +289,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
           </div>
           {gcMsg && <p className="mt-1 text-xs text-brand">{gcMsg}</p>}
           {gcCard && <p className="mt-1 text-xs text-success">{t("رصيد الكارت {balance}", { balance: egp(gcCard.balance, t) })}</p>}
+          {cards.length > 0 && <p className="mt-1 text-xs text-muted">{t("رصيد الكارت بيدفع الهدايا بس، مش كارت الهدية الجديد.")}</p>}
         </div>
         )}
 

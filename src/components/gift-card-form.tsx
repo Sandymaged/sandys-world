@@ -204,6 +204,7 @@ export function GiftCardForm() {
           <Icon name="check" className="size-4 text-success" />
           {t("من غير مصاريف شحن. بيتبعت على واتساب أول ما الدفع يتأكد.")}
         </p>
+        <p className="text-center text-xs leading-5 text-muted">{t("الدفع بإنستاباي. أكواد الخصم مش بتتطبق على كروت الهدايا، ومينفعش تدفع تمنها بكارت هدية تاني.")}</p>
       </div>
     </div>
   );
