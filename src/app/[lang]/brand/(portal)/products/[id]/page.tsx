@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, Field, ImageField, Row, Section, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, ImageField, Row, Section, TextArea } from "@/components/admin/form";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { requireBrand } from "@/lib/brand-auth";
 import { deleteBrandProduct, saveBrandProduct } from "@/lib/brand-actions";
@@ -78,10 +78,13 @@ export default async function BrandProduct({ params }: PageProps<"/[lang]/brand/
           <div className="grid gap-3 sm:grid-cols-2">
             <Check label="متاح للبيع (شيله لو عايز توقف المنتج مؤقتاً)" name="isAvailable" defaultChecked={p?.isAvailable ?? true} />
             <Check label="ينفع يتحط في بوكس" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
-            <Check label="بيتكتب عليه اسم أو جملة" name="isCustomizable" defaultChecked={p?.isCustomizable ?? false} />
           </div>
+          <CustomizationFields
+            defaultChecked={p?.isCustomizable ?? false}
+            defaultMax={p?.customizationMaxChars ?? null}
+            hint="لو المنتج بيتكتب عليه اسم أو جملة (زي مج بالاسم أو ميدالية محفورة)، العميل بيلاقي خانة يكتب فيها الكلام. الرقم ده أقصى عدد حروف يقدر يكتبه، على قد المساحة اللي على المنتج."
+          />
           <Row>
-            <Field label="أقصى عدد حروف للكتابة" name="customizationMaxChars" type="number" defaultValue={p?.customizationMaxChars ?? 25} />
             <Field
               label="العدد اللي عندك"
               name="stock"

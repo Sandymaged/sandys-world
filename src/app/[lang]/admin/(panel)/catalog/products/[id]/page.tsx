@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, Field, ImageField, Row, Section, Select, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, ImageField, Row, Section, Select, TextArea } from "@/components/admin/form";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deleteProduct, saveProduct } from "@/lib/admin-catalog-actions";
 import { adminOptions } from "@/lib/admin-options";
@@ -84,10 +84,13 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
             <Check label="متاح للبيع (لو اتشال، المنتج وكل باكدج فيه بيختفوا)" name="isAvailable" defaultChecked={p ? p.reviewStatus === "pending" || p.isAvailable : true} />
             <Check label="ينفع يتحط في بوكس" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
             <Check label="إضافة على الباكدجات (ورد، بالونة…)" name="isAddon" defaultChecked={p?.isAddon ?? false} />
-            <Check label="بيتكتب عليه اسم أو جملة" name="isCustomizable" defaultChecked={p?.isCustomizable ?? false} />
           </div>
+          <CustomizationFields
+            defaultChecked={p?.isCustomizable ?? false}
+            defaultMax={p?.customizationMaxChars ?? null}
+            hint="لو المنتج بيتكتب عليه اسم أو جملة (زي مج بالاسم أو ميدالية محفورة)، العميل بيلاقي خانة يكتب فيها الكلام. الرقم ده أقصى عدد حروف يقدر يكتبه، على قد المساحة اللي على المنتج: مثلاً 15 للمج، وأكتر للكوشن أو البرواز."
+          />
           <Row>
-            <Field label="أقصى عدد حروف للتخصيص" name="customizationMaxChars" type="number" defaultValue={p?.customizationMaxChars ?? 25} />
             <Field
               label="العدد في المخزن"
               name="stock"

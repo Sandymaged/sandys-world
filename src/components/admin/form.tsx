@@ -111,6 +111,27 @@ export function Check({ label, name, defaultChecked }: { label: string; name: st
   );
 }
 
+/**
+ * «بيتكتب عليه اسم أو جملة» ومعاها أقصى عدد حروف: الخانة بتتفتح بس لما العلامة تتعلّم
+ * (ولو اتقفلت، السيرفر بيشيل الحد أصلاً)
+ */
+export function CustomizationFields({ defaultChecked, defaultMax, hint }: { defaultChecked: boolean; defaultMax: number | null; hint: string }) {
+  const [on, setOn] = useState(defaultChecked);
+  return (
+    <div className="space-y-3 rounded-2xl border border-dashed border-line p-4">
+      <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+        <input type="checkbox" name="isCustomizable" checked={on} onChange={(e) => setOn(e.target.checked)} className="size-5 accent-brand" />
+        بيتكتب عليه اسم أو جملة
+      </label>
+      <div className={on ? "" : "opacity-50"}>
+        <label className="label" htmlFor="customizationMaxChars">أقصى عدد حروف للكتابة</label>
+        <input id="customizationMaxChars" name="customizationMaxChars" type="number" min={1} disabled={!on} defaultValue={defaultMax ?? 25} className="field tabular max-w-40" />
+        <p className="mt-1 text-xs leading-5 text-muted">{hint}</p>
+      </div>
+    </div>
+  );
+}
+
 export function ChecksGroup({ label, name, options, selected }: { label: string; name: string; options: { value: string; label: string }[]; selected: string[] }) {
   return (
     <fieldset>
