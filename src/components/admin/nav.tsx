@@ -40,6 +40,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
       { href: "/admin/settlements", label: "حسابات البراندات", icon: "handshake" },
       { href: "/admin/expenses", label: "المصاريف", icon: "receipt" },
       { href: "/admin/costs", label: "التكاليف", icon: "receipt" },
+      { href: "/admin/payment", label: "الدفع بإنستاباي", icon: "wallet" },
     ],
   },
   {

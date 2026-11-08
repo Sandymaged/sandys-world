@@ -26,7 +26,8 @@ export interface StoreSettings {
   defaultSlotCapacity: number;
   periods: { id: DeliveryPeriod; label: string; from: number; to: number }[];
   maxCardMessage: number;
-  instapay: { address: string; link: string; holderName: string };
+  /** بيانات الدفع بإنستاباي اللي العميل بيشوفها: العنوان (IPA)، والرقم، ولينك الدفع، والاسم */
+  instapay: { address: string; phone?: string; link: string; holderName: string };
   paymentWindowHours: number;
   sameDayPaymentWindowHours: number;
   weddingDiscounts: { minQty: number; rate: number }[];

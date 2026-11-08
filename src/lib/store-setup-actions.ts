@@ -178,6 +178,24 @@ export async function saveGroupDiscounts(f: FormData): Promise<{ ok: true } | { 
   return { ok: true };
 }
 
+// ───────────── بيانات الدفع بإنستاباي ─────────────
+
+export async function saveInstapay(f: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  if (!setupOnSupabase()) return { ok: false, error: NEED_DB };
+  const address = str(f, "address").slice(0, 60);
+  const phone = str(f, "phone").replace(/[^\d+]/g, "").slice(0, 15);
+  const link = str(f, "link").slice(0, 300);
+  const holderName = str(f, "holderName").slice(0, 60);
+  if (!address && !phone) return { ok: false, error: "اكتبي عنوان إنستاباي أو رقم الموبايل على الأقل" };
+  if (phone && !/^(\+20|0)1[0125]\d{8}$/.test(phone)) return { ok: false, error: "رقم الموبايل مش مظبوط (01xxxxxxxxx)" };
+  if (link && !/^https:\/\//.test(link)) return { ok: false, error: "لينك الدفع لازم يبدأ بـ https://" };
+  const { error } = await adminClient().from("settings").upsert({ key: "instapay", value: { address, phone, link, holderName } });
+  if (error) return { ok: false, error: `ماتحفظش: ${error.message}` };
+  updateTag("catalog");
+  return { ok: true };
+}
+
 // ───────────── أكواد الخصم ─────────────
 
 export async function saveCoupon(code: string | null, f: FormData): Promise<SaveResult> {

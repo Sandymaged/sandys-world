@@ -1,6 +1,6 @@
 import "server-only";
 import * as seed from "./seed-data";
-import { DEFAULT_SETTINGS } from "./settings";
+import { DEFAULT_SETTINGS, type StoreSettings } from "./settings";
 import { adminClient } from "./supabase/admin";
 import type { Occasion, Season, Zone } from "./types";
 
@@ -107,6 +107,14 @@ export async function loadGroupDiscounts(): Promise<GroupDiscounts> {
   if (map.groupDiscounts) return map.groupDiscounts as GroupDiscounts;
   const live = (map.weddingDiscounts as GroupDiscounts["tiers"] | undefined) ?? DEFAULT_SETTINGS.weddingDiscounts;
   return { enabled: live.length > 0, tiers: live };
+}
+
+/** بيانات إنستاباي من اللوحة (ولو لسه متحطتش: من متغيرات Vercel القديمة) */
+export async function loadInstapay(): Promise<StoreSettings["instapay"]> {
+  const env = { address: process.env.INSTAPAY_ADDRESS ?? "", phone: "", link: process.env.INSTAPAY_LINK ?? "", holderName: process.env.INSTAPAY_NAME ?? "" };
+  if (!setupOnSupabase()) return env;
+  const { data } = await adminClient().from("settings").select("value").eq("key", "instapay").maybeSingle();
+  return data?.value ? { ...env, ...(data.value as StoreSettings["instapay"]) } : env;
 }
 
 /** يوم بتوقيت القاهرة (YYYY-MM-DD) من تاريخ ووقت محفوظ */

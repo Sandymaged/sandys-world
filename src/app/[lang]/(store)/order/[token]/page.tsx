@@ -60,10 +60,12 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
   if (!order) notFound();
   const settings = (await getStorefront()).settings;
 
+  // اللي اتكتب في اللوحة («الدفع بإنستاباي») الأول، ولو لسه متكتبش: متغيرات Vercel القديمة
   const ip = {
-    address: process.env.INSTAPAY_ADDRESS || settings.instapay.address,
-    link: process.env.INSTAPAY_LINK || settings.instapay.link,
-    name: process.env.INSTAPAY_NAME || settings.instapay.holderName,
+    address: settings.instapay.address || process.env.INSTAPAY_ADDRESS || "",
+    phone: settings.instapay.phone || "",
+    link: settings.instapay.link || process.env.INSTAPAY_LINK || "",
+    name: settings.instapay.holderName || process.env.INSTAPAY_NAME || "",
   };
   const waitingProof = order.paymentMethod === "instapay" && ["awaiting_proof", "rejected"].includes(order.paymentStatus) && order.status !== "cancelled";
   const qr = waitingProof && ip.link ? await QRCode.toDataURL(ip.link, { margin: 1, width: 220, color: { dark: "#6e1423", light: "#fffdf8" } }) : null;
@@ -223,15 +225,24 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                       <CopyButton value={String(order.totals.total)} />
                     </div>
                   </div>
+                  {ip.phone && (
+                    <div>
+                      <p className="text-xs text-muted">{t("حوّل على رقم الموبايل")}</p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="tabular text-lg font-semibold select-all" dir="ltr">{ip.phone}</p>
+                        <CopyButton value={ip.phone} />
+                      </div>
+                    </div>
+                  )}
                   <div>
-                    <p className="text-xs text-muted">{t("عنوان إنستاباي (IPA)")}</p>
+                    {(ip.address || !ip.phone) && <p className="text-xs text-muted">{ip.phone ? t("أو على عنوان إنستاباي (IPA)") : t("عنوان إنستاباي (IPA)")}</p>}
                     {ip.address ? (
                       <div className="flex flex-wrap items-center gap-3">
                         <p className="tabular text-lg font-semibold select-all" dir="ltr">{ip.address}</p>
                         <CopyButton value={ip.address} />
                       </div>
                     ) : (
-                      <p className="text-sm text-butter">{t("عنوان إنستاباي لسه متحطش في الإعدادات.")}</p>
+                      !ip.phone && <p className="text-sm text-butter">{t("عنوان إنستاباي لسه متحطش في الإعدادات.")}</p>
                     )}
                     {ip.name && <p className="text-xs text-ink-2">{t("باسم: {name}", { name: ip.name })}</p>}
                   </div>
