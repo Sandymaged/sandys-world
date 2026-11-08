@@ -165,7 +165,7 @@ export default async function PoliciesPage() {
   return (
     <div className="container-x pt-8 pb-4 sm:pt-12">
       {/* العنوان وأهم الأرقام */}
-      <header className="grid items-end gap-8 lg:grid-cols-[1fr_1.4fr]">
+      <header className="grid grid-cols-1 items-end gap-8 lg:grid-cols-[1fr_1.4fr]">
         <div className="reveal">
           <span className="font-script text-3xl text-brand">{t(STORE_NAME)}</span>
           <h1 className="mt-1 text-5xl leading-tight sm:text-6xl">{t("السياسات")}</h1>
@@ -181,9 +181,10 @@ export default async function PoliciesPage() {
         </ul>
       </header>
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-14">
+      {/* grid-cols-1 = minmax(0,1fr): من غيرها شريط الأقسام اللي بيتسحب على الموبايل بيعرّض الصفحة كلها */}
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-14">
         {/* الأقسام: على الكمبيوتر قايمة ثابتة على جنب، وعلى الموبايل صف بيتسحب */}
-        <nav className="lg:sticky lg:top-40 lg:self-start" aria-label={t("السياسات")}>
+        <nav className="min-w-0 lg:sticky lg:top-40 lg:self-start" aria-label={t("السياسات")}>
           <ul className="scroll-x lg:mx-0 lg:block lg:space-y-1 lg:px-0">
             {sections.map((x) => (
               <li key={x.id} className="shrink-0">
