@@ -12,5 +12,6 @@ export async function adminOptions() {
     recipients: recipientOrder.map((r) => ({ value: r, label: recipientLabels[r] })),
     seasons: [{ value: "", label: "من غير موسم" }, ...seasons.map((x) => ({ value: x.id, label: x.name }))],
     minPackageMargin: sf.settings.minPackageMargin,
+    packageBoxes: sf.settings.packageBoxes ?? {},
   };
 }

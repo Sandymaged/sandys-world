@@ -9,6 +9,42 @@ import { describeChoices } from "@/lib/options";
 import { useCart } from "@/store/cart";
 import { OptionPicker } from "../option-picker";
 
+/** اختيارات التغليف (صورة واسم وسعر لكل واحد) */
+export function WrappingPicker({ settings, value, onChange }: { settings: StoreSettings; value?: string; onChange: (id: string) => void }) {
+  const t = useT();
+  const wraps = settings.wrappings;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {wraps.map((w) => {
+        const on = (value ?? wraps[0].id) === w.id;
+        return (
+          <button
+            key={w.id}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(w.id)}
+            className={`flex items-center gap-3 rounded-2xl border p-2.5 text-start transition ${on ? "border-ink ring-1 ring-ink" : "border-line hover:border-ink/40"}`}
+          >
+            {w.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- صور التغليف من اللوحة (أي لينك)
+              <img src={w.image} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+            ) : (
+              <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-blush text-2xl" aria-hidden>🎁</span>
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">{t.locale === "en" ? w.en || w.name : w.name}</span>
+              {(w.description || w.descriptionEn) && (
+                <span className="block text-xs leading-5 text-muted">{t.locale === "en" ? w.descriptionEn || w.description : w.description}</span>
+              )}
+            </span>
+            <span className="tabular shrink-0 text-sm font-semibold">{w.price ? `+${egp(w.price, t)}` : t("من غير زيادة")}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** هدية واحدة في السلة: التخصيص، والاختيارات، والتغليف، ورسالة الكارت. (التوصيل للطلب كله في DeliveryEditor) */
 export function GiftEditor({
   gift,
@@ -59,7 +95,9 @@ export function GiftEditor({
           <span className={problems.length ? "font-semibold text-brand" : "text-muted"}>
             {problems.length
               ? t("ناقص: {list}", { list: problems.slice(0, 3).map((p) => t(p)).join(t("، ")) + (problems.length > 3 ? "…" : "") })
-              : (wrap && (t.locale === "en" ? wrap.en || wrap.name : wrap.name)) || t("التغليف العادي")}
+              : gift.kind === "product"
+                ? t("بيتغلّف مع باقي المنتجات")
+                : (wrap && (t.locale === "en" ? wrap.en || wrap.name : wrap.name)) || t("التغليف العادي")}
           </span>
           <span className="font-semibold underline underline-offset-4">{t("تعديل")}</span>
         </button>
@@ -118,37 +156,11 @@ export function GiftEditor({
             </section>
           )}
 
-          {wraps.length > 1 && (
+          {/* المنتجات المنفردة بتتغلّف مع بعض (اختيار واحد في السلة)، والباكدج والبوكس كل واحد لوحده */}
+          {wraps.length > 1 && gift.kind !== "product" && (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold">{t("التغليف")}</h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {wraps.map((w) => {
-                  const on = (gift.wrapping ?? wraps[0].id) === w.id;
-                  return (
-                    <button
-                      key={w.id}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => updateGift(gift.id, { wrapping: w.id })}
-                      className={`flex items-center gap-3 rounded-2xl border p-2.5 text-start transition ${on ? "border-ink ring-1 ring-ink" : "border-line hover:border-ink/40"}`}
-                    >
-                      {w.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- صور التغليف من اللوحة (أي لينك)
-                        <img src={w.image} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
-                      ) : (
-                        <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-blush text-2xl" aria-hidden>🎁</span>
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">{t.locale === "en" ? w.en || w.name : w.name}</span>
-                        {(w.description || w.descriptionEn) && (
-                          <span className="block text-xs leading-5 text-muted">{t.locale === "en" ? w.descriptionEn || w.description : w.description}</span>
-                        )}
-                      </span>
-                      <span className="tabular shrink-0 text-sm font-semibold">{w.price ? `+${egp(w.price, t)}` : t("من غير زيادة")}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <WrappingPicker settings={settings} value={gift.wrapping} onChange={(id) => updateGift(gift.id, { wrapping: id })} />
             </section>
           )}
 

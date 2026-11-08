@@ -135,6 +135,13 @@ export function quoteOrder(
         return;
       }
       basePrice = pkg.price;
+      // البوكس اختياري، ولازم يكون من المقاسات اللي المتجر حددها للباكدج ده
+      if (g.boxSizeId) {
+        const allowed = sf.settings.packageBoxes?.[pkg.id] ?? [];
+        const box = sf.boxSizes.find((b) => b.id === g.boxSizeId);
+        if (!box || !allowed.includes(box.id)) errors.push(t("{tag}: البوكس ده مبقاش متاح للباكدج", { tag }));
+        else basePrice += box.price;
+      }
       const custom = new Map(g.lines.map((l) => [l.productId, l]));
       for (const p of pkg.products) takeProduct(p.id, p.quantity, false, false, custom.get(p.id)?.customization, custom.get(p.id)?.choices);
       for (const a of g.addons) {

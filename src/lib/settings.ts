@@ -32,6 +32,8 @@ export interface StoreSettings {
   sameDayPaymentWindowHours: number;
   weddingDiscounts: { minQty: number; rate: number }[];
   minPackageMargin: number;
+  /** مقاسات البوكس اللي تنفع لكل باكدج (العميل يختار واحد منهم أو من غير بوكس): { packageId: [boxSizeId] } */
+  packageBoxes: Record<string, string[]>;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -53,4 +55,5 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     { minQty: 6, rate: 0.05 },
   ],
   minPackageMargin: 0.3,
+  packageBoxes: {},
 };

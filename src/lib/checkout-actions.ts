@@ -57,6 +57,8 @@ export type SubmitResult = { ok: true; token: string; number: number } | { ok: f
 export async function submitOrder(input: OrderInput & { giftCardCode?: string }, locale: string): Promise<SubmitResult> {
   const lang = isLocale(locale) ? locale : "ar";
   const t = translator(lang);
+  // الطلب للعميل نفسه: مفيش كارت ولا «اخفي السعر» ولا «مفاجأة» (حتى لو اتبعتوا)
+  if (input.sender.isRecipient) input = { ...input, gifts: input.gifts.map((g) => ({ ...g, cardMessage: "", hidePrice: false, surprise: false })) };
   const raw = await getStorefront();
   const sf = localizeStorefront(raw, lang);
   let coupon: CouponRule | null = null;
@@ -120,7 +122,11 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
       id: c.id,
       kind: c.kind,
       refId: c.refId,
-      title: c.title,
+      // للوحة بالعربي: الباكدج باسمه، ولو العميل اختار بوكس بيتكتب جنبه
+      title:
+        c.kind === "package"
+          ? `${raw.packages.find((p) => p.id === c.refId)?.name ?? c.title}${c.boxSizeId ? ` + بوكس ${raw.boxSizes.find((b) => b.id === c.boxSizeId)?.name ?? ""}` : ""}`
+          : c.title,
       recipient: {
         name: c.recipient.name.trim(),
         phone: normalizePhone(c.recipient.phone),

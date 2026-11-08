@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useT } from "@/i18n/client";
 import { deliveryProblems, giftProblems, giftTotals, orderPrepDays } from "@/lib/cart";
 import { cairoNow, earliestDeliveryDate } from "@/lib/delivery";
@@ -11,7 +11,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 import { useCart } from "@/store/cart";
 import { DeliveryEditor } from "./delivery-editor";
 import { GiftCardLines } from "./gift-card-lines";
-import { GiftEditor } from "./gift-editor";
+import { GiftEditor, WrappingPicker } from "./gift-editor";
 
 export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSettings }) {
   const t = useT();
@@ -19,7 +19,17 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
   const gifts = useCart((s) => s.gifts);
   const cards = useCart((s) => s.giftCards);
   const delivery = useCart((s) => s.delivery);
+  const forMe = useCart((s) => s.sender.isRecipient);
+  const setSender = useCart((s) => s.setSender);
+  const updateGift = useCart((s) => s.updateGift);
   const [tried, setTried] = useState(false);
+
+  // المنتجات المنفردة بتتغلّف مع بعض: التغليف بيتسجل على أول منتج بس (فبيتحسب مرة واحدة)
+  const loose = gifts.filter((g) => g.kind === "product");
+  useEffect(() => {
+    for (const g of loose.slice(1)) if (g.wrapping) updateGift(g.id, { wrapping: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- بس لما المنتجات تتغير
+  }, [loose.map((g) => `${g.id}:${g.wrapping ?? ""}`).join("|")]);
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
@@ -54,9 +64,47 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
       <div className="min-w-0 space-y-8">
+        {/* الطلب لمين: بيحدد خانات التوصيل والدفع (ليا أنا: من غير كارت ولا مفاجأة، والكاش متاح) */}
+        {hasGifts && (
+          <section className="card p-4 sm:p-5">
+            <h2 className="font-heading text-2xl">{t("الطلب ده لمين؟")}</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  [true, "ليا أنا", "هيوصلك إنت على عنوانك."],
+                  [false, "هدية لحد تاني", "نوصّلها له، ومعاها كارت برسالتك لو حابب."],
+                ] as const
+              ).map(([v, title, body]) => (
+                <button
+                  key={title}
+                  type="button"
+                  aria-pressed={forMe === v}
+                  onClick={() => setSender({ isRecipient: v })}
+                  className={`rounded-2xl border p-4 text-start transition ${forMe === v ? "border-ink bg-bg ring-1 ring-ink" : "border-line hover:border-ink/40"}`}
+                >
+                  <span className="block font-semibold">{t(title)}</span>
+                  <span className="mt-0.5 block text-sm leading-6 text-ink-2">{t(body)}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {gifts.map((g, i) => (
           <GiftEditor key={g.id} gift={g} index={i} settings={settings} problems={problems[i]} />
         ))}
+        {loose.length > 0 && settings.wrappings.length > 1 && (
+          <section className="card space-y-3 p-4 sm:p-5">
+            <div>
+              <h2 className="font-semibold">{loose.length > 1 ? t("تغليف المنتجات") : t("تغليف المنتج")}</h2>
+              {loose.length > 1 && <p className="text-xs text-muted">{t("المنتجات اللي برا البوكس بتتغلّف كلها مع بعض.")}</p>}
+            </div>
+            <WrappingPicker
+              settings={settings}
+              value={loose[0].wrapping}
+              onChange={(id) => loose.forEach((g, i) => updateGift(g.id, { wrapping: i === 0 ? id : undefined }))}
+            />
+          </section>
+        )}
         {cards.length > 0 && <GiftCardLines cards={cards} />}
         <div className="flex flex-wrap gap-2">
           <Link href="/shop" className="btn-outline">{hasGifts ? t("+ ضيف هدية تانية") : t("+ ضيف هدية")}</Link>
@@ -64,7 +112,7 @@ export function CartView({ zones, settings }: { zones: Zone[]; settings: StoreSe
         </div>
         {hasGifts && (
           <div id="delivery">
-            <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} showErrors={tried} />
+            <DeliveryEditor gifts={gifts} zones={zones} settings={settings} problems={dProblems} showErrors={tried} forMe={forMe} />
           </div>
         )}
       </div>

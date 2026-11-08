@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { deletePackage, savePackage } from "@/lib/admin-catalog-actions";
 import { adminOptions } from "@/lib/admin-options";
 import { costOf, loadCatalogData } from "@/lib/db/catalog-store";
+import { loadStoreConfig } from "@/lib/store-config";
 
 export const instant = false;
 
@@ -15,7 +16,8 @@ export const metadata = { title: "باكدج" };
 export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/catalog/packages/[id]">) {
   await requireAdmin();
   const { id } = await params;
-  const [d, opts] = await Promise.all([loadCatalogData(), adminOptions()]);
+  const [d, opts, config] = await Promise.all([loadCatalogData(), adminOptions(), loadStoreConfig()]);
+  const boxes = config.boxSizes.filter((b) => b.isActive !== false);
   const pk = id === "new" ? null : d.packages.find((x) => x.id === id);
   if (id !== "new" && !pk) notFound();
   const back = "/admin/catalog/packages";
@@ -63,6 +65,19 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
             initialPrice={pk?.price ?? 0}
             minMargin={opts.minPackageMargin}
           />
+        </Section>
+
+        <Section title="البوكس (اختياري للعميل)">
+          {boxes.length === 0 ? (
+            <p className="text-sm text-muted">مفيش مقاسات بوكس مفتوحة. ضيفيها من «البوكسات والتغليف».</p>
+          ) : (
+            <>
+              <ChecksGroup label="مقاسات البوكس اللي تنفع للباكدج ده" name="boxSizeIds" options={boxes.map((b) => ({ value: b.id, label: `${b.name} (+${b.price} ج.م)` }))} selected={opts.packageBoxes[pk?.id ?? ""] ?? []} />
+              <p className="-mt-2 text-xs leading-5 text-muted">
+                العميل بيختار «من غير بوكس» أو مقاس من دول، وسعر البوكس بيتضاف على سعر الباكدج. لو ماعلّمتيش حاجة الباكدج بيتباع من غير بوكس.
+              </p>
+            </>
+          )}
         </Section>
 
         <Section title="الصورة">

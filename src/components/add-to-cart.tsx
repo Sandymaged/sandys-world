@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { CartLine } from "@/lib/cart";
 import { egp } from "@/lib/format";
 import { missingOptions, optionsPrice, type OptionChoice } from "@/lib/options";
-import type { PackageView, Product } from "@/lib/types";
+import type { BoxSize, PackageView, Product } from "@/lib/types";
 import { useCart } from "@/store/cart";
 import { GiftArt } from "./gift-art";
 import { Icon } from "./icons";
@@ -72,19 +72,25 @@ function BuyBar({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[] }) {
+export function AddPackage({ pkg, addons, boxes = [] }: { pkg: PackageView; addons: Product[]; boxes?: BoxSize[] }) {
   const t = useT();
   const { added, done } = useAddFeedback();
   const addGift = useCart((s) => s.addGift);
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [choices, setChoices] = useState<Record<string, OptionChoice[]>>({});
+  // البوكس اختياري: المقاسات اللي المتجر حددها للباكدج ده، وفاضي = من غير بوكس
+  const [boxId, setBoxId] = useState("");
+  const box = boxes.find((b) => b.id === boxId);
 
   const customizable = pkg.products.filter((p) => p.isCustomizable);
   const withOptions = pkg.products.filter((p) => p.options?.length);
   const addonTotal = addons.reduce((s, a) => s + (picked[a.id] ?? 0) * a.price, 0);
+  // مينفعش يتضاف للسلة قبل ما كل لون/مقاس جوه الباكدج يتختار
+  const missing = withOptions.flatMap((p) => missingOptions(p.options, choices[p.id]));
 
   function add() {
+    if (missing.length) return;
     const lines: CartLine[] = pkg.products.map((p) => ({
       productId: p.id,
       name: p.name,
@@ -101,11 +107,12 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
       .map((a) => ({ productId: a.id, name: a.name, unitPrice: a.price, quantity: picked[a.id] }));
     addGift({
       kind: "package",
-      title: pkg.name,
+      title: box ? `${pkg.name} + ${t("بوكس {name}", { name: t.locale === "en" ? box.en?.name || box.name : box.name })}` : pkg.name,
       slug: pkg.slug,
       refId: pkg.id,
       image: pkg.images[0],
-      basePrice: pkg.price,
+      basePrice: pkg.price + (box?.price ?? 0),
+      boxSizeId: box?.id,
       lines,
       addons: addonLines,
       prepDays: Math.max(pkg.prepDays, ...addons.filter((a) => picked[a.id]).map((a) => a.prepDays)),
@@ -148,6 +155,38 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
         </section>
       )}
 
+      {boxes.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold">{t("عايز الباكدج في بوكس؟")}</h2>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[{ id: "", name: t("من غير بوكس"), price: 0, image: null as string | null, description: t("بيتغلّف عادي.") }, ...boxes.map((b) => ({ id: b.id, name: t("بوكس {name}", { name: t.locale === "en" ? b.en?.name || b.name : b.name }), price: b.price, image: b.image ?? null, description: b.description ?? "" }))].map((b) => {
+              const on = boxId === b.id;
+              return (
+                <button
+                  key={b.id || "none"}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setBoxId(b.id)}
+                  className={`flex items-center gap-3 rounded-2xl border p-2.5 text-start transition ${on ? "border-ink ring-1 ring-ink" : "border-line hover:border-ink/40"}`}
+                >
+                  {b.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- صور البوكسات من اللوحة
+                    <img src={b.image} alt="" className="size-12 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-blush text-xl" aria-hidden>{b.id ? "📦" : "🎀"}</span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold">{b.name}</span>
+                    {b.description && <span className="block text-xs leading-5 text-muted">{b.description}</span>}
+                  </span>
+                  <span className="tabular shrink-0 text-sm font-semibold">{b.price ? `+${egp(b.price, t)}` : t("من غير زيادة")}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {addons.length > 0 && (
         <section>
           <h2 className="mb-3 text-sm font-semibold">{t("ضيف على الباكدج")}</h2>
@@ -187,13 +226,15 @@ export function AddPackage({ pkg, addons }: { pkg: PackageView; addons: Product[
       )}
 
       <BuyBar>
-        <button onClick={add} disabled={added} className={`btn-primary w-full ${added ? "!bg-success !opacity-100" : ""}`}>
+        <button onClick={add} disabled={added || missing.length > 0} className={`btn-primary w-full ${added ? "!bg-success !opacity-100" : ""}`}>
           {added ? (
             <AddedLabel />
+          ) : missing.length ? (
+            t("اختار {name} الأول", { name: t.locale === "en" ? missing[0].en || missing[0].name : missing[0].name })
           ) : (
             <>
               {t("ضيف للسلة")}
-              <span className="tabular opacity-90">· {egp(pkg.price + addonTotal, t)}</span>
+              <span className="tabular opacity-90">· {egp(pkg.price + (box?.price ?? 0) + addonTotal, t)}</span>
             </>
           )}
         </button>
@@ -266,7 +307,7 @@ export function AddProduct({ product }: { product: Product }) {
               t("اختار {name} الأول", { name: t.locale === "en" ? missing[0].en || missing[0].name : missing[0].name })
             ) : (
               <>
-                {t("ابعته هدية")}
+                {t("ضيف للسلة")}
                 <span className="tabular opacity-90">· {egp(unit * qty, t)}</span>
               </>
             )}

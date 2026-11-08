@@ -22,6 +22,7 @@ export function DeliveryEditor({
   settings,
   problems,
   showErrors = false,
+  forMe = false,
 }: {
   gifts: CartGift[];
   zones: Zone[];
@@ -29,6 +30,8 @@ export function DeliveryEditor({
   problems: string[];
   /** بعد ما العميل يدوس «كمّل»: كل الأخطاء بتبان حتى في الخانات اللي ملمسهاش */
   showErrors?: boolean;
+  /** الطلب للعميل نفسه: بياناته وعنوانه، ومن غير كارت ولا «اخفي السعر» ولا «مفاجأة» */
+  forMe?: boolean;
 }) {
   const t = useT();
   const delivery = useCart((s) => s.delivery);
@@ -77,21 +80,25 @@ export function DeliveryEditor({
   return (
     <section className={`card space-y-6 p-5 ${problems.length ? "border-brand/50" : ""}`}>
       <div>
-        <h2 className="font-heading text-2xl">{gifts.length > 1 ? t("الهدايا رايحة لمين؟") : t("الهدية رايحة لمين؟")}</h2>
+        <h2 className="font-heading text-2xl">{forMe ? t("بياناتك وعنوانك") : gifts.length > 1 ? t("الهدايا رايحة لمين؟") : t("الهدية رايحة لمين؟")}</h2>
         <p className="mt-1 text-sm text-muted">
-          {gifts.length > 1 ? t("كل الهدايا بتوصل مع بعض لنفس الشخص، برسوم توصيل واحدة. لو عايز تبعت لحد تاني اعمل طلب تاني.") : t("التوصيل لعنوان واحد، وبنكلمك لو احتجنا حاجة.")}
+          {forMe
+            ? t("الطلب كله بيوصلك مع بعض برسوم توصيل واحدة.")
+            : gifts.length > 1
+              ? t("كل الهدايا بتوصل مع بعض لنفس الشخص، برسوم توصيل واحدة. لو عايز تبعت لحد تاني اعمل طلب تاني.")
+              : t("التوصيل لعنوان واحد، وبنكلمك لو احتجنا حاجة.")}
         </p>
       </div>
 
       <div className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="label" htmlFor="rn">{t("اسم المستلم")}</label>
+            <label className="label" htmlFor="rn">{forMe ? t("اسمك") : t("اسم المستلم")}</label>
             <input id="rn" className={fieldCls(err("name"))} maxLength={60} value={delivery.recipient.name} onChange={(e) => setRecipient({ name: e.target.value })} onBlur={blur("name")} aria-invalid={!!err("name")} aria-describedby="rn-e" autoComplete="off" />
             <FieldError id="rn-e" msg={err("name")} />
           </div>
           <div>
-            <label className="label" htmlFor="rp">{t("موبايل المستلم")}</label>
+            <label className="label" htmlFor="rp">{forMe ? t("رقم موبايلك") : t("موبايل المستلم")}</label>
             <input
               id="rp"
               className={`${fieldCls(err("phone"))} tabular`}
@@ -216,6 +223,8 @@ export function DeliveryEditor({
         )}
       </div>
 
+      {!forMe && (
+      <>
       <div className="space-y-2">
         <label className="label" htmlFor="cm">
           {t("رسالة الكارت")} <span className="font-normal text-muted">{gifts.length > 1 ? t("(كارت واحد للطلب كله، اختياري)") : t("(اختياري)")}</span>
@@ -247,6 +256,8 @@ export function DeliveryEditor({
         ))}
         {delivery.surprise && <p className="text-xs text-muted">{t("هنكلمك إنت لو احتجنا نتأكد من العنوان، والمندوب هيكلم المستلم وهو قدام الباب بس.")}</p>}
       </div>
+      </>
+      )}
     </section>
   );
 }

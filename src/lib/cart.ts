@@ -54,6 +54,8 @@ export interface CartGift {
   wantsDeliveryPhoto: boolean;
   /** اختيار التغليف (id من إعدادات المتجر) */
   wrapping?: string;
+  /** للباكدج: مقاس البوكس اللي العميل اختاره (سعره جوه basePrice)، أو فاضي = من غير بوكس */
+  boxSizeId?: string;
 }
 
 /**

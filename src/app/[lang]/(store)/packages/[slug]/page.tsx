@@ -115,7 +115,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
           </section>
 
           <div id="order" className="scroll-mt-40">
-            <AddPackage pkg={pkg} addons={addons} />
+            <AddPackage pkg={pkg} addons={addons} boxes={sf.boxSizes.filter((b) => (sf.settings.packageBoxes?.[pkg.id] ?? []).includes(b.id))} />
           </div>
           <PolicyDetails customizable={customizable} />
         </div>

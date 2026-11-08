@@ -5,6 +5,10 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "./admin-auth";
 import { bool, en, image, lines, many, num, removeProduct, slugify, str, upsertProduct, type SaveResult } from "./catalog-form";
 import { mutateCatalog } from "./db/catalog-store";
+import { adminClient } from "./supabase/admin";
+
+const onSupabase = () =>
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
 import type { BridalRole, GiftPackage, Kit, KitCategory, PackageTier, Partner, RecipientTag } from "./types";
 
 export type { SaveResult } from "./catalog-form";
@@ -104,7 +108,23 @@ export async function savePackage(id: string | null, f: FormData): Promise<SaveR
     if (existing) Object.assign(existing, rec);
     else d.packages.push(rec);
     return { ok: true as const, id: rec.id };
-  }).then((r) => (r.ok ? done(r.id) : r));
+  }).then(async (r) => {
+    if (!r.ok) return r;
+    const err = await savePackageBoxes(r.id, many(f, "boxSizeIds"));
+    return err ? { ok: false as const, error: err } : done(r.id);
+  });
+}
+
+/** مقاسات البوكس اللي تنفع للباكدج (في settings.packageBoxes، بتتقري مع إعدادات المتجر) */
+async function savePackageBoxes(packageId: string, boxIds: string[]): Promise<string | null> {
+  if (!onSupabase()) return null;
+  const db = adminClient();
+  const { data } = await db.from("settings").select("value").eq("key", "packageBoxes").maybeSingle();
+  const map = { ...((data?.value as Record<string, string[]> | undefined) ?? {}) };
+  if (boxIds.length) map[packageId] = boxIds;
+  else delete map[packageId];
+  const { error } = await db.from("settings").upsert({ key: "packageBoxes", value: map });
+  return error ? `الباكدج اتحفظ بس البوكسات ماتحفظتش: ${error.message}` : null;
 }
 
 export async function deletePackage(id: string): Promise<SaveResult> {

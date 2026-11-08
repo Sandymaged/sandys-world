@@ -2,7 +2,7 @@
 
 import { Link, useHref, useT } from "@/i18n/client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { checkCoupon, submitOrder } from "@/lib/checkout-actions";
 import { checkGiftCard } from "@/lib/gift-card-actions";
 import { deliveryProblems, giftProblems, giftTotals, hasCustomization, orderSources, withDelivery } from "@/lib/cart";
@@ -34,6 +34,16 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   // بياناتك: الخطأ بيبان بعد ما تسيب الخانة أو تحاول تأكد الطلب
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [tried, setTried] = useState(false);
+
+  // الطلب للعميل نفسه: اسمه وموبايله من بيانات التوصيل اللي كتبها في السلة (لو لسه فاضيين)
+  useEffect(() => {
+    if (!hydrated || !sender.isRecipient) return;
+    const patch: Partial<typeof sender> = {};
+    if (!sender.name.trim() && delivery.recipient.name.trim()) patch.name = delivery.recipient.name.trim();
+    if (!sender.phone.trim() && delivery.recipient.phone.trim()) patch.phone = delivery.recipient.phone.trim();
+    if (Object.keys(patch).length) setSender(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- مرة واحدة لما الصفحة تفتح
+  }, [hydrated]);
 
   if (!hydrated) return <div className="h-64 animate-pulse rounded-3xl bg-surface" />;
 
@@ -104,7 +114,8 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
     }
     start(async () => {
       const r = await submitOrder(
-        { gifts: withDelivery(gifts, delivery), giftCards: cards.map(({ id: _id, ...c }) => c), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
+        // الطلب للعميل نفسه: مفيش كارت ولا «اخفي السعر» ولا «مفاجأة»
+        { gifts: withDelivery(gifts, sender.isRecipient ? { ...delivery, cardMessage: "", hidePrice: false, surprise: false } : delivery), giftCards: cards.map(({ id: _id, ...c }) => c), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
         t.locale,
       );
       if (!r.ok) {
@@ -157,10 +168,10 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
             <Err msg={sErr("email")} />
           </div>
           {hasGifts && (
-            <label className="flex cursor-pointer items-center gap-3 text-sm">
-              <input type="checkbox" className="size-5 accent-ink" checked={sender.isRecipient} onChange={(e) => setSender({ isRecipient: e.target.checked })} />
-              {t("أنا نفسي اللي هستلم الهدية")}
-            </label>
+            <p className="text-sm text-ink-2">
+              {sender.isRecipient ? t("الطلب ليك إنت، وهيوصل على العنوان اللي كتبته في السلة.") : t("الطلب هدية لـ {name}.", { name: delivery.recipient.name })}{" "}
+              <Link href="/cart" className="font-semibold text-brand underline underline-offset-4">{t("تغيير")}</Link>
+            </p>
           )}
           <div>
             <label className="label" htmlFor="src">
