@@ -31,9 +31,7 @@ export async function deleteProduct(id: string): Promise<SaveResult> {
 export async function saveBrand(id: string | null, f: FormData): Promise<SaveResult> {
   await requireAdmin();
   const name = str(f, "name");
-  const rate = num(f, "commission");
   if (!name) return { ok: false, error: "اكتبي اسم البراند" };
-  if (!(rate >= 0 && rate <= 100)) return { ok: false, error: "نسبة العمولة لازم تكون من 0 لـ 100" };
   const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `b-${Date.now().toString(36)}`;
 
   return mutateCatalog(async (d) => {
@@ -51,7 +49,8 @@ export async function saveBrand(id: string | null, f: FormData): Promise<SaveRes
       city: str(f, "city"),
       instagram: str(f, "instagram").replace(/^@/, "") || null,
       cover: images[0] ?? null,
-      commissionRate: rate / 100,
+      // العمولة بالشرايح الشهرية؛ النسبة دي احتياطي للحسابات القديمة بس ومش بتتعدل من اللوحة
+      commissionRate: existing?.commissionRate ?? 0.2,
       en: { ...en({ name: str(f, "nameEn"), tagline: str(f, "taglineEn") }), ...(str(f, "storyEn") ? { story: str(f, "storyEn") } : {}), ...(str(f, "cityEn") ? { city: str(f, "cityEn") } : {}) },
     };
     if (existing) Object.assign(existing, rec);

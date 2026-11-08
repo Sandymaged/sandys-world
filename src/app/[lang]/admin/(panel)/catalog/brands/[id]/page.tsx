@@ -44,9 +44,8 @@ export default async function AdminBrand({ params }: PageProps<"/[lang]/admin/ca
           </Row>
           <Row>
             <Field label="إنستجرام" name="instagram" defaultValue={b?.instagram} dir="ltr" placeholder="brand.name" />
-            <Field label="نسبة العمولة القديمة %" name="commission" type="number" defaultValue={b ? Math.round(b.commissionRate * 100) : 20} hint="للطلبات اللي اتسلمت قبل نظام الشرايح بس. العمولة دلوقتي بالشرايح الشهرية (شوفي حسابات البراندات)." />
+            <Field label="الرابط (slug)" name="slug" defaultValue={b?.slug} dir="ltr" hint="لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
           </Row>
-          <Field label="الرابط (slug)" name="slug" defaultValue={b?.slug} dir="ltr" hint="لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
         </Section>
         <Section title="صورة البراند">
           <ImageField current={b?.cover} />
