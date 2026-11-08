@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AdminLoginForm } from "@/components/admin/login-form";
 import { Bow } from "@/components/decor";
 import { Tape } from "@/components/scrapbook";
-import { DEV_PASSWORD, usingDevPassword } from "@/lib/admin-auth";
+import { DEFAULT_USERNAME, DEV_PASSWORD, usingDevPassword } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "دخول لوحة التحكم", robots: { index: false } };
 
@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
         </div>
         {usingDevPassword() && (
           <p className="mt-5 rounded-xl bg-butter-soft p-3 text-xs leading-5 text-butter">
-            وضع التطوير: كلمة السر <b className="tabular" dir="ltr">{DEV_PASSWORD}</b>. قبل ما الموقع يفتح لازم تتحط كلمة سر في متغير ADMIN_PASSWORD.
+            وضع التطوير: اسم المستخدم <b dir="ltr">{DEFAULT_USERNAME}</b> وكلمة السر <b className="tabular" dir="ltr">{DEV_PASSWORD}</b>. قبل ما الموقع يفتح لازم تتحط كلمة سر في متغير ADMIN_PASSWORD.
           </p>
         )}
       </div>

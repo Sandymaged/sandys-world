@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { checkPassword, endSession, requireAdmin, startSession } from "./admin-auth";
+import { adminAccountInfo, checkLogin, endSession, requireAdmin, setAdminAccount, startSession } from "./admin-auth";
 import { cancellable } from "./admin-format";
 import { settleOnDelivery } from "./brand-portal";
 import { getStorefront } from "./catalog";
@@ -16,10 +16,37 @@ import type { DeliveryPeriod } from "./types";
 import { toLatinDigits } from "./validate";
 
 export async function adminLogin(_: unknown, form: FormData): Promise<{ error: string } | void> {
+  const user = String(form.get("username") ?? "");
   const pass = String(form.get("password") ?? "");
-  if (!checkPassword(pass)) return { error: "كلمة السر غلط" };
+  if (!(await checkLogin(user, pass))) {
+    // تأخير بسيط عشان محدش يجرّب كلمات سر كتير ورا بعض بسرعة
+    await new Promise((r) => setTimeout(r, 800));
+    return { error: "اسم المستخدم أو كلمة السر غلط" };
+  }
   await startSession();
   redirect("/admin");
+}
+
+/** تغيير اسم المستخدم وكلمة السر من «حسابي» (لازم كلمة السر الحالية) */
+export async function changeAdminAccount(f: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const current = String(f.get("current") ?? "");
+  const username = String(f.get("username") ?? "").trim();
+  const password = String(f.get("password") ?? "");
+  const confirm = String(f.get("confirm") ?? "");
+  const info = await adminAccountInfo();
+  if (!(await checkLogin(info.username, current))) return { ok: false, error: "كلمة السر الحالية غلط" };
+  if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) return { ok: false, error: "اسم المستخدم من 3 لـ 30 حرف إنجليزي أو رقم (ومسموح . _ -)" };
+  if (password.length < 8) return { ok: false, error: "كلمة السر الجديدة لازم تكون 8 حروف على الأقل" };
+  if (password !== confirm) return { ok: false, error: "تأكيد كلمة السر مش زي كلمة السر" };
+  try {
+    await setAdminAccount(username, password);
+  } catch (e) {
+    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+  }
+  // الجلسات القديمة (أي جهاز تاني) بتقفل، والجهاز ده بيفضل داخل بجلسة جديدة
+  await startSession();
+  return { ok: true };
 }
 
 export async function adminLogout() {
