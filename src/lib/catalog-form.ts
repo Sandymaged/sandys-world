@@ -98,8 +98,10 @@ export async function upsertProduct(id: string | null, f: FormData, mode: Produc
   const price = num(f, "price");
   if (!name) return { ok: false, error: "اسم المنتج ناقص" };
   if (!(price > 0)) return { ok: false, error: "السعر لازم يكون رقم أكبر من صفر" };
-  const cost = mode.by === "store" ? num(f, "cost") : 0;
-  if (!(cost >= 0)) return { ok: false, error: "التكلفة لازم تكون رقم" };
+  // التكلفة لمنتجات المتجر نفسه بس (لازم تتكتب). منتج البراند تكلفته نصيب البراند وبتتحسب لوحدها
+  const ownProduct = mode.by === "store" && !str(f, "partnerId");
+  const cost = ownProduct ? num(f, "cost") : 0;
+  if (ownProduct && !(cost > 0)) return { ok: false, error: "اكتبي تكلفة المنتج (المنتج كلّفك كام)" };
   const customizable = bool(f, "isCustomizable");
   let options: ProductOption[] = [];
   try {

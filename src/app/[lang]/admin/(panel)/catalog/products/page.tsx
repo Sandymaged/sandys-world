@@ -35,9 +35,18 @@ export default async function AdminProducts() {
                       {p.partnerId ? brands.get(p.partnerId) ?? "براند اتمسح" : "من المتجر"} · {p.category || "من غير تصنيف"}
                     </span>
                   </span>
+                  {/* منتج البراند مكسبك منه بالشرايح الشهرية (مش معروف لكل منتج)، فبنعرض التكلفة والهامش لمنتجات المتجر بس */}
                   <span className="hidden text-end text-xs text-muted sm:block">
-                    {p.partnerId ? "نصيب البراند" : "تكلفة"} <span className="tabular">{money(cost)}</span>
-                    <span className="block">هامش <span className="tabular">{margin}%</span></span>
+                    {p.partnerId ? (
+                      "عمولة بالشرايح"
+                    ) : p.cost > 0 ? (
+                      <>
+                        تكلفة <span className="tabular">{money(cost)}</span>
+                        <span className="block">هامش <span className="tabular">{margin}%</span></span>
+                      </>
+                    ) : (
+                      <span className="font-semibold text-brand">التكلفة مش متكتبة</span>
+                    )}
                   </span>
                   <span className="tabular w-20 text-end text-sm font-semibold">{money(p.price)}</span>
                   {p.reviewStatus === "pending" ? (

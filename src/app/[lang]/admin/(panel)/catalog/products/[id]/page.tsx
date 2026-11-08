@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, Row, Section, Select, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, PriceCostBrand, Row, Section, TextArea } from "@/components/admin/form";
 import { ProductImagesField } from "@/components/admin/product-images";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deleteProduct, saveProduct } from "@/lib/admin-catalog-actions";
@@ -46,19 +46,7 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
             <TextArea label="الوصف بالعربي" name="description" defaultValue={p?.description} />
             <TextArea label="الوصف بالإنجليزي" name="descriptionEn" defaultValue={p?.en?.description} dir="ltr" />
           </Row>
-          <Row>
-            <Field label="السعر (ج.م)" name="price" type="number" defaultValue={p?.price} required />
-            <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={p?.cost ?? 0} hint="مش بتظهر للعميل. لمنتجات المتجر بس: منتج البراند تكلفته نصيب البراند (السعر ناقص العمولة) وبتتحسب لوحدها." />
-          </Row>
-          <Row>
-            <Select
-              label="البراند"
-              name="partnerId"
-              defaultValue={p?.partnerId}
-              options={[{ value: "", label: "من المتجر نفسه" }, ...d.partners.map((b) => ({ value: b.id, label: b.name }))]}
-            />
-            <Field label="مدة التجهيز (أيام)" name="prepDays" type="number" defaultValue={p?.prepDays ?? 0} hint="صفر يعني ينفع يوصل النهارده" />
-          </Row>
+          <PriceCostBrand price={p?.price} cost={p?.cost} partnerId={p?.partnerId} partners={d.partners.map((b) => ({ id: b.id, name: b.name }))} prepDays={p?.prepDays ?? 0} />
           <Row>
             <Field label="التصنيف بالعربي" name="category" defaultValue={p?.category} placeholder="مجات، شموع، ورد…" />
             <Field label="التصنيف بالإنجليزي" name="categoryEn" defaultValue={p?.en?.category} dir="ltr" />

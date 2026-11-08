@@ -112,6 +112,45 @@ export function Check({ label, name, defaultChecked }: { label: string; name: st
 }
 
 /**
+ * السعر والتكلفة والبراند: التكلفة بتظهر (ولازم تتكتب) لمنتجات المتجر بس.
+ * لو اخترتي براند بتختفي، لأن تكلفته نصيب البراند وبتتحسب لوحدها.
+ */
+export function PriceCostBrand({
+  price,
+  cost,
+  partnerId,
+  partners,
+  prepDays,
+}: {
+  price?: number;
+  cost?: number;
+  partnerId?: string | null;
+  partners: { id: string; name: string }[];
+  prepDays: number;
+}) {
+  const [brand, setBrand] = useState(partnerId ?? "");
+  return (
+    <>
+      <Row>
+        <Select label="البراند" name="partnerId" value={brand} onChange={setBrand} options={[{ value: "", label: "من المتجر نفسه" }, ...partners.map((b) => ({ value: b.id, label: b.name }))]} />
+        <Field label="مدة التجهيز (أيام)" name="prepDays" type="number" defaultValue={prepDays} hint="صفر يعني ينفع يوصل النهارده" />
+      </Row>
+      <Row>
+        <Field label="السعر (ج.م)" name="price" type="number" defaultValue={price} required />
+        {brand ? (
+          <div className="rounded-2xl bg-bg p-3 text-sm leading-6 text-ink-2">
+            <p className="font-semibold text-ink">التكلفة</p>
+            منتج براند: مش محتاجة تكتبي تكلفة، بتتحسب لوحدها من نصيب البراند (السعر ناقص عمولتك).
+          </div>
+        ) : (
+          <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={cost || ""} required placeholder="المنتج كلّفك كام؟" hint="اللي المنتج كلّفك (مش سعر البيع). مش بتظهر للعميل، والمكسب في التقارير بيتحسب منها." />
+        )}
+      </Row>
+    </>
+  );
+}
+
+/**
  * «بيتكتب عليه اسم أو جملة» ومعاها أقصى عدد حروف: الخانة بتتفتح بس لما العلامة تتعلّم
  * (ولو اتقفلت، السيرفر بيشيل الحد أصلاً)
  */
@@ -150,11 +189,31 @@ export function ChecksGroup({ label, name, options, selected }: { label: string;
   );
 }
 
-export function Select({ label, name, options, defaultValue }: { label: string; name: string; options: { value: string; label: string }[]; defaultValue?: string | null }) {
+export function Select({
+  label,
+  name,
+  options,
+  defaultValue,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+  defaultValue?: string | null;
+  /** لو الاختيار بيأثر على خانات تانية في نفس الفورم */
+  value?: string;
+  onChange?: (v: string) => void;
+}) {
   return (
     <div>
       <label className="label" htmlFor={name}>{label}</label>
-      <select id={name} name={name} defaultValue={defaultValue ?? ""} className="field">
+      <select
+        id={name}
+        name={name}
+        {...(value !== undefined ? { value, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => onChange?.(e.target.value) } : { defaultValue: defaultValue ?? "" })}
+        className="field"
+      >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
