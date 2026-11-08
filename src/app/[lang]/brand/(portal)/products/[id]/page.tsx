@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, ImageField, Row, Section, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, Row, Section, TextArea } from "@/components/admin/form";
+import { ProductImagesField } from "@/components/admin/product-images";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { requireBrand } from "@/lib/brand-auth";
 import { deleteBrandProduct, saveBrandProduct } from "@/lib/brand-actions";
@@ -60,8 +61,8 @@ export default async function BrandProduct({ params }: PageProps<"/[lang]/brand/
           </Row>
         </Section>
 
-        <Section title="الصورة">
-          <ImageField current={p?.images[0]} uploadLabel="ارفع صورة" />
+        <Section title="الصور">
+          <ProductImagesField current={p?.images ?? []} label="ارفع صور" />
         </Section>
 
         <Section title="مناسب لإيه ولمين">

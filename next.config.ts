@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
     ],
   },
   partialPrefetching: true,
+  experimental: {
+    // صور المنتج (لحد 5) بتتصغّر في المتصفح قبل الرفع، بس مع بعض ممكن تعدّي 1MB الافتراضي
+    // (Vercel نفسه حده 4.5MB للطلب)
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, ImageField, Row, Section, Select, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, Row, Section, Select, TextArea } from "@/components/admin/form";
+import { ProductImagesField } from "@/components/admin/product-images";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deleteProduct, saveProduct } from "@/lib/admin-catalog-actions";
 import { adminOptions } from "@/lib/admin-options";
@@ -65,8 +66,8 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
           <Field label="الرابط (slug)" name="slug" defaultValue={p?.slug} dir="ltr" hint="بالإنجليزي من غير مسافات. لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
         </Section>
 
-        <Section title="الصورة">
-          <ImageField current={p?.images[0]} />
+        <Section title="الصور">
+          <ProductImagesField current={p?.images ?? []} />
         </Section>
 
         <Section title="مناسب لإيه ولمين (للتصفح ومساعد الهدايا)">

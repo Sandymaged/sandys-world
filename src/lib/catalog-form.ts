@@ -54,6 +54,39 @@ export async function image(f: FormData, current: string[]): Promise<string[] | 
   return current;
 }
 
+export const MAX_PRODUCT_IMAGES = 5;
+
+/**
+ * صور المنتج (لحد 5) بالترتيب: «imagesOrder» فيها الصور القديمة اللي اتسابت (باللينك)
+ * والجديدة كـ «file:رقم» من «imageFiles». الأولى هي اللي بتظهر في الكروت.
+ */
+export async function productImages(f: FormData, current: string[]): Promise<string[] | string> {
+  let order: unknown;
+  try {
+    order = JSON.parse(str(f, "imagesOrder") || "[]");
+  } catch {
+    return "في مشكلة في الصور، حدّثي الصفحة وجربي تاني";
+  }
+  if (!Array.isArray(order)) return "في مشكلة في الصور";
+  const files = f.getAll("imageFiles").filter((x): x is File => x instanceof File && x.size > 0);
+  const out: string[] = [];
+  for (const token of order.slice(0, MAX_PRODUCT_IMAGES)) {
+    if (typeof token !== "string") continue;
+    const m = /^file:(\d+)$/.exec(token);
+    if (m) {
+      const file = files[Number(m[1])];
+      if (!file) continue;
+      if (!IMAGE_TYPES.includes(file.type)) return "الصور لازم تكون JPG أو PNG أو WEBP";
+      if (file.size > 5 * 1024 * 1024) return "صورة أكبر من 5 ميجا";
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      out.push(await saveMedia(`img.${ext}`, Buffer.from(await file.arrayBuffer())));
+    } else if (current.includes(token) || /^https:\/\/|^\/media\//.test(token)) {
+      out.push(token);
+    } else return "لينك الصورة لازم يبدأ بـ https://";
+  }
+  return out;
+}
+
 /**
  * المتجر: كل الخانات (التكلفة والبراند والموافقة).
  * البراند: منتجاته بس، والمنتج الجديد بيستنى موافقة المتجر ومش بيظهر لحد ما يتوافق عليه.
@@ -100,7 +133,7 @@ export async function upsertProduct(id: string | null, f: FormData, mode: Produc
       slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
     }
 
-    const images = await image(f, existing?.images ?? []);
+    const images = f.has("imagesOrder") ? await productImages(f, existing?.images ?? []) : await image(f, existing?.images ?? []);
     if (typeof images === "string") return { ok: false as const, error: images };
 
     // المنتج الجديد من البراند بيستنى الموافقة، والمستني بيفضل مخفي مهما اتعلّم «متاح»

@@ -9,7 +9,7 @@ import { Icon } from "@/components/icons";
 import { Breadcrumbs, PolicyDetails } from "@/components/product-info";
 import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { egp, prepLabel } from "@/lib/format";
-import { Polaroid } from "@/components/scrapbook";
+import { ProductGallery } from "@/components/product-gallery";
 import { Link } from "@/i18n/client";
 
 export async function generateStaticParams() {
@@ -49,9 +49,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
       <Breadcrumbs items={[{ href: "/", label: t("الرئيسية") }, { href: "/shop", label: t("كل الهدايا") }, { label: product.name }]} />
       <div className="grid gap-8 md:grid-cols-2 lg:gap-14">
         <div className="md:sticky md:top-36 md:self-start">
-          <Polaroid rotate={2.5} tape="lilac" className="mx-auto max-w-md" caption={product.name}>
-            <GiftArt image={product.images[0]} label={product.name} className="aspect-square" sizes="(max-width: 768px) 100vw, 50vw" priority />
-          </Polaroid>
+          <ProductGallery images={product.images} name={product.name} />
         </div>
         <div className="panel space-y-7 border border-line bg-paper p-6 sm:p-10">
           <div>
