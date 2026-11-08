@@ -1,15 +1,25 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useT } from "@/i18n/client";
+import { Link, useT } from "@/i18n/client";
 import type { PackageView } from "@/lib/types";
 import { useCart } from "@/store/cart";
 import { Icon } from "./icons";
 
-/** زرار واضح تحت كارت الباكدج: بيضيفه على طول ويفتح درج السلة */
+/**
+ * زرار واضح تحت كارت الباكدج: بيضيفه على طول ويفتح درج السلة.
+ * لو فيه منتج جواه ليه لون أو مقاس، الزرار بيودّي لصفحة الباكدج يختار الأول (مايتضافش من غير اختيار).
+ */
 export function QuickAdd({ pkg }: { pkg: PackageView }) {
   const t = useT();
   const addGift = useCart((s) => s.addGift);
+  if (pkg.products.some((p) => p.options?.length)) {
+    return (
+      <Link href={`/packages/${pkg.slug}`} className="btn btn-sm w-full border border-brand/30 bg-brand-soft text-brand hover:bg-brand hover:text-white">
+        {t("اختار اللون أو المقاس")}
+      </Link>
+    );
+  }
   return (
     <motion.button
       type="button"

@@ -1,6 +1,7 @@
 import { getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
 import { egp, tierLabels } from "@/lib/format";
+import { valueAvailable, type ProductOption } from "@/lib/options";
 import type { PackageTier } from "@/lib/types";
 import type { PackageView, Product } from "@/lib/types";
 import { Basket } from "./basket-reveal";
@@ -76,6 +77,7 @@ export async function ProductCard({ product }: { product: Product }) {
           </div>
           <div className="px-1.5 pt-3">
             <h3 className="line-clamp-1 text-base font-semibold">{product.name}</h3>
+            {product.options?.length ? <OptionsPreview options={product.options} en={t.locale === "en"} /> : null}
           </div>
         </Link>
         <div className="flex-1 px-1.5">
@@ -94,6 +96,41 @@ export async function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
     </Tilt>
+  );
+}
+
+/**
+ * اختيارات المنتج على الكارت: الألوان دواير صغيرة، والمقاسات والريحة أساميهم.
+ * اللي خلص بيبان باهت ومشطوب.
+ */
+function OptionsPreview({ options, en }: { options: ProductOption[]; en: boolean }) {
+  return (
+    <div className="mt-1.5 space-y-1">
+      {options.slice(0, 2).map((o) =>
+        o.kind === "color" ? (
+          <div key={o.id} className="flex items-center gap-1" aria-label={o.values.map((v) => (en && v.en) || v.label).join("، ")}>
+            {o.values.slice(0, 7).map((v) => (
+              <span
+                key={v.id}
+                title={(en && v.en) || v.label}
+                className={`size-3.5 rounded-full ring-1 ring-ink/15 ${valueAvailable(v) ? "" : "opacity-30"}`}
+                style={{ backgroundColor: v.color ?? "#d9a5ae" }}
+              />
+            ))}
+            {o.values.length > 7 && <span className="text-[11px] text-muted">+{o.values.length - 7}</span>}
+          </div>
+        ) : (
+          <p key={o.id} className="line-clamp-1 text-xs text-muted">
+            {o.values.map((v, i) => (
+              <span key={v.id} className={valueAvailable(v) ? "" : "line-through opacity-50"}>
+                {i > 0 && " · "}
+                {(en && v.en) || v.label}
+              </span>
+            ))}
+          </p>
+        ),
+      )}
+    </div>
   );
 }
 

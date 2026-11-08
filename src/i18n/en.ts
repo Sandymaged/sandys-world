@@ -659,6 +659,7 @@ export const en: Record<string, string> = {
   "كارت هدية بقيمة {amount}. اقلب الكارت وشوف إحنا كاتبينلك إيه.": "A gift card worth {amount}. Flip the card to see our note to you.",
   "الرصيد": "Balance",
   "حوّل على رقم الموبايل": "Transfer to this mobile number",
+  "اختار اللون أو المقاس": "Choose color or size",
   "أو على عنوان إنستاباي (IPA)": "Or to this InstaPay address (IPA)",
   "انتهى في": "Expired on",
   "صالح لحد": "Valid until",
