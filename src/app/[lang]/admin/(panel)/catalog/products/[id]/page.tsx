@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, PriceCostBrand, Row, Section, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, PriceCostBrand, Row, Section, StockField, TextArea } from "@/components/admin/form";
 import { ProductImagesField } from "@/components/admin/product-images";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deleteProduct, saveProduct } from "@/lib/admin-catalog-actions";
@@ -80,12 +80,11 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
             hint="لو المنتج بيتكتب عليه اسم أو جملة (زي مج بالاسم أو ميدالية محفورة)، العميل بيلاقي خانة يكتب فيها الكلام. الرقم ده أقصى عدد حروف يقدر يكتبه، على قد المساحة اللي على المنتج: مثلاً 15 للمج، وأكتر للكوشن أو البرواز."
           />
           <Row>
-            <Field
+            <StockField
               label="العدد في المخزن"
-              name="stock"
-              type="number"
-              defaultValue={p?.stock ?? ""}
-              hint="للمنتج اللي ملوش اختيارات. سيبيه فاضي لو مش عايزة تعدّي. بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيبان «خلص»."
+              defaultValue={p?.stock}
+              hasOptions={Boolean(p?.options?.length)}
+              hint="اختياري. سيبيه فاضي لو مش عايزة تعدّي. لو كتبتيه بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيبان «خلص»."
             />
           </Row>
         </Section>

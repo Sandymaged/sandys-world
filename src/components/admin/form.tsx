@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { SaveResult } from "@/lib/admin-catalog-actions";
+import { OPTIONS_EVENT } from "./options-editor";
 
 /** فورم بيحفظ بـ server action، وبعد الحفظ بيرجع للقايمة */
 export function CatalogForm({
@@ -147,6 +148,30 @@ export function PriceCostBrand({
         )}
       </Row>
     </>
+  );
+}
+
+/**
+ * عدد المنتج في المخزن: بيتقفل ويتفضّى لما المنتج يبقى ليه ألوان أو مقاسات
+ * (العدد ساعتها بيتكتب لكل اختيار في الجدول فوق)
+ */
+export function StockField({ label, defaultValue, hasOptions: initial, hint }: { label: string; defaultValue: number | null | undefined; hasOptions: boolean; hint: string }) {
+  const [hasOptions, setHasOptions] = useState(initial);
+  useEffect(() => {
+    const on = (e: Event) => setHasOptions(Boolean((e as CustomEvent<boolean>).detail));
+    window.addEventListener(OPTIONS_EVENT, on);
+    return () => window.removeEventListener(OPTIONS_EVENT, on);
+  }, []);
+  return (
+    <div className={hasOptions ? "opacity-60" : ""}>
+      <label className="label" htmlFor="stock">{label}</label>
+      {hasOptions ? (
+        <input id="stock" disabled value="" placeholder="بيتكتب لكل لون أو مقاس فوق" className="field" readOnly />
+      ) : (
+        <input id="stock" name="stock" type="number" min={0} defaultValue={defaultValue ?? ""} className="field tabular" />
+      )}
+      <p className="mt-1 text-xs leading-5 text-muted">{hasOptions ? "المنتج ليه ألوان أو مقاسات، فالعدد بيتكتب لكل واحد في جدول الاختيارات فوق (أو يتساب فاضي)." : hint}</p>
+    </div>
   );
 }
 

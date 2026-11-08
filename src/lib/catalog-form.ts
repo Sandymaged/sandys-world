@@ -163,7 +163,8 @@ export async function upsertProduct(id: string | null, f: FormData, mode: Produc
       isAddon: mode.by === "store" ? bool(f, "isAddon") : (existing?.isAddon ?? false),
       boxEligible: bool(f, "boxEligible"),
       options: options.length ? options : undefined,
-      stock: str(f, "stock") === "" ? null : Math.max(0, Math.round(num(f, "stock"))),
+      // المنتج اللي ليه ألوان أو مقاسات العدد بتاعه جوه كل اختيار، مش على المنتج كله
+      stock: options.length || str(f, "stock") === "" ? null : Math.max(0, Math.round(num(f, "stock"))),
       en: en({ name: str(f, "nameEn"), description: str(f, "descriptionEn"), category: str(f, "categoryEn") }),
       reviewStatus,
     };

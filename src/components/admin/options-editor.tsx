@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MAX_OPTIONS, MAX_VALUES, optionKinds, type OptionKind, type ProductOption } from "@/lib/options";
 
 /** في الفورم: قيم الاختيارات بتتكتب كنص، وبتتحول وتتنضف على السيرفر (normalizeOptions) */
@@ -9,6 +9,8 @@ interface DraftValue {
   label: string;
   en: string;
   color: string;
+  /** القيمة سعرها غير السعر الأساسي (من غير العلامة دي فرق السعر صفر والخانة مقفولة) */
+  ownPrice: boolean;
   priceDelta: string;
   available: boolean;
   stock: string;
@@ -21,7 +23,10 @@ interface DraftOption {
   values: DraftValue[];
 }
 
-const emptyValue = (): DraftValue => ({ label: "", en: "", color: "#d9a5ae", priceDelta: "", available: true, stock: "" });
+const emptyValue = (): DraftValue => ({ label: "", en: "", color: "#d9a5ae", ownPrice: false, priceDelta: "", available: true, stock: "" });
+
+/** اسم الحدث اللي بيقول لخانة «العدد في المخزن» تحت إن المنتج بقى ليه اختيارات (فتتقفل) */
+export const OPTIONS_EVENT = "product-options-change";
 
 const toDraft = (options: ProductOption[]): DraftOption[] =>
   options.map((o) => ({
@@ -34,6 +39,7 @@ const toDraft = (options: ProductOption[]): DraftOption[] =>
       label: v.label,
       en: v.en ?? "",
       color: v.color ?? "#d9a5ae",
+      ownPrice: Boolean(v.priceDelta),
       priceDelta: v.priceDelta ? String(v.priceDelta) : "",
       available: v.available,
       stock: v.stock == null ? "" : String(v.stock),
@@ -54,9 +60,15 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
   const json = JSON.stringify(
     options.map((o) => ({
       ...o,
-      values: o.values.map((v) => ({ ...v, color: o.kind === "color" ? v.color : null })),
+      values: o.values.map(({ ownPrice, ...v }) => ({ ...v, priceDelta: ownPrice ? v.priceDelta : "", color: o.kind === "color" ? v.color : null })),
     })),
   );
+
+  // خانة العدد اللي تحت بتتقفل لما يبقى فيه قيمة واحدة على الأقل
+  const hasOptions = options.some((o) => o.values.some((v) => v.label.trim()));
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(OPTIONS_EVENT, { detail: hasOptions }));
+  }, [hasOptions]);
 
   return (
     <div className="space-y-4">
@@ -103,7 +115,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                   <th className="pb-2 text-start font-medium">بالإنجليزي</th>
                   {o.kind === "color" && <th className="pb-2 text-start font-medium">اللون</th>}
                   <th className="pb-2 text-start font-medium">العدد في المخزن</th>
-                  <th className="pb-2 text-start font-medium">فرق السعر</th>
+                  <th className="pb-2 text-start font-medium">السعر</th>
                   <th className="pb-2 text-start font-medium">متاحة</th>
                   <th />
                 </tr>
@@ -126,7 +138,19 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                       <input className="field tabular h-10 w-28" inputMode="numeric" value={v.stock} onChange={(e) => setValue(i, j, { stock: e.target.value.replace(/\D/g, "") })} placeholder="مفتوح" />
                     </td>
                     <td className="py-2 pe-2">
-                      <input className="field tabular h-10 w-24" inputMode="numeric" value={v.priceDelta} onChange={(e) => setValue(i, j, { priceDelta: e.target.value.replace(/[^\d-]/g, "") })} placeholder="0" />
+                      <label className="mb-1 flex cursor-pointer items-center gap-1.5 text-xs whitespace-nowrap text-ink-2">
+                        <input type="checkbox" className="size-4 accent-brand" checked={v.ownPrice} onChange={(e) => setValue(i, j, { ownPrice: e.target.checked, priceDelta: e.target.checked ? v.priceDelta : "" })} />
+                        سعره مختلف
+                      </label>
+                      <input
+                        className="field tabular h-10 w-28 disabled:opacity-50"
+                        inputMode="numeric"
+                        disabled={!v.ownPrice}
+                        value={v.priceDelta}
+                        onChange={(e) => setValue(i, j, { priceDelta: e.target.value.replace(/[^\d-]/g, "") })}
+                        placeholder={v.ownPrice ? "+ كام ج.م" : "السعر الأساسي"}
+                        aria-label="فرق السعر عن السعر الأساسي"
+                      />
                     </td>
                     <td className="py-2 pe-2">
                       <input type="checkbox" aria-label="متاحة" className="size-5 accent-brand" checked={v.available} onChange={(e) => setValue(i, j, { available: e.target.checked })} />
@@ -159,7 +183,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
         </button>
       )}
       <p className="text-xs leading-5 text-muted">
-        العدد في المخزن بيقل لوحده مع كل طلب وبيرجع لو الطلب اتلغى، وأول ما يوصل صفر القيمة بتبان «خلص». سيبه فاضي من غير عدّ. فرق السعر بيتحسب على المنتج لوحده والبوكس، مش جوه الباكدج.
+        كل قيمة بتتباع بالسعر الأساسي للمنتج. لو قيمة سعرها مختلف (مقاس كبير مثلاً)، علّمي «سعره مختلف» واكتبي الفرق (+50 أو -20). العدد في المخزن اختياري: سيبيه فاضي من غير عدّ، ولو كتبتيه بيقل لوحده مع كل طلب وأول ما يوصل صفر القيمة بتبان «خلص».
       </p>
     </div>
   );

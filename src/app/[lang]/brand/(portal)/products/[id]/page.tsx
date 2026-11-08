@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/catalog-ui";
-import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, Row, Section, TextArea } from "@/components/admin/form";
+import { CatalogForm, Check, ChecksGroup, CustomizationFields, Field, Row, Section, StockField, TextArea } from "@/components/admin/form";
 import { ProductImagesField } from "@/components/admin/product-images";
 import { OptionsEditor } from "@/components/admin/options-editor";
 import { requireBrand } from "@/lib/brand-auth";
@@ -86,12 +86,11 @@ export default async function BrandProduct({ params }: PageProps<"/[lang]/brand/
             hint="لو المنتج بيتكتب عليه اسم أو جملة (زي مج بالاسم أو ميدالية محفورة)، العميل بيلاقي خانة يكتب فيها الكلام. الرقم ده أقصى عدد حروف يقدر يكتبه، على قد المساحة اللي على المنتج."
           />
           <Row>
-            <Field
+            <StockField
               label="العدد اللي عندك"
-              name="stock"
-              type="number"
-              defaultValue={p?.stock ?? ""}
-              hint="لازم يتكتب. لو المنتج ليه ألوان أو مقاسات، اكتب عدد كل واحد في الجدول فوق بدل هنا. العدد بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيتقفل «خلص». أي طلب بيوصلك لازم يتجهز، فخلّي العدد مظبوط أول بأول."
+              defaultValue={p?.stock}
+              hasOptions={Boolean(p?.options?.length)}
+              hint="لازم يتكتب. العدد بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيتقفل «خلص». أي طلب بيوصلك لازم يتجهز، فخلّي العدد مظبوط أول بأول."
             />
           </Row>
         </Section>
