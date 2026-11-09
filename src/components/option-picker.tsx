@@ -2,11 +2,12 @@
 
 import { useT } from "@/i18n/client";
 import { egp } from "@/lib/format";
-import { valueAvailable, type OptionChoice, type ProductOption } from "@/lib/options";
+import { canPick, pickChoice, type OptionChoice, type ProductOption } from "@/lib/options";
 
 /**
  * اختيار اللون/المقاس/الريحة: زراير، والألوان دواير بلونها.
  * اللي خلص بيبان مشطوب ومينفعش يتختار، وفرق السعر مكتوب جنب القيمة.
+ * لو المنتج ليه أكتر من اختيار، «خلص» بيتحسب مع اللي اتختار (yara 100ml ممكن تخلص و50ml لأ).
  */
 export function OptionPicker({
   options,
@@ -24,8 +25,7 @@ export function OptionPicker({
 }) {
   const t = useT();
   const en = t.locale === "en";
-  const pick = (optionId: string, valueId: string) =>
-    onChange([...choices.filter((c) => c.optionId !== optionId), { optionId, valueId }]);
+  const pick = (optionId: string, valueId: string) => onChange(pickChoice(options, choices, optionId, valueId));
 
   return (
     <div className="space-y-4">
@@ -39,7 +39,7 @@ export function OptionPicker({
             </legend>
             <div className="flex flex-wrap gap-2">
               {o.values.map((v) => {
-                const ok = valueAvailable(v);
+                const ok = canPick(options, choices, o.id, v.id);
                 const on = chosen?.id === v.id;
                 const label = en ? v.en || v.label : v.label;
                 return (

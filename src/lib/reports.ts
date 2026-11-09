@@ -4,6 +4,7 @@ import type { OrderRecord } from "./db/types";
 import { cairoNow } from "./delivery";
 import { instapayFee, type Expense, type FinanceSettings } from "./finance";
 import { cardsTotal } from "./gift-card";
+import { allCombos, comboKey, comboStock, describeChoices, usesCombos } from "./options";
 
 /*
  * التقارير (بحساب الفلوس اللي دخلت فعلاً):
@@ -337,7 +338,12 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
   // المخزون اللي قرب يخلص (٣ أو أقل)
   const lowStock: Ranked[] = [];
   for (const p of i.catalog.products) {
-    if (p.options?.length) {
+    if (usesCombos(p.options)) {
+      for (const cs of allCombos(p.options!)) {
+        const s = comboStock(p.options, comboKey(cs));
+        if (s != null && s <= 3) lowStock.push({ key: `${p.id}:${comboKey(cs)}`, label: `${p.name} (${describeChoices(p.options, cs)})`, value: s });
+      }
+    } else if (p.options?.length) {
       for (const o of p.options) for (const v of o.values) if (v.stock != null && v.stock <= 3) lowStock.push({ key: `${p.id}:${o.id}:${v.id}`, label: `${p.name} (${v.label})`, value: v.stock });
     } else if (p.stock != null && p.stock <= 3) lowStock.push({ key: p.id, label: p.name, value: p.stock });
   }

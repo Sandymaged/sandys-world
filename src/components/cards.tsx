@@ -1,7 +1,7 @@
 import { getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
 import { egp, tierLabels } from "@/lib/format";
-import { valueAvailable, type ProductOption } from "@/lib/options";
+import { canPick, type ProductOption } from "@/lib/options";
 import type { PackageTier } from "@/lib/types";
 import type { PackageView, Product } from "@/lib/types";
 import { Basket } from "./basket-reveal";
@@ -113,7 +113,7 @@ function OptionsPreview({ options, en }: { options: ProductOption[]; en: boolean
               <span
                 key={v.id}
                 title={(en && v.en) || v.label}
-                className={`size-3.5 rounded-full ring-1 ring-ink/15 ${valueAvailable(v) ? "" : "opacity-30"}`}
+                className={`size-3.5 rounded-full ring-1 ring-ink/15 ${canPick(options, [], o.id, v.id) ? "" : "opacity-30"}`}
                 style={{ backgroundColor: v.color ?? "#d9a5ae" }}
               />
             ))}
@@ -122,7 +122,7 @@ function OptionsPreview({ options, en }: { options: ProductOption[]; en: boolean
         ) : (
           <p key={o.id} className="line-clamp-1 text-xs text-muted">
             {o.values.map((v, i) => (
-              <span key={v.id} className={valueAvailable(v) ? "" : "line-through opacity-50"}>
+              <span key={v.id} className={canPick(options, [], o.id, v.id) ? "" : "line-through opacity-50"}>
                 {i > 0 && " · "}
                 {(en && v.en) || v.label}
               </span>

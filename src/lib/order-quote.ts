@@ -7,7 +7,7 @@ import { emailError, nameError, phoneError, recipientErrors } from "./validate";
 import type { Storefront } from "./catalog";
 import { cairoNow, earliestDeliveryDate, periodsForDate, type CairoNow } from "./delivery";
 import { translator, type T } from "@/i18n/t";
-import { describeChoices, optionsPrice, valueAvailable, type OptionChoice } from "./options";
+import { comboKey, comboStock, describeChoices, optionsPrice, usesCombos, valueAvailable, type OptionChoice } from "./options";
 import { couponDiscount, kitTotal, packagingFee, type CouponRule } from "./pricing";
 import { giftCardProblems, type CartGiftCard } from "./gift-card";
 
@@ -104,6 +104,11 @@ export function quoteOrder(
         const v = o.values.find((x) => x.id === picked.find((c) => c.optionId === o.id)?.valueId);
         if (!v) errors.push(t("{tag}: اختار {option} لـ {name}", { tag, option: o.name, name: p.name }));
         else if (!valueAvailable(v)) errors.push(t("{tag}: {value} من {name} خلص", { tag, value: v.label, name: p.name }));
+      }
+      // التركيبة نفسها (yara · 100ml) خلصت حتى لو كل قيمة لوحدها متاحة
+      if (usesCombos(opts) && picked.length === opts.length) {
+        const s = comboStock(opts, comboKey(picked));
+        if (s != null && s <= 0) errors.push(t("{tag}: {value} من {name} خلص", { tag, value: describeChoices(opts, picked), name: p.name }));
       }
       items.push({
         productId,

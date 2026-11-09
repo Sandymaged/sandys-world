@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { mutateCatalog, saveMedia, type ProductRecord } from "./db/catalog-store";
-import { normalizeOptions, type ProductOption } from "./options";
+import { MAX_COMBOS, allCombos, comboKey, comboStock, normalizeOptions, usesCombos, type ProductOption } from "./options";
 import type { Localized, RecipientTag } from "./types";
 
 /*
@@ -109,12 +109,20 @@ export async function upsertProduct(id: string | null, f: FormData, mode: Produc
   } catch {
     return { ok: false, error: "في مشكلة في الاختيارات، راجعها" };
   }
+  if (usesCombos(options) && options.reduce((n, o) => n * o.values.length, 1) > MAX_COMBOS) {
+    return { ok: false, error: `التركيبات كتير أوي، أقصى حاجة ${MAX_COMBOS}. قلل القيم شوية` };
+  }
   // البراند ماشي بالمخزون: لازم يكتب العدد اللي عنده، وأي طلب بيوصله يبقى عليه يجهّزه.
   // أول ما العدد يخلص المنتج (أو اللون/المقاس) بيتقفل «خلص» لوحده
   if (mode.by === "brand") {
     // مدة التجهيز بتاعة البراند هي اللي بتحدد أقرب يوم توصيل يظهر للعميل في الدفع
     if (str(f, "prepDays") === "" || !(num(f, "prepDays") >= 0)) return { ok: false, error: "اكتب المنتج بيتجهز في كام يوم" };
-    if (options.length) {
+    if (usesCombos(options)) {
+      const missing = allCombos(options)
+        .filter((cs) => typeof comboStock(options, comboKey(cs)) !== "number")
+        .map((cs) => cs.map((c) => options.find((o) => o.id === c.optionId)?.values.find((v) => v.id === c.valueId)?.label).join(" · "));
+      if (missing.length) return { ok: false, error: `اكتب العدد اللي عندك من كل تركيبة (ناقص: ${missing.slice(0, 4).join("، ")})` };
+    } else if (options.length) {
       const missing = options.flatMap((o) => o.values.filter((v) => typeof v.stock !== "number").map((v) => `${o.name}: ${v.label}`));
       if (missing.length) return { ok: false, error: `اكتب العدد اللي عندك من كل اختيار (ناقص: ${missing.slice(0, 4).join("، ")})` };
     } else if (str(f, "stock") === "" || !(num(f, "stock") >= 0)) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MAX_OPTIONS, MAX_VALUES, optionKinds, type OptionKind, type ProductOption } from "@/lib/options";
+import { MAX_COMBOS, MAX_OPTIONS, MAX_VALUES, comboKey, optionKinds, type OptionKind, type ProductOption } from "@/lib/options";
 
 /** في الفورم: قيم الاختيارات بتتكتب كنص، وبتتحول وتتنضف على السيرفر (normalizeOptions) */
 interface DraftValue {
@@ -23,7 +23,10 @@ interface DraftOption {
   values: DraftValue[];
 }
 
-const emptyValue = (): DraftValue => ({ label: "", en: "", color: "#d9a5ae", ownPrice: false, priceDelta: "", available: true, stock: "" });
+// القيمة الجديدة بتاخد id من الأول، عشان التركيبات (اللي متخزنة بالـ id) تفضل مربوطة بيها
+const newId = () => `v${Math.random().toString(36).slice(2, 8)}`;
+const newOptionId = () => `o${Math.random().toString(36).slice(2, 8)}`;
+const emptyValue = (): DraftValue => ({ id: newId(), label: "", en: "", color: "#d9a5ae", ownPrice: false, priceDelta: "", available: true, stock: "" });
 
 /** اسم الحدث اللي بيقول لخانة «العدد في المخزن» تحت إن المنتج بقى ليه اختيارات (فتتقفل) */
 export const OPTIONS_EVENT = "product-options-change";
@@ -52,15 +55,31 @@ const toDraft = (options: ProductOption[]): DraftOption[] =>
  */
 export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
   const [options, setOptions] = useState<DraftOption[]>(() => toDraft(initial));
+  // عدد كل تركيبة (بالمفتاح)، بيتكتب كنص زي باقي الخانات
+  const [combos, setCombos] = useState<Record<string, string>>(() =>
+    Object.fromEntries((initial[0]?.combos ?? []).map((c) => [c.key, c.stock == null ? "" : String(c.stock)])),
+  );
 
   const setOption = (i: number, patch: Partial<DraftOption>) => setOptions((all) => all.map((o, k) => (k === i ? { ...o, ...patch } : o)));
   const setValue = (i: number, j: number, patch: Partial<DraftValue>) =>
     setOptions((all) => all.map((o, k) => (k === i ? { ...o, values: o.values.map((v, m) => (m === j ? { ...v, ...patch } : v)) } : o)));
 
+  // الاختيارات اللي ليها اسم وقيم: لو اتنين أو أكتر، العدد بيبقى على التركيبات مش على القيمة
+  const filled = options
+    .map((o) => ({ ...o, values: o.values.filter((v) => v.label.trim() && v.id) }))
+    .filter((o) => o.name.trim() && o.values.length && o.id);
+  const byCombo = filled.length >= 2;
+  const rows = byCombo
+    ? filled
+        .reduce<{ id: string; label: string }[][]>((acc, o) => acc.flatMap((cs) => o.values.map((v) => [...cs, { id: `${o.id}=${v.id}`, label: v.label.trim() }])), [[]])
+        .map((cs) => ({ key: comboKey(cs.map((c) => ({ optionId: c.id.split("=")[0], valueId: c.id.split("=")[1] }))), label: cs.map((c) => c.label).join(" · ") }))
+    : [];
+
   const json = JSON.stringify(
-    options.map((o) => ({
+    options.map((o, i) => ({
       ...o,
-      values: o.values.map(({ ownPrice, ...v }) => ({ ...v, priceDelta: ownPrice ? v.priceDelta : "", color: o.kind === "color" ? v.color : null })),
+      values: o.values.map(({ ownPrice, ...v }) => ({ ...v, stock: byCombo ? "" : v.stock, priceDelta: ownPrice ? v.priceDelta : "", color: o.kind === "color" ? v.color : null })),
+      ...(i === 0 && byCombo ? { combos: rows.map((r) => ({ key: r.key, stock: combos[r.key] ?? "" })) } : {}),
     })),
   );
 
@@ -114,7 +133,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                   <th className="pb-2 text-start font-medium">القيمة</th>
                   <th className="pb-2 text-start font-medium">بالإنجليزي</th>
                   {o.kind === "color" && <th className="pb-2 text-start font-medium">اللون</th>}
-                  <th className="pb-2 text-start font-medium">العدد في المخزن</th>
+                  {!byCombo && <th className="pb-2 text-start font-medium">العدد في المخزن</th>}
                   <th className="pb-2 text-start font-medium">السعر</th>
                   <th className="pb-2 text-start font-medium">متاحة</th>
                   <th />
@@ -134,9 +153,11 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                         <input type="color" aria-label="اللون" className="h-10 w-14 cursor-pointer rounded-lg border border-line bg-paper p-1" value={v.color} onChange={(e) => setValue(i, j, { color: e.target.value })} />
                       </td>
                     )}
-                    <td className="py-2 pe-2">
-                      <input className="field tabular h-10 w-28" inputMode="numeric" value={v.stock} onChange={(e) => setValue(i, j, { stock: e.target.value.replace(/\D/g, "") })} placeholder="مفتوح" />
-                    </td>
+                    {!byCombo && (
+                      <td className="py-2 pe-2">
+                        <input className="field tabular h-10 w-28" inputMode="numeric" value={v.stock} onChange={(e) => setValue(i, j, { stock: e.target.value.replace(/\D/g, "") })} placeholder="مفتوح" />
+                      </td>
+                    )}
                     <td className="py-2 pe-2">
                       <label className="mb-1 flex cursor-pointer items-center gap-1.5 text-xs whitespace-nowrap text-ink-2">
                         <input type="checkbox" className="size-4 accent-brand" checked={v.ownPrice} onChange={(e) => setValue(i, j, { ownPrice: e.target.checked, priceDelta: e.target.checked ? v.priceDelta : "" })} />
@@ -176,12 +197,42 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
       {options.length < MAX_OPTIONS && (
         <button
           type="button"
-          onClick={() => setOptions((all) => [...all, { name: "اللون", en: "Color", kind: "color", values: [emptyValue()] }])}
+          onClick={() => setOptions((all) => [...all, { id: newOptionId(), name: "اللون", en: "Color", kind: "color", values: [emptyValue()] }])}
           className="btn-outline btn-sm"
         >
           + اختيار جديد (لون، مقاس، ريحة…)
         </button>
       )}
+      {byCombo && (
+        <div className="space-y-3 rounded-2xl border border-line bg-paper p-4">
+          <div>
+            <h3 className="font-semibold">العدد في المخزن لكل تركيبة</h3>
+            <p className="text-xs leading-5 text-muted">
+              عشان المنتج ليه أكتر من اختيار، العدد بيتكتب لكل تركيبة لوحدها. مثلاً عندك كام yara 50ml وكام yara 100ml. الطلب بيقلّل من التركيبة اللي العميل اختارها بس، ولما تخلص بتبان «خلص» مع الاختيار ده لوحده.
+            </p>
+          </div>
+          {rows.length > MAX_COMBOS ? (
+            <p className="text-sm text-brand">التركيبات كتير أوي ({rows.length}). أقصى حاجة {MAX_COMBOS}، قللي القيم شوية.</p>
+          ) : (
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {rows.map((r) => (
+                <li key={r.key} className="flex items-center gap-3 rounded-xl border border-dashed border-line px-3 py-2">
+                  <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
+                  <input
+                    className="field tabular h-10 w-24"
+                    inputMode="numeric"
+                    aria-label={`العدد: ${r.label}`}
+                    value={combos[r.key] ?? ""}
+                    onChange={(e) => setCombos((all) => ({ ...all, [r.key]: e.target.value.replace(/\D/g, "") }))}
+                    placeholder="مفتوح"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <p className="text-xs leading-5 text-muted">
         كل قيمة بتتباع بالسعر الأساسي للمنتج. لو قيمة سعرها مختلف (مقاس كبير مثلاً)، علّمي «سعره مختلف» واكتبي الفرق (+50 أو -20). العدد في المخزن اختياري: سيبيه فاضي من غير عدّ، ولو كتبتيه بيقل لوحده مع كل طلب وأول ما يوصل صفر القيمة بتبان «خلص».
       </p>
