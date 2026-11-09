@@ -1,4 +1,5 @@
 import type { BrandOrder, MonthProgress } from "@/lib/brand-portal";
+import { FREE_PIECES } from "@/lib/commission";
 import { statusLabel, statusTone } from "@/lib/admin-format";
 import { money } from "../admin/ui";
 import { OrderActions } from "./portal-ui";
@@ -118,7 +119,7 @@ export function MonthTierCard({ p }: { p: MonthProgress }) {
         ))}
       </ul>
       <p className="mt-3 text-xs leading-5 text-muted">
-        الحد = متوسط سعر منتجاتك × 20 (يعني حوالي أول 20 قطعة في الشهر من غير عمولة). كل نسبة بتتحسب على الجزء اللي جوه شريحتها بس، والعمولة بتتثبت لما الطلب يتسلم للعميل.
+        الحد = متوسط سعر منتجاتك × {FREE_PIECES} (يعني حوالي أول {FREE_PIECES} قطع في الشهر من غير عمولة). كل نسبة بتتحسب على الجزء اللي جوه شريحتها بس، والعمولة بتتثبت لما الطلب يتسلم للعميل.
       </p>
     </Box>
   );

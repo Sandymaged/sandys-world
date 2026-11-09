@@ -52,7 +52,7 @@ export default async function PoliciesPage() {
           id: "delivery",
           title: "Delivery",
           items: [
-            <>We deliver anywhere in Assiut with our own courier, and to other governorates through a shipping company. The fee for your area shows in the cart before you pay.</>,
+            <>For now we deliver inside Assiut City only, with our own courier. The fee for your area shows in the cart before you pay.</>,
             <>You choose the day and time: {periods}.</>,
             <>Same-day delivery is available inside Assiut city for ready gifts if you order before {cutoff} PM. Gifts that need preparing show their preparation days at checkout.</>,
             <>If we can&apos;t deliver (the recipient isn&apos;t there, the phone is off, or the address is wrong), a second try on the same day is free. Another day comes with a new delivery fee.</>,
@@ -108,7 +108,7 @@ export default async function PoliciesPage() {
           id: "delivery",
           title: "التوصيل",
           items: [
-            <>بنوصّل لأي مكان في أسيوط بمندوب خاص، وباقي المحافظات بشركة شحن. ورسوم التوصيل لمنطقتك بتظهر في السلة قبل ما تدفع.</>,
+            <>بنوصّل جوه مدينة أسيوط بس دلوقتي، بمندوب خاص. ورسوم التوصيل لمنطقتك بتظهر في السلة قبل ما تدفع.</>,
             <>إنت اللي بتختار اليوم والفترة: {periods}.</>,
             <>التوصيل في نفس اليوم متاح جوه مدينة أسيوط للهدايا الجاهزة، لو طلبت قبل الساعة {cutoff} الضهر. والهدايا اللي محتاجة تجهيز بيظهرلك عدد أيام تجهيزها وإنت بتطلب.</>,
             <>لو مقدرناش نوصّل (المستلم مش موجود، أو الموبايل مقفول، أو العنوان غلط)، المحاولة التانية في نفس اليوم ببلاش، وفي يوم تاني برسوم توصيل جديدة.</>,

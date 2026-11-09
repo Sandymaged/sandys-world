@@ -40,8 +40,7 @@ export const en: Record<string, string> = {
   "مولود جديد": "New baby",
   "خطوبة وجواز": "Engagement",
   "التوصيل والدفع": "Delivery & payment",
-  "مدينة أسيوط ومراكزها بمندوب خاص": "Assiut City and its districts by our own courier",
-  "باقي المحافظات بشركة شحن": "Other governorates by shipping company",
+  "التوصيل جوه مدينة أسيوط بمندوب خاص": "Delivery inside Assiut City by our own courier",
   "الدفع بإنستاباي، أو كاش لو إنت المستلم": "Pay by InstaPay, or cash if you're the recipient",
   "كل الحقوق محفوظة.": "All rights reserved.",
 
@@ -202,8 +201,8 @@ export const en: Record<string, string> = {
   "موجود في الباكدجات دي": "Included in these packages",
   "الصور": "Photos",
   "الإلغاء والاسترجاع": "Cancellations & returns",
-  "مدينة أسيوط ومراكزها بمندوب خاص، وباقي المحافظات بشركة شحن. بتختار يوم وفترة التوصيل لكل هدية في السلة، ورسوم التوصيل بتظهر قبل الدفع.":
-    "Assiut City and its districts by our own courier, other governorates by shipping company. You choose the day and time for each gift in your bag, and delivery fees show before you pay.",
+  "بنوصّل جوه مدينة أسيوط بس دلوقتي، بمندوب خاص. بتختار يوم وفترة التوصيل لكل هدية في السلة، ورسوم التوصيل بتظهر قبل الدفع.":
+    "For now we deliver inside Assiut City only, by our own courier. You choose the day and time for each gift in your bag, and delivery fees show before you pay.",
   "هنبعتلك على واتساب صورة الهدية قبل ما تخرج، وصورة وهي بتتسلم لو طلبت كده.": "We'll send you a WhatsApp photo of the gift before it leaves, and one on delivery if you ask.",
   "الإلغاء مجاني قبل ما نبدأ التجهيز. المنتجات المتخصصة بالاسم مش بترجع بعد التنفيذ، إلا لو فيها عيب أو غلط مننا، ويتبلغ خلال 48 ساعة بصورة.":
     "Free cancellation before we start preparing. Personalised items can't be returned once made, unless there's a defect or our mistake, reported with a photo within 48 hours.",

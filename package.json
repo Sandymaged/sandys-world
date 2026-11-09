@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed-sql": "node scripts/seed-sql.mts"
+    "db:seed-sql": "node scripts/seed-sql.mts",
+    "portfolio": "node scripts/portfolio-pdf.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.134.0",

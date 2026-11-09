@@ -137,7 +137,7 @@ function withCommission(bo: BrandOrder, commission: number): BrandOrder {
   return { ...bo, commission: c, net: r2(bo.gross - c), lines: bo.lines.map((l) => ({ ...l, net: r2(l.gross * (1 - share)) })) };
 }
 
-/** الحد الشهري الحالي للبراند: متوسط أسعار منتجاته المعروضة × 20 */
+/** الحد الشهري الحالي للبراند: متوسط أسعار منتجاته المعروضة × FREE_PIECES */
 export function currentThreshold(partnerId: string, catalog: CatalogData, fallback: BrandOrder[] = []) {
   const prices = catalog.products.filter((p) => p.partnerId === partnerId && p.reviewStatus !== "pending" && p.price > 0).map((p) => p.price);
   const units = prices.length ? prices : fallback.flatMap((o) => o.lines.map((l) => l.unitPrice)).filter((x) => x > 0);

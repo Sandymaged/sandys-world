@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { payBalanceAction } from "@/lib/brand-admin-actions";
 import { tierLine } from "@/components/brand/bits";
 import { allStatements, HOLD_DAYS } from "@/lib/brand-portal";
+import { FREE_PIECES } from "@/lib/commission";
 
 export const instant = false;
 
@@ -30,7 +31,7 @@ export default async function AdminSettlements() {
       <div>
         <h1 className="text-3xl text-brand">حسابات البراندات</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          نصيب البراند = سعر منتجاته ناقص عمولتك. العمولة بالشرايح كل شهر: أول (متوسط أسعاره × 20) ببلاش، وبعدها 10% ثم 15% ثم 20%. النصيب بيستحق بعد ما الطلب يتسلم للعميل بـ {HOLD_DAYS} أيام. حوّلي للبراند ودوسي «✓ حوّلت» جنبه، والحساب بيتصفّى لوحده.
+          نصيب البراند = سعر منتجاته ناقص عمولتك. العمولة بالشرايح كل شهر: أول (متوسط أسعاره × {FREE_PIECES}) ببلاش، وبعدها 10% ثم 15% ثم 20%. النصيب بيستحق بعد ما الطلب يتسلم للعميل بـ {HOLD_DAYS} أيام. حوّلي للبراند ودوسي «✓ حوّلت» جنبه، والحساب بيتصفّى لوحده.
         </p>
       </div>
 

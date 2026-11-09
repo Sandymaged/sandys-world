@@ -18,7 +18,7 @@ const shop = [
   { href: "/send-to-assiut", label: "ابعت لأهلك في أسيوط" },
 ];
 
-const delivery = ["مدينة أسيوط ومراكزها بمندوب خاص", "باقي المحافظات بشركة شحن", "الدفع بإنستاباي، أو كاش لو إنت المستلم"];
+const delivery = ["التوصيل جوه مدينة أسيوط بمندوب خاص", "الدفع بإنستاباي، أو كاش لو إنت المستلم"];
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (

@@ -196,6 +196,23 @@ export async function saveInstapay(f: FormData): Promise<{ ok: true } | { ok: fa
   return { ok: true };
 }
 
+// ───────────── بيانات تواصل المتجر ─────────────
+
+export async function saveContact(f: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  if (!setupOnSupabase()) return { ok: false, error: NEED_DB };
+  const whatsapp = str(f, "whatsapp").replace(/[^\d+]/g, "").slice(0, 15);
+  const instagram = str(f, "instagram").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/.*$/, "").slice(0, 40);
+  const website = str(f, "website").trim().slice(0, 200);
+  if (whatsapp && !/^(\+20|0)1[0125]\d{8}$/.test(whatsapp)) return { ok: false, error: "رقم الواتساب مش مظبوط (01xxxxxxxxx)" };
+  if (instagram && !/^[A-Za-z0-9._]+$/.test(instagram)) return { ok: false, error: "اسم الانستجرام فيه حروف مش مظبوطة" };
+  if (website && !/^https?:\/\/\S+\.\S+$/.test(website)) return { ok: false, error: "لينك الموقع لازم يبدأ بـ https://" };
+  const { error } = await adminClient().from("settings").upsert({ key: "contact", value: { whatsapp, instagram, website } });
+  if (error) return { ok: false, error: `ماتحفظش: ${error.message}` };
+  updateTag("catalog");
+  return { ok: true };
+}
+
 // ───────────── أكواد الخصم ─────────────
 
 export async function saveCoupon(code: string | null, f: FormData): Promise<SaveResult> {

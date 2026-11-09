@@ -117,6 +117,20 @@ export async function loadInstapay(): Promise<StoreSettings["instapay"]> {
   return data?.value ? { ...env, ...(data.value as StoreSettings["instapay"]) } : env;
 }
 
+/** بيانات تواصل المتجر (واتساب، انستجرام، لينك الموقع) اللي بتتحط في ملف البراندات */
+export interface StoreContact {
+  whatsapp: string;
+  instagram: string;
+  website: string;
+}
+
+export async function loadContact(): Promise<StoreContact> {
+  const empty: StoreContact = { whatsapp: "", instagram: "", website: "" };
+  if (!setupOnSupabase()) return empty;
+  const { data } = await adminClient().from("settings").select("value").eq("key", "contact").maybeSingle();
+  return data?.value ? { ...empty, ...(data.value as Partial<StoreContact>) } : empty;
+}
+
 /** يوم بتوقيت القاهرة (YYYY-MM-DD) من تاريخ ووقت محفوظ */
 export function cairoDay(iso: string | null | undefined) {
   if (!iso) return "";
