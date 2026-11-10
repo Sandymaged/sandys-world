@@ -106,7 +106,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         <Icon name="external" className="size-4" />
         شوف الموقع
       </a>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto">
         <NavLinks onNavigate={onNavigate} />
       </div>
       <form action={adminLogout} className="border-t border-line pt-4">
