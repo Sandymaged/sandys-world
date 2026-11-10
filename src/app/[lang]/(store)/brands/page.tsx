@@ -29,7 +29,7 @@ export default async function BrandsPage() {
       />
 
       <section className="container-x py-14">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sf.brands.map((b) => (
             <Reveal key={b.id}>
               <BrandCard brand={b} />

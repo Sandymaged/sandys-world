@@ -274,11 +274,12 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="mt-10">
-              <ScrollRow label={t("براندات من أسيوط")}>
-                {sf.brands.map((b) => (
+              {/* شبكة بدل صف بيتسحب: البراندات لسه قليلة، والصف كان بيسيب فاضي كبير */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {sf.brands.slice(0, 6).map((b) => (
                   <BrandCard key={b.id} brand={b} />
                 ))}
-              </ScrollRow>
+              </div>
             </div>
           </div>
         </section>
