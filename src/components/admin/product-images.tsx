@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { shrinkImage } from "@/lib/shrink-image";
 import { Icon } from "../icons";
 
 const MAX = 5;
@@ -8,19 +9,7 @@ const SIDE = 1600;
 
 type Item = { kind: "url"; url: string } | { kind: "file"; file: File; preview: string };
 
-/** بيصغّر الصورة في المتصفح (أطول ضلع 1600 بكسل، WebP) عشان الرفع يبقى خفيف ومايعدّيش حد السيرفر */
-async function shrink(file: File): Promise<File> {
-  const bmp = await createImageBitmap(file);
-  const scale = Math.min(1, SIDE / Math.max(bmp.width, bmp.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bmp.width * scale);
-  canvas.height = Math.round(bmp.height * scale);
-  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-  bmp.close();
-  const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/webp", 0.85));
-  if (!blob) throw new Error("shrink failed");
-  return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "img"}.webp`, { type: "image/webp" });
-}
+const shrink = (file: File) => shrinkImage(file, SIDE);
 
 /**
  * صور المنتج: لحد 5، بتترفع مع بعض وتتشال وتترتب، والأولى هي الأساسية (اللي بتظهر في الكروت).

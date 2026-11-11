@@ -4,7 +4,7 @@ import { missingOptions, optionsPrice, type OptionChoice, type ProductOption } f
 import { recipientErrors } from "./validate";
 import { packagingFee } from "./pricing";
 import type { StoreSettings } from "./settings";
-import type { DeliveryPeriod } from "./types";
+import { needsImage, needsText, type CustomizationKind, type DeliveryPeriod } from "./types";
 
 export type GiftKind = "package" | "box" | "product" | "kit";
 
@@ -16,6 +16,10 @@ export interface CartLine {
   customization?: string;
   customizable?: boolean;
   maxChars?: number | null;
+  /** المنتج المخصص محتاج كلام ولا صورة ولا الاتنين (بيتملوا في صفحة الدفع) */
+  customKind?: CustomizationKind;
+  /** صورة العميل بعد ما اترفعت (اسم الملف على السيرفر) */
+  customImage?: string;
   /** اختيارات المنتج وقت الإضافة (للعرض والاختيار في السلة)، واللي العميل اختاره */
   options?: ProductOption[];
   choices?: OptionChoice[];
@@ -155,12 +159,26 @@ export function deliveryProblems(d: OrderDelivery, maxCardMessage = Infinity): s
   return out;
 }
 
-/** الناقص في الهدية نفسها (التخصيص والاختيارات والكارت) */
-export function giftProblems(g: CartGift, settings: StoreSettings): string[] {
+/**
+ * الناقص في الهدية نفسها قبل الدفع. الاختيارات (لون/مقاس) بتتختار قبل ما المنتج يتضاف،
+ * فده للأمان بس (منتج اتعدّل بعد ما اتضاف). الكلام والصورة بيتملوا في صفحة الدفع (customProblems).
+ */
+export function giftProblems(g: CartGift, _settings: StoreSettings): string[] {
   const out: string[] = [];
-  for (const l of g.lines) {
-    if (l.customizable && !l.customization?.trim()) out.push("نص التخصيص");
-  }
   if (g.lines.some((l) => missingOptions(l.options, l.choices).length)) out.push("اختيارات المنتجات (لون/مقاس/ريحة)");
   return out;
+}
+
+/** المنتجات المخصصة في الطلب كله، وكل واحد ناقصه كلام ولا صورة (لصفحة الدفع) */
+export function customLines(gifts: CartGift[]) {
+  return gifts.flatMap((g) =>
+    g.lines
+      .map((l, i) => ({ gift: g, line: l, index: i }))
+      .filter((x) => x.line.customizable)
+      .map((x) => ({
+        ...x,
+        missingText: needsText(x.line.customKind) && !x.line.customization?.trim(),
+        missingImage: needsImage(x.line.customKind) && !x.line.customImage,
+      })),
+  );
 }

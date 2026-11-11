@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mutateCatalog, saveMedia, type ProductRecord } from "./db/catalog-store";
 import { MAX_COMBOS, allCombos, comboKey, comboStock, normalizeOptions, usesCombos, type ProductOption } from "./options";
+import { adminClient } from "./supabase/admin";
 import type { Localized, RecipientTag } from "./types";
 
 /*
@@ -179,7 +180,28 @@ export async function upsertProduct(id: string | null, f: FormData, mode: Produc
     if (existing) Object.assign(existing, rec);
     else d.products.push(rec);
     return { ok: true as const, id: rec.id };
+  }).then(async (r) => {
+    if (!r.ok) return r;
+    const kind = str(f, "customizationKind");
+    const err = await saveCustomizationKind(r.id, customizable && (kind === "image" || kind === "both") ? kind : null);
+    return err ? { ok: false as const, error: err } : r;
   });
+}
+
+const onSupabase = () =>
+  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+
+/** المنتج المخصص محتاج صورة؟ (settings.productCustomization، واللي مش متسجل كلام بس) */
+async function saveCustomizationKind(productId: string, kind: "image" | "both" | null): Promise<string | null> {
+  if (!onSupabase()) return null;
+  const db = adminClient();
+  const { data } = await db.from("settings").select("value").eq("key", "productCustomization").maybeSingle();
+  const map = { ...((data?.value as Record<string, string> | undefined) ?? {}) };
+  if ((map[productId] ?? null) === kind) return null;
+  if (kind) map[productId] = kind;
+  else delete map[productId];
+  const { error } = await db.from("settings").upsert({ key: "productCustomization", value: map });
+  return error ? `المنتج اتحفظ بس نوع التخصيص ماتحفظش: ${error.message}` : null;
 }
 
 export async function removeProduct(id: string, mode: ProductMode): Promise<SaveResult> {

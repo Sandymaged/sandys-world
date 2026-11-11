@@ -50,6 +50,7 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
                   {it.name} × <span className="tabular">{it.quantity}</span>
                   {it.optionsText && <span> ({it.optionsText})</span>}
                   {it.customization && <b> — يتكتب: «{it.customization}»</b>}
+                  {it.customImage && <b> — عليه صورة العميل</b>}
                 </li>
               ))}
             </ul>

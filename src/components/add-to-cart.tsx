@@ -6,40 +6,32 @@ import { useState } from "react";
 import type { CartLine } from "@/lib/cart";
 import { egp } from "@/lib/format";
 import { missingOptions, optionsPrice, type OptionChoice } from "@/lib/options";
-import type { BoxSize, PackageView, Product } from "@/lib/types";
+import { needsImage, needsText, type BoxSize, type PackageView, type Product } from "@/lib/types";
 import { useCart } from "@/store/cart";
 import { GiftArt } from "./gift-art";
 import { Icon } from "./icons";
 import { OptionPicker } from "./option-picker";
 
-function CustomizationInput({
-  product,
-  value,
-  onChange,
-}: {
-  product: Pick<Product, "id" | "name" | "customizationMaxChars">;
-  value: string;
-  onChange: (v: string) => void;
-}) {
+/**
+ * المنتج المخصص: الكلام والصورة بيتملوا في صفحة الدفع، فهنا بنقوله ده بس قبل ما يضيف
+ */
+function CustomizationNote({ products }: { products: Pick<Product, "name" | "customizationKind">[] }) {
   const t = useT();
-  const max = product.customizationMaxChars ?? 30;
+  if (!products.length) return null;
+  const image = products.some((p) => needsImage(p.customizationKind));
+  const text = products.some((p) => needsText(p.customizationKind));
   return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <label className="label" htmlFor={`c-${product.id}`}>
-          {t("الاسم أو الجملة على {name}", { name: product.name })}
-        </label>
-        <span className="tabular text-xs text-muted">{value.length}/{max}</span>
-      </div>
-      <input
-        id={`c-${product.id}`}
-        className="field"
-        value={value}
-        maxLength={max}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={t("مثلاً: ماما حبيبتي")}
-      />
-    </div>
+    <p className="flex gap-2.5 rounded-2xl bg-lilac-soft p-3.5 text-sm leading-6 text-ink-2">
+      <Icon name={image ? "camera" : "pen"} className="mt-0.5 size-5 shrink-0 text-lilac" />
+      <span>
+        {image && text
+          ? t("هتكتب الكلام وترفع الصورة اللي هتتطبع في صفحة الدفع.")
+          : image
+            ? t("هترفع الصورة اللي هتتطبع في صفحة الدفع.")
+            : t("هتكتب الاسم أو الجملة اللي هتتكتب في صفحة الدفع.")}{" "}
+        {t("وهنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}
+      </span>
+    </p>
   );
 }
 
@@ -76,7 +68,6 @@ export function AddPackage({ pkg, addons, boxes = [] }: { pkg: PackageView; addo
   const t = useT();
   const { added, done } = useAddFeedback();
   const addGift = useCart((s) => s.addGift);
-  const [custom, setCustom] = useState<Record<string, string>>({});
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [choices, setChoices] = useState<Record<string, OptionChoice[]>>({});
   // البوكس اختياري: المقاسات اللي المتجر حددها للباكدج ده، وفاضي = من غير بوكس
@@ -98,7 +89,8 @@ export function AddPackage({ pkg, addons, boxes = [] }: { pkg: PackageView; addo
       quantity: p.quantity,
       customizable: p.isCustomizable,
       maxChars: p.customizationMaxChars,
-      customization: custom[p.id] ?? "",
+      customKind: p.customizationKind,
+      customization: "",
       options: p.options?.length ? p.options : undefined,
       choices: choices[p.id] ?? [],
     }));
@@ -140,20 +132,7 @@ export function AddPackage({ pkg, addons, boxes = [] }: { pkg: PackageView; addo
         </section>
       )}
 
-      {customizable.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold">{t("التخصيص")}</h2>
-          {customizable.map((p) => (
-            <CustomizationInput
-              key={p.id}
-              product={p}
-              value={custom[p.id] ?? ""}
-              onChange={(v) => setCustom((c) => ({ ...c, [p.id]: v }))}
-            />
-          ))}
-          <p className="text-xs leading-5 text-muted">{t("ممكن تكتبه بعدين من السلة. هنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}</p>
-        </section>
-      )}
+      <CustomizationNote products={customizable} />
 
       {boxes.length > 0 && (
         <section className="space-y-3">
@@ -248,7 +227,6 @@ export function AddProduct({ product }: { product: Product }) {
   const router = useRouter();
   const { added, done } = useAddFeedback();
   const addGift = useCart((s) => s.addGift);
-  const [custom, setCustom] = useState("");
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<OptionChoice[]>([]);
   const missing = missingOptions(product.options, choices);
@@ -271,7 +249,8 @@ export function AddProduct({ product }: { product: Product }) {
           quantity: qty,
           customizable: product.isCustomizable,
           maxChars: product.customizationMaxChars,
-          customization: custom,
+          customKind: product.customizationKind,
+          customization: "",
           options: product.options?.length ? product.options : undefined,
           choices,
         },
@@ -285,7 +264,7 @@ export function AddProduct({ product }: { product: Product }) {
   return (
     <div className="space-y-6">
       {product.options?.length ? <OptionPicker options={product.options} choices={choices} onChange={setChoices} /> : null}
-      {product.isCustomizable && <CustomizationInput product={product} value={custom} onChange={setCustom} />}
+      {product.isCustomizable && <CustomizationNote products={[product]} />}
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">{t("الكمية")}</span>
         <div className="flex items-center rounded-full border border-line">

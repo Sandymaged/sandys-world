@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { checkCoupon, submitOrder } from "@/lib/checkout-actions";
 import { checkGiftCard } from "@/lib/gift-card-actions";
-import { deliveryProblems, giftProblems, giftTotals, hasCustomization, orderSources, withDelivery } from "@/lib/cart";
+import { customLines, deliveryProblems, giftProblems, giftTotals, hasCustomization, orderSources, withDelivery } from "@/lib/cart";
+import { CheckoutCustomizations } from "./checkout-custom";
 import { periodLabel } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
 import { couponDiscount, type CouponRule } from "@/lib/pricing";
@@ -107,6 +108,12 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
 
   function submit() {
     setErrors([]);
+    // الكلام والصور للمنتجات المخصصة لازم يتملوا الأول
+    if (customLines(gifts).some((x) => x.missingText || x.missingImage)) {
+      setTried(true);
+      document.getElementById("customizations")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     if (senderErr.name || senderErr.phone || senderErr.email) {
       setTried(true);
       document.getElementById("sender")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -131,6 +138,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
       <div className="min-w-0 space-y-8">
+        <CheckoutCustomizations gifts={gifts} showErrors={tried} />
         <section id="sender" className="card space-y-3 p-4">
           <h2 className="font-semibold">{t("بياناتك")}</h2>
           <p className="-mt-2 text-xs text-muted">{t("مش محتاج تعمل حساب. هنبعتلك التأكيد ومتابعة الطلب على واتساب.")}</p>

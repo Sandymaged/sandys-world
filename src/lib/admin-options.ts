@@ -13,5 +13,6 @@ export async function adminOptions() {
     seasons: [{ value: "", label: "من غير موسم" }, ...seasons.map((x) => ({ value: x.id, label: x.name }))],
     minPackageMargin: sf.settings.minPackageMargin,
     packageBoxes: sf.settings.packageBoxes ?? {},
+    productCustomization: sf.settings.productCustomization ?? {},
   };
 }

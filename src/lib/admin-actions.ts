@@ -179,7 +179,7 @@ export async function confirmPayment(id: string) {
   const codes = giftCards.map((c) => c.code).join("، ");
 
   // طلب كروت بس: بيخلص على طول (مفيش حاجة بتتجهز أو تتوصل). غير كده الهدايا بتبدأ تتجهز
-  const needsDesign = order.gifts.some((g) => g.items.some((it) => it.customization));
+  const needsDesign = order.gifts.some((g) => g.items.some((it) => it.customization || it.customImage));
   const status: OrderStatus = order.gifts.length === 0 ? "delivered" : needsDesign ? "awaiting_design_approval" : "new";
   await db.update(
     id,

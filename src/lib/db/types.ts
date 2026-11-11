@@ -23,6 +23,8 @@ export interface GiftItemRecord {
   unitPrice: number; // السعر وقت الطلب
   isAddon: boolean;
   customization: string | null;
+  /** صورة العميل للمنتج المخصص (اسم الملف في التخزين الخاص، بتتشاف من /admin/files) */
+  customImage?: string | null;
   partnerId: string | null;
   commissionRate: number | null;
   /** اللون/المقاس/الريحة (عشان المخزون يرجع لو الطلب اتلغى)، ونص مقروء */

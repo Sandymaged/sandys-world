@@ -132,6 +132,13 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                       {it.optionsText && <span className="mt-0.5 block text-xs font-semibold text-lilac">{it.optionsText}</span>}
                       {it.isAddon && <span className="text-xs text-lilac"> (إضافة)</span>}
                       {it.customization && <span className="mt-0.5 block rounded bg-butter-soft px-2 text-butter">✎ {it.customization}</span>}
+                      {it.customImage && (
+                        <a href={`/admin/files/${it.customImage}`} target="_blank" rel="noreferrer" className="mt-1 flex w-fit items-center gap-2 rounded bg-butter-soft p-1 pe-2 text-xs text-butter hover:underline">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- صورة العميل من التخزين الخاص */}
+                          <img src={`/admin/files/${it.customImage}`} alt="" className="size-12 rounded object-cover" />
+                          صورة العميل للطباعة (افتحيها)
+                        </a>
+                      )}
                     </span>
                     {it.unitPrice > 0 && <span className="tabular text-muted">{money(it.unitPrice * it.quantity)}</span>}
                   </li>

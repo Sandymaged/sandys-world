@@ -41,6 +41,7 @@ export function QuickAdd({ pkg }: { pkg: PackageView }) {
             quantity: p.quantity,
             customizable: p.isCustomizable,
             maxChars: p.customizationMaxChars,
+            customKind: p.customizationKind,
             customization: "",
             options: p.options?.length ? p.options : undefined,
           })),

@@ -176,22 +176,51 @@ export function StockField({ label, defaultValue, hasOptions: initial, hint }: {
 }
 
 /**
- * «بيتكتب عليه اسم أو جملة» ومعاها أقصى عدد حروف: الخانة بتتفتح بس لما العلامة تتعلّم
- * (ولو اتقفلت، السيرفر بيشيل الحد أصلاً)
+ * المنتج المخصص: بيتكتب عليه اسم أو جملة، أو بيتطبع عليه صورة، أو الاتنين.
+ * العميل بيكتب الكلام ويرفع الصورة في صفحة الدفع. خانة الحروف بتتفتح بس لو فيه كلام.
  */
-export function CustomizationFields({ defaultChecked, defaultMax, hint }: { defaultChecked: boolean; defaultMax: number | null; hint: string }) {
+export function CustomizationFields({
+  defaultChecked,
+  defaultMax,
+  defaultKind = "text",
+  hint,
+}: {
+  defaultChecked: boolean;
+  defaultMax: number | null;
+  defaultKind?: "text" | "image" | "both";
+  hint: string;
+}) {
   const [on, setOn] = useState(defaultChecked);
+  const [kind, setKind] = useState(defaultKind);
+  const text = on && kind !== "image";
   return (
     <div className="space-y-3 rounded-2xl border border-dashed border-line p-4">
       <label className="flex cursor-pointer items-center gap-2.5 text-sm">
         <input type="checkbox" name="isCustomizable" checked={on} onChange={(e) => setOn(e.target.checked)} className="size-5 accent-brand" />
-        بيتكتب عليه اسم أو جملة
+        المنتج بيتخصص للعميل (اسم أو صورة)
       </label>
-      <div className={on ? "" : "opacity-50"}>
+      <fieldset disabled={!on} className={on ? "" : "opacity-50"}>
+        <legend className="label">العميل بيبعت إيه؟</legend>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["text", "اسم أو جملة"],
+              ["image", "صورة"],
+              ["both", "صورة وكلام"],
+            ] as const
+          ).map(([v, label]) => (
+            <label key={v} className="cursor-pointer">
+              <input type="radio" name="customizationKind" value={v} checked={kind === v} onChange={() => setKind(v)} className="peer sr-only" />
+              <span className="chip border-line bg-white text-ink-2 peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white">{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className={text ? "" : "opacity-50"}>
         <label className="label" htmlFor="customizationMaxChars">أقصى عدد حروف للكتابة</label>
-        <input id="customizationMaxChars" name="customizationMaxChars" type="number" min={1} disabled={!on} defaultValue={defaultMax ?? 25} className="field tabular max-w-40" />
-        <p className="mt-1 text-xs leading-5 text-muted">{hint}</p>
+        <input id="customizationMaxChars" name="customizationMaxChars" type="number" min={1} disabled={!text} defaultValue={defaultMax ?? 25} className="field tabular max-w-40" />
       </div>
+      <p className="text-xs leading-5 text-muted">{hint}</p>
     </div>
   );
 }

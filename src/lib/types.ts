@@ -65,6 +65,8 @@ export interface Product {
   interests: string[];
   isCustomizable: boolean;
   customizationMaxChars: number | null;
+  /** المنتج المخصص محتاج إيه من العميل (بيتملا في صفحة الدفع): كلام، صورة، أو الاتنين. فاضي = كلام */
+  customizationKind?: CustomizationKind;
   prepDays: number;
   isAvailable: boolean;
   isAddon: boolean;
@@ -74,6 +76,10 @@ export interface Product {
   /** العدد في المخزن للمنتج اللي ملوش اختيارات؛ فاضي = مفتوح */
   stock?: number | null;
 }
+
+export type CustomizationKind = "text" | "image" | "both";
+export const needsText = (k: CustomizationKind | undefined) => k !== "image";
+export const needsImage = (k: CustomizationKind | undefined) => k === "image" || k === "both";
 
 export interface PackageItem {
   productId: string;

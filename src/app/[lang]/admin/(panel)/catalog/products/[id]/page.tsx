@@ -77,7 +77,8 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
           <CustomizationFields
             defaultChecked={p?.isCustomizable ?? false}
             defaultMax={p?.customizationMaxChars ?? null}
-            hint="لو المنتج بيتكتب عليه اسم أو جملة (زي مج بالاسم أو ميدالية محفورة)، العميل بيلاقي خانة يكتب فيها الكلام. الرقم ده أقصى عدد حروف يقدر يكتبه، على قد المساحة اللي على المنتج: مثلاً 15 للمج، وأكتر للكوشن أو البرواز."
+            defaultKind={p ? (opts.productCustomization[p.id] ?? "text") : "text"}
+            hint="زي مج بالاسم، أو برواز بصورة. العميل بيكتب الكلام أو بيرفع الصورة في صفحة الدفع، وبنقوله ده وهو بيضيف المنتج للسلة. عدد الحروف على قد المساحة اللي على المنتج: مثلاً 15 للمج، وأكتر للكوشن."
           />
           <Row>
             <StockField

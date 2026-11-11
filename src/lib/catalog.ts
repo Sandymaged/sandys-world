@@ -276,8 +276,11 @@ export async function getStorefront(): Promise<Storefront> {
   };
   // المنتج بيبان «خلص» لو تصنيفه مقفول، أو عدده في المخزن خلص، أو كل قيم اختيار فيه خلصت
   const soldOut = (p: Product) => (p.options?.length ? allOptionsSoldOut(p.options) : p.stock != null && p.stock <= 0);
+  // المنتج المخصص: محتاج كلام ولا صورة ولا الاتنين (من إعدادات المتجر، والافتراضي كلام)
+  const withKind = (p: Product): Product => (p.isCustomizable ? { ...p, customizationKind: c.settings.productCustomization?.[p.id] ?? "text" } : p);
   const products = c.products
     .map(withBrand)
+    .map(withKind)
     .map((p) => (hiddenCategories.has(p.category) || soldOut(p) ? { ...p, isAvailable: false } : p));
   const byId = new Map(products.map((p) => [p.id, p]));
 

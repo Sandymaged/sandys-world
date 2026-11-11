@@ -44,7 +44,7 @@ export default async function AdminToday() {
                           <span className="block font-semibold">{g.title}</span>
                           <span className="block text-xs text-muted">
                             لـ {g.recipient.name} · {g.recipient.zoneName}
-                            {g.items.some((it) => it.customization) && " · فيه تخصيص"}
+                            {g.items.some((it) => it.customization || it.customImage) && " · فيه تخصيص"}
                             {g.surprise && " · مفاجأة"}
                           </span>
                         </span>

@@ -7,7 +7,6 @@ import { egp, prepLabel } from "@/lib/format";
 import type { StoreSettings } from "@/lib/settings";
 import { describeChoices } from "@/lib/options";
 import { useCart } from "@/store/cart";
-import { OptionPicker } from "../option-picker";
 
 /** اختيارات التغليف (صورة واسم وسعر لكل واحد) */
 export function WrappingPicker({ settings, value, onChange }: { settings: StoreSettings; value?: string; onChange: (id: string) => void }) {
@@ -62,7 +61,6 @@ export function GiftEditor({
   const [open, setOpen] = useState(problems.length > 0);
   const totals = giftTotals(gift, settings);
   const customLines = gift.lines.filter((l) => l.customizable);
-  const optionLines = gift.lines.filter((l) => l.options?.length);
   const wraps = settings.wrappings;
   const wrap = wraps.find((w) => w.id === gift.wrapping) ?? wraps[0];
 
@@ -105,56 +103,8 @@ export function GiftEditor({
 
       {open && (
         <div className="space-y-6 border-t border-line p-4">
-          {optionLines.length > 0 && (
-            <section className="space-y-4">
-              <h3 className="text-sm font-semibold">{t("اختار اللي يناسبك")}</h3>
-              {optionLines.map((l) => (
-                <div key={l.productId} className="space-y-2">
-                  <p className="text-sm text-muted">{l.name}</p>
-                  <OptionPicker
-                    options={l.options!}
-                    choices={l.choices ?? []}
-                    showPrices={l.unitPrice > 0}
-                    size="sm"
-                    onChange={(next) =>
-                      updateGift(gift.id, {
-                        lines: gift.lines.map((x) => (x.productId === l.productId ? { ...x, choices: next } : x)),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-            </section>
-          )}
-
-          {customLines.length > 0 && (
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold">{t("التخصيص")}</h3>
-              {customLines.map((l) => {
-                const max = l.maxChars ?? 30;
-                const v = l.customization ?? "";
-                return (
-                  <div key={l.productId}>
-                    <label className="label" htmlFor={`cz-${gift.id}-${l.productId}`}>
-                      {t("الاسم أو الجملة على {name}", { name: l.name })}
-                    </label>
-                    <input
-                      id={`cz-${gift.id}-${l.productId}`}
-                      className="field"
-                      value={v}
-                      maxLength={max}
-                      onChange={(e) =>
-                        updateGift(gift.id, {
-                          lines: gift.lines.map((x) => (x.productId === l.productId ? { ...x, customization: e.target.value } : x)),
-                        })
-                      }
-                    />
-                    <p className="tabular mt-1 text-left text-xs text-muted">{v.length}/{max}</p>
-                  </div>
-                );
-              })}
-            </section>
-          )}
+          {/* اللون/المقاس بيتختار قبل الإضافة، والكلام والصورة في صفحة الدفع، فهنا التغليف بس */}
+          {customLines.length > 0 && <p className="text-sm text-muted">{t("الكلام والصور اللي هتتطبع بتتكتب وتترفع في صفحة الدفع.")}</p>}
 
           {/* المنتجات المنفردة بتتغلّف مع بعض (اختيار واحد في السلة)، والباكدج والبوكس كل واحد لوحده */}
           {wraps.length > 1 && gift.kind !== "product" && (

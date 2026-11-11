@@ -3,9 +3,8 @@
 
 import type { Locale } from "@/i18n/config";
 import type { Storefront } from "./catalog";
-import type { ProductOption } from "./options";
 import { packagingFee } from "./pricing";
-import type { BoxSize, Product, RecipientTag } from "./types";
+import type { BoxSize, CustomizationKind, Product, RecipientTag } from "./types";
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -20,8 +19,8 @@ export interface SuggestionItem {
   brand: string | null;
   isCustomizable: boolean;
   maxChars: number | null;
+  customKind?: CustomizationKind;
   prepDays: number;
-  options?: ProductOption[];
 }
 
 export interface Suggestion {
@@ -59,6 +58,8 @@ export function priceSuggestion(
   const items = unique.map((id) => candidates.get(id));
   if (items.some((p) => !p)) return null;
   const products = items as Product[];
+  // الاقتراح بيتضاف للسلة على طول، والمنتج اللي ليه لون/مقاس لازم يتختار قبل الإضافة
+  if (products.some((p) => p.options?.length)) return null;
   const box = smallestBox(sf.boxSizes, products.length);
   if (!box) return null;
   const itemsTotal = products.reduce((s, p) => s + p.price, 0);
@@ -76,8 +77,8 @@ export function priceSuggestion(
       brand: p.brand,
       isCustomizable: p.isCustomizable,
       maxChars: p.customizationMaxChars,
+      customKind: p.customizationKind,
       prepDays: p.prepDays,
-      options: p.options?.length ? p.options : undefined,
     })),
     box: { id: box.id, name: box.name, price: box.price },
     packaging,

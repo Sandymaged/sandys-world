@@ -34,6 +34,8 @@ export interface StoreSettings {
   minPackageMargin: number;
   /** مقاسات البوكس اللي تنفع لكل باكدج (العميل يختار واحد منهم أو من غير بوكس): { packageId: [boxSizeId] } */
   packageBoxes: Record<string, string[]>;
+  /** المنتجات المخصصة اللي محتاجة صورة: { productId: "image" | "both" } (اللي مش هنا كلام بس) */
+  productCustomization: Record<string, "text" | "image" | "both">;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -56,4 +58,5 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   ],
   minPackageMargin: 0.3,
   packageBoxes: {},
+  productCustomization: {},
 };

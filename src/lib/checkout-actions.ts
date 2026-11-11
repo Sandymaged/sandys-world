@@ -157,6 +157,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
           unitPrice: it.unitPrice,
           isAddon: it.isAddon,
           customization: it.customization,
+          customImage: it.customImage,
           partnerId: p?.partnerId ?? null,
           commissionRate: null,
           choices: it.choices,
@@ -173,7 +174,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   const fullyPaid = total <= 0;
   const instapay = input.paymentMethod === "instapay" && !fullyPaid;
   const hours = sameDay ? raw.settings.sameDayPaymentWindowHours : raw.settings.paymentWindowHours;
-  const needsDesign = gifts.some((g) => g.items.some((it) => it.customization));
+  const needsDesign = gifts.some((g) => g.items.some((it) => it.customization || it.customImage));
 
   // بنتأكد إن الكمية موجودة بس. الخصم بيحصل لما المتجر ينقل الطلب لـ«بيتجهز»
   const stock = await checkStock(orderStockLines(gifts));

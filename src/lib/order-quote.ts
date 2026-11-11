@@ -10,6 +10,7 @@ import { translator, type T } from "@/i18n/t";
 import { comboKey, comboStock, describeChoices, optionsPrice, usesCombos, valueAvailable, type OptionChoice } from "./options";
 import { couponDiscount, kitTotal, packagingFee, type CouponRule } from "./pricing";
 import { giftCardProblems, type CartGiftCard } from "./gift-card";
+import { needsImage, needsText } from "./types";
 
 export interface OrderInput {
   gifts: CartGift[];
@@ -27,6 +28,8 @@ export interface QuotedItem {
   quantity: number;
   unitPrice: number; // السعر وقت الطلب — بيتسجل في سطر الهدية
   customization: string | null;
+  /** صورة العميل للمنتج المخصص (اسم الملف) */
+  customImage: string | null;
   isAddon: boolean;
   /** اللون/المقاس/الريحة اللي اتختار، ونص مقروء للوحة */
   choices: OptionChoice[];
@@ -86,16 +89,21 @@ export function quoteOrder(
     let basePrice = 0;
     let prepDays = 0;
 
-    const takeProduct = (productId: string, qty: number, priced: boolean, isAddon: boolean, customization?: string, choices?: OptionChoice[]) => {
+    const takeProduct = (productId: string, qty: number, priced: boolean, isAddon: boolean, customization?: string, choices?: OptionChoice[], customImage?: string) => {
       const p = products.get(productId);
       if (!p) {
         errors.push(t("{tag}: فيها منتج مبقاش متاح", { tag }));
         return;
       }
       if (!Number.isInteger(qty) || qty < 1 || qty > 50) errors.push(t("{tag}: كمية غلط", { tag }));
-      const text = p.isCustomizable ? (customization ?? "").trim() : "";
-      if (p.isCustomizable && !text) errors.push(t("{tag}: ناقص نص التخصيص لـ {name}", { tag, name: p.name }));
+      // المنتج المخصص: الكلام و/أو الصورة (بيتملوا في صفحة الدفع)
+      const kind = p.customizationKind;
+      const text = p.isCustomizable && needsText(kind) ? (customization ?? "").trim() : "";
+      if (p.isCustomizable && needsText(kind) && !text) errors.push(t("{tag}: اكتب الكلام اللي هيتكتب على {name}", { tag, name: p.name }));
       if (p.customizationMaxChars && text.length > p.customizationMaxChars) errors.push(t("{tag}: نص التخصيص أطول من المسموح", { tag }));
+      // الصورة لازم تكون اترفعت من صفحة الدفع (اسمها بيبدأ بالوقت وبعده custom)
+      const image = p.isCustomizable && needsImage(kind) && customImage && /^\d+-custom\.(jpg|png|webp)$/.test(customImage) ? customImage : null;
+      if (p.isCustomizable && needsImage(kind) && !image) errors.push(t("{tag}: ارفع الصورة اللي هتتطبع على {name}", { tag, name: p.name }));
       prepDays = Math.max(prepDays, p.prepDays);
       // الاختيارات: لازم كل اختيار يكون متختار وموجود ولسه متاح (الإضافات ملهاش اختيار في الصفحة، فبتتساب)
       const opts = isAddon ? [] : (p.options ?? []);
@@ -115,6 +123,7 @@ export function quoteOrder(
         quantity: qty,
         unitPrice: priced ? p.price + optionsPrice(opts, picked) : 0,
         customization: text || null,
+        customImage: image,
         isAddon,
         choices: picked,
         optionsText: describeChoices(opts, picked) || null,
@@ -148,7 +157,7 @@ export function quoteOrder(
         else basePrice += box.price;
       }
       const custom = new Map(g.lines.map((l) => [l.productId, l]));
-      for (const p of pkg.products) takeProduct(p.id, p.quantity, false, false, custom.get(p.id)?.customization, custom.get(p.id)?.choices);
+      for (const p of pkg.products) takeProduct(p.id, p.quantity, false, false, custom.get(p.id)?.customization, custom.get(p.id)?.choices, custom.get(p.id)?.customImage);
       for (const a of g.addons) {
         if (!products.get(a.productId)?.isAddon) errors.push(t("{tag}: إضافة مش متاحة", { tag }));
         else takeProduct(a.productId, a.quantity, true, true);
@@ -164,7 +173,7 @@ export function quoteOrder(
       if (count === 0 || count > size.maxItems) errors.push(t("{tag}: عدد المنتجات مش مناسب لحجم البوكس", { tag }));
       for (const l of g.lines) {
         if (products.get(l.productId)?.boxEligible === false) errors.push(t("{tag}: {name} مينفعش يتحط في بوكس", { tag, name: l.name }));
-        takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices);
+        takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices, l.customImage);
       }
     } else {
       const l = g.lines[0];
@@ -172,7 +181,7 @@ export function quoteOrder(
         errors.push(t("{tag}: بيانات غلط", { tag }));
         return;
       }
-      takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices);
+      takeProduct(l.productId, l.quantity, true, false, l.customization, l.choices, l.customImage);
     }
 
     const lines = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
