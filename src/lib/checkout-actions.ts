@@ -58,7 +58,9 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   const lang = isLocale(locale) ? locale : "ar";
   const t = translator(lang);
   // الطلب للعميل نفسه: مفيش كارت ولا «اخفي السعر» ولا «مفاجأة» (حتى لو اتبعتوا)
-  if (input.sender.isRecipient) input = { ...input, gifts: input.gifts.map((g) => ({ ...g, cardMessage: "", hidePrice: false, surprise: false })) };
+  if (input.sender.isRecipient) input = { ...input, gifts: input.gifts.map((g) => ({ ...g, cardMessage: "", hidePrice: false })) };
+  // اختيار «مفاجأة» اتشال من السلة (حتى لو سلة قديمة لسه فيها)
+  input = { ...input, gifts: input.gifts.map((g) => ({ ...g, surprise: false })) };
   const raw = await getStorefront();
   const sf = localizeStorefront(raw, lang);
   let coupon: CouponRule | null = null;

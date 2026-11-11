@@ -56,7 +56,7 @@ export default async function PoliciesPage() {
             <>You choose the day and time: {periods}.</>,
             <>Same-day delivery is available inside Assiut city for ready gifts if you order before {cutoff} PM. Gifts that need preparing show their preparation days at checkout.</>,
             <>If we can&apos;t deliver (the recipient isn&apos;t there, the phone is off, or the address is wrong), a second try on the same day is free. Another day comes with a new delivery fee.</>,
-            <>Choose &quot;surprise&quot; and the courier won&apos;t call the recipient until he&apos;s at the door. Prices are never written on the gift unless you ask.</>,
+            <>Prices are never written on the gift unless you ask.</>,
           ],
         },
         {
@@ -112,7 +112,7 @@ export default async function PoliciesPage() {
             <>إنت اللي بتختار اليوم والفترة: {periods}.</>,
             <>التوصيل في نفس اليوم متاح جوه مدينة أسيوط للهدايا الجاهزة، لو طلبت قبل الساعة {cutoff} الضهر. والهدايا اللي محتاجة تجهيز بيظهرلك عدد أيام تجهيزها وإنت بتطلب.</>,
             <>لو مقدرناش نوصّل (المستلم مش موجود، أو الموبايل مقفول، أو العنوان غلط)، المحاولة التانية في نفس اليوم ببلاش، وفي يوم تاني برسوم توصيل جديدة.</>,
-            <>لو اخترت «مفاجأة»، المندوب مش هيكلم المستلم غير وهو على الباب. والسعر عمره ما بيتكتب على الهدية إلا لو طلبت.</>,
+            <>السعر عمره ما بيتكتب على الهدية إلا لو طلبت.</>,
           ],
         },
         {

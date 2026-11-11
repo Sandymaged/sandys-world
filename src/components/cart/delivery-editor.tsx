@@ -184,21 +184,30 @@ export function DeliveryEditor({
                 {t("التوصيل في نفس اليوم متاح للطلبات قبل الساعة {h} الضهر بس.", { h: settings.sameDayCutoffHour > 12 ? settings.sameDayCutoffHour - 12 : settings.sameDayCutoffHour })}
               </p>
             )}
-            <div className="scroll-x">
-              {days.map((d) => {
-                const on = delivery.date === d;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setDelivery({ date: d, period: "" })}
-                    className={`min-w-24 shrink-0 rounded-xl border px-3 py-2 text-center text-sm transition ${on ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}
-                  >
-                    {d === now.date ? t("النهارده") : d === addDays(now.date, 1) ? t("بكرة") : formatDay(d, t).split(" ")[0]}
-                    <span className="tabular block text-xs opacity-80">{formatDay(d, t).split(" ").slice(1).join(" ")}</span>
-                  </button>
-                );
-              })}
+            {/* الأيام: كارت صغير لكل يوم (اسم اليوم، رقمه كبير، والشهر)، والصف بيتسحب وطرفه باهت */}
+            <div className="relative overflow-hidden">
+              <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                {days.map((d) => {
+                  const on = delivery.date === d;
+                  const date = new Date(`${d}T12:00:00Z`);
+                  const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(t.locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { ...o, timeZone: "UTC" }).format(date);
+                  const label = d === now.date ? t("النهارده") : d === addDays(now.date, 1) ? t("بكرة") : fmt({ weekday: "long" });
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setDelivery({ date: d, period: "" })}
+                      className={`flex w-[4.75rem] shrink-0 flex-col items-center rounded-2xl border py-2.5 transition ${on ? "border-brand bg-brand text-white shadow-[0_8px_18px_-10px_rgb(163_33_44/0.7)]" : "border-line bg-white hover:border-brand/50"}`}
+                    >
+                      <span className={`text-[11px] leading-4 font-medium ${on ? "text-white/85" : "text-muted"}`}>{label}</span>
+                      <span className="tabular font-heading text-2xl leading-8">{fmt({ day: "numeric" })}</span>
+                      <span className={`text-[11px] leading-4 ${on ? "text-white/85" : "text-ink-2"}`}>{fmt({ month: "short" })}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <span aria-hidden className="pointer-events-none absolute inset-y-0 end-0 w-10 bg-gradient-to-l from-paper to-transparent rtl:bg-gradient-to-r" />
             </div>
             {delivery.date && !dateTooEarly && (
               <div className="grid grid-cols-3 gap-2">
@@ -211,7 +220,7 @@ export function DeliveryEditor({
                       type="button"
                       disabled={!ok}
                       onClick={() => setDelivery({ period: p.id })}
-                      className={`rounded-xl border px-2 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${on ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}
+                      className={`rounded-2xl border px-2 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${on ? "border-brand bg-brand text-white shadow-[0_8px_18px_-10px_rgb(163_33_44/0.7)]" : "border-line bg-white hover:border-brand/50"}`}
                     >
                       {periodLabel(p.id, settings, t)}
                     </button>
@@ -245,7 +254,6 @@ export function DeliveryEditor({
         {(
           [
             ["hidePrice", "متكتبوش السعر على أي حاجة"],
-            ["surprise", "مفاجأة — متكلموش المستلم قبل التوصيل"],
             ["wantsDeliveryPhoto", "ابعتولي صورة التسليم على واتساب"],
           ] as const
         ).map(([k, label]) => (
@@ -254,7 +262,6 @@ export function DeliveryEditor({
             {t(label)}
           </label>
         ))}
-        {delivery.surprise && <p className="text-xs text-muted">{t("هنكلمك إنت لو احتجنا نتأكد من العنوان، والمندوب هيكلم المستلم وهو قدام الباب بس.")}</p>}
       </div>
       </>
       )}
