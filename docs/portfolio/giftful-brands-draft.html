@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>giftful للبراندات (مسودة)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=El+Messiri:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,500;1,600&display=swap" rel="stylesheet">
+<!--
+  مسودة ملف البراندات بعد المراجعة (عربي بس). الأجزاء اللي عليها «محتاج قرار» لسه مستنية موافقة صاحبة المشروع،
+  وبعد الموافقة المسودة دي بتحل محل giftful-brands.html والنسخة الإنجليزي بتتعدل عليها.
+  ملف البراندات. بيانات التواصل (data-contact) بتتملى من «الدفع والتواصل» في اللوحة
+  لما الـ PDF يطلع بأمر: node scripts/portfolio-pdf.mjs
+-->
+<style>
+  :root {
+    --paper: #fffdf9;
+    --cream: #f5efe7;
+    --line: #e3d8cb;
+    --ink: #2e2421;
+    --ink-2: #55473f;
+    --muted: #85776d;
+    --red: #a3212c;
+    --blush: #f6dfe3;
+    --blue-soft: #e2e9f5;
+    --blue-deep: #3e5d92;
+    --butter-soft: #fbefc6;
+    --olive-soft: #ecead0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    background: #ede5da;
+    color: var(--ink);
+    font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.75;
+  }
+  [lang="en"] { line-height: 1.6; }
+
+  .switch {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; justify-content: center; gap: 6px;
+    padding: 12px 16px; background: #ede5da;
+  }
+  .switch button {
+    font: 600 13px "IBM Plex Sans Arabic", sans-serif;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink-2);
+    padding: 6px 18px; border-radius: 999px; cursor: pointer;
+  }
+  .switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  body[data-show="ar"] .ver[lang="en"], body[data-show="en"] .ver[lang="ar"] { display: none; }
+
+  .page {
+    width: 210mm; min-height: 297mm;
+    margin: 0 auto 14px;
+    padding: 20mm 19mm 16mm;
+    background: var(--paper);
+    display: flex; flex-direction: column;
+    box-shadow: 0 1px 3px rgba(46,36,33,.08);
+  }
+  .foot {
+    margin-top: auto; padding-top: 8mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8.5pt; color: var(--muted);
+  }
+  .foot .mark { font: italic 600 12pt "Playfair Display", serif; color: var(--red); }
+
+  h1, h2, h3 { font-family: "El Messiri", serif; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  [lang="en"] h1, [lang="en"] h2 { font-family: "Playfair Display", serif; font-weight: 600; letter-spacing: -.01em; }
+  [lang="en"] h3 { font-family: "IBM Plex Sans Arabic", sans-serif; font-weight: 600; }
+  h2 { font-size: 21pt; margin-bottom: 4mm; }
+  h3 { font-size: 12.5pt; margin-bottom: 1mm; }
+  h3.sub { margin-bottom: 3mm; }
+  .lead { font-size: 12.5pt; color: var(--ink-2); }
+  .kicker { font-size: 9pt; font-weight: 600; letter-spacing: .04em; color: var(--red); margin-bottom: 2mm; }
+  [lang="en"] .kicker { text-transform: uppercase; letter-spacing: .12em; font-size: 8pt; }
+  .hand { font-family: "Aref Ruqaa", serif; font-size: 15pt; color: var(--red); line-height: 1.5; }
+  [lang="en"] .hand { font-family: "Playfair Display", serif; font-style: italic; font-weight: 500; font-size: 14pt; }
+  .hand .sig { font: italic 600 1em "Playfair Display", serif; }
+  .thread { display: block; width: 46mm; height: auto; color: var(--red); }
+
+  section + section, .portal + section, .offer + section, .cycle + section { margin-top: 9mm; }
+
+  /* cover */
+  .cover { justify-content: center; align-items: center; text-align: center; gap: 14mm; background: var(--cream); }
+  .cover > div { display: flex; flex-direction: column; align-items: center; }
+  .cover .logo { direction: ltr; display: inline-flex; flex-direction: column; align-items: center; }
+  .cover .logo span { font: italic 600 46pt/0.95 "Playfair Display", serif; color: var(--ink); }
+  .cover .logo .thread { width: 52mm; }
+  .cover h1 { font-size: 34pt; max-width: 150mm; margin: 2mm 0 5mm; }
+  [lang="en"] .cover h1 { font-size: 36pt; line-height: 1.1; }
+  .cover .lead { max-width: 128mm; }
+  .cover .note { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 6mm 8mm; max-width: 140mm; }
+  .cover .note p { color: var(--ink-2); }
+  .cover .note .hand { margin-top: 3mm; }
+  .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 2.5mm; margin-top: 7mm; }
+  .tags span { font-size: 9.5pt; padding: 1.2mm 4mm; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); color: var(--ink-2); }
+
+  /* idea */
+  .story { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin: 2mm 0 8mm; }
+  .story > div { border-radius: 14px; padding: 5mm 6mm; }
+  .story .before { background: var(--cream); }
+  .story .after { background: var(--blue-soft); }
+  .story h3 { font-size: 11pt; }
+  .story ul { list-style: none; margin-top: 2mm; }
+  .story li { padding: 1mm 0; color: var(--ink-2); font-size: 10.5pt; }
+  .story .before li::before { content: "·"; color: var(--muted); margin-inline-end: 2mm; font-weight: 700; }
+  .story .after li::before { content: "✓"; color: var(--blue-deep); margin-inline-end: 2mm; font-size: 9pt; }
+
+  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .who > div { border-top: 2px solid var(--line); padding-top: 3mm; }
+  .who p { font-size: 10.3pt; color: var(--ink-2); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 8mm; }
+  .item p { font-size: 10.3pt; color: var(--ink-2); }
+  .item h3::before {
+    content: ""; display: inline-block; width: 2mm; height: 2mm; border-radius: 50%;
+    background: var(--red); margin-inline-end: 2.5mm; vertical-align: middle; position: relative; top: -1px;
+  }
+  .strip { margin-top: 8mm; padding: 4mm 6mm; border-radius: 12px; background: var(--butter-soft); font-size: 10.3pt; color: var(--ink-2); }
+  .strip b { color: var(--ink); font-weight: 600; }
+
+  /* offer */
+  .offer { display: flex; flex-direction: column; gap: 5mm; }
+  .offer .row { display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; }
+  .offer .n { font: italic 600 15pt "Playfair Display", serif; color: var(--red); line-height: 1.4; }
+  .offer p { font-size: 10.5pt; color: var(--ink-2); }
+  .offer ul { list-style: none; margin-top: 1.5mm; }
+  .offer li { font-size: 10.3pt; color: var(--ink-2); padding: .6mm 0; }
+  .offer li::before { content: "✓"; color: var(--blue-deep); margin-inline-end: 2mm; font-size: 9pt; }
+
+  .tiers { margin-top: 3mm; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  .tiers table { width: 100%; border-collapse: collapse; font-size: 9.6pt; }
+  .tiers th, .tiers td { padding: 2mm 3.5mm; text-align: start; vertical-align: top; }
+  .tiers th { background: var(--cream); font-weight: 600; color: var(--ink-2); font-size: 8.8pt; line-height: 1.45; }
+  .tiers td { border-top: 1px solid var(--line); }
+  .tiers td:last-child, .tiers th:last-child { text-align: end; }
+  .tiers tr.free td { background: var(--olive-soft); }
+  .tiers .pct { font-weight: 600; }
+  .example { margin-top: 4mm; background: var(--blush); border-radius: 14px; padding: 4mm 6mm; font-size: 10.3pt; color: var(--ink-2); }
+  .example b { color: var(--ink); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .portal { margin-top: 6mm; background: var(--blue-soft); border-radius: 14px; padding: 5mm 6mm; }
+  .portal ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 6mm; margin-top: 2mm; }
+  .portal li { font-size: 10.2pt; color: var(--ink-2); }
+  .portal li::before { content: "✓"; color: var(--blue-deep); margin-inline-end: 2mm; font-size: 9pt; }
+
+  /* order cycle */
+  .cycle { list-style: none; position: relative; margin-top: 2mm; }
+  .cycle::before { content: ""; position: absolute; inset-inline-start: 3.9mm; top: 4mm; bottom: 4mm; width: 1.4px; background: var(--line); }
+  .cycle li { display: grid; grid-template-columns: 8mm 1fr; gap: 4mm; padding: 1.6mm 0; position: relative; }
+  .cycle .dot {
+    width: 8mm; height: 8mm; border-radius: 50%; background: var(--paper); border: 1.4px solid var(--line);
+    display: grid; place-items: center; font: italic 600 10.5pt "Playfair Display", serif; color: var(--muted); position: relative;
+  }
+  .cycle li.you .dot { background: var(--blush); border-color: var(--red); color: var(--red); }
+  .cycle li { align-items: start; }
+  .cycle h3 { font-size: 11pt; line-height: 1.5; margin: .4mm 0 1.2mm; display: flex; align-items: center; gap: 2mm; }
+  .cycle p { font-size: 10pt; color: var(--ink-2); line-height: 1.6; }
+  .cycle .who-tag {
+    font: 600 7.8pt/1 "IBM Plex Sans Arabic", sans-serif; color: var(--muted);
+    background: var(--cream); border-radius: 999px; padding: 1mm 2.4mm;
+  }
+  .cycle li.you .who-tag { color: var(--red); background: var(--blush); }
+  .legend { font-size: 9pt; color: var(--muted); margin-top: 2mm; }
+  .legend i { display: inline-block; width: 2.6mm; height: 2.6mm; border-radius: 50%; background: var(--blush); border: 1.2px solid var(--red); margin-inline-end: 1.5mm; vertical-align: middle; }
+
+  /* packaging */
+  .pack { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .pack > div { border-radius: 14px; padding: 5mm 6mm; }
+  .pack .yours { background: var(--cream); }
+  .pack .ours { background: var(--blue-soft); }
+  .pack p { font-size: 10.2pt; color: var(--ink-2); }
+  .pack ul { list-style: none; margin-top: 2mm; }
+  .pack li { font-size: 10.2pt; color: var(--ink-2); padding: .6mm 0; }
+  .pack li::before { content: "·"; font-weight: 700; color: var(--red); margin-inline-end: 2mm; }
+
+  /* needs + steps */
+  .needs { list-style: none; display: flex; flex-direction: column; gap: 3mm; }
+  .needs li { padding-inline-start: 6mm; position: relative; font-size: 10.4pt; color: var(--ink-2); }
+  .needs li::before { content: ""; position: absolute; inset-inline-start: 0; top: 2.6mm; width: 2.5mm; height: 1.4px; background: var(--red); }
+  .needs b { color: var(--ink); font-weight: 600; }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-top: 2mm; }
+  .steps > div { background: var(--cream); border-radius: 12px; padding: 4mm; }
+  .steps .s { font: italic 600 18pt/1 "Playfair Display", serif; color: var(--red); display: block; margin-bottom: 2mm; }
+  .steps p { font-size: 9.8pt; color: var(--ink-2); line-height: 1.55; }
+
+  .contact {
+    margin-top: 7mm; border: 1px solid var(--line); border-radius: 14px; padding: 5mm 7mm;
+    display: grid; grid-template-columns: 1fr auto; gap: 6mm; align-items: end;
+  }
+  .contact:not(:has(dl)) { grid-template-columns: 1fr; text-align: center; }
+  .contact dl { display: grid; grid-template-columns: auto 1fr; gap: 1.5mm 5mm; font-size: 10.5pt; }
+  .contact dt { color: var(--muted); }
+  .contact dd { direction: ltr; text-align: start; }
+  [dir="rtl"] .contact dd { text-align: right; }
+  .fill { background: var(--butter-soft); padding: 0 1.5mm; border-radius: 3px; }
+
+  @page { size: A4; margin: 0; }
+  @media print {
+    body { background: var(--paper); }
+    .switch { display: none; }
+    .page { margin: 0; box-shadow: none; break-after: page; height: 297mm; overflow: hidden; }
+    .page:last-child { break-after: auto; }
+  }
+  @media screen and (max-width: 820px) {
+    .page { width: auto; min-height: 0; margin: 0 0 10px; padding: 28px 16px; }
+    .story, .grid2, .who, .portal ul, .steps, .contact, .pack { grid-template-columns: 1fr; }
+    .tiers { overflow-x: auto; }
+    .cover h1 { font-size: 26pt; }
+  }
+
+  /* المسودة */
+  .pending { background: var(--butter-soft); border-radius: 4px; padding: 0 1mm; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .pending::after { content: "محتاج قرار"; font: 600 6.8pt/1 "IBM Plex Sans Arabic", sans-serif; color: #8a6a00; background: #f5dc8a; border-radius: 999px; padding: .6mm 1.8mm; margin-inline-start: 1.5mm; vertical-align: middle; }
+  .draft-note { background: var(--butter-soft); border: 1px dashed #d9b84a; border-radius: 12px; padding: 3mm 5mm; font-size: 9.5pt; color: var(--ink-2); max-width: 150mm; }
+  .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .kinds > div { border-radius: 14px; padding: 5mm 6mm; }
+  .kinds .brands { background: var(--blush); }
+  .kinds .ours { background: var(--olive-soft); }
+  .kinds p, .kinds li { font-size: 10.2pt; color: var(--ink-2); }
+  .kinds ul { list-style: none; margin-top: 2mm; }
+  .kinds li { padding: .5mm 0; }
+  .kinds li::before { content: "·"; font-weight: 700; color: var(--red); margin-inline-end: 2mm; }
+  .tools { margin-top: 5mm; font-size: 10pt; color: var(--ink-2); }
+  .tools b { color: var(--ink); font-weight: 600; }
+  .benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 7mm; }
+  .benefits .b { display: grid; grid-template-columns: 8mm 1fr; gap: 2mm; }
+  .benefits .n { font: italic 600 14pt "Playfair Display", serif; color: var(--red); line-height: 1.4; }
+  .benefits h3 { font-size: 11pt; }
+  .benefits p { font-size: 9.9pt; color: var(--ink-2); line-height: 1.6; }
+  .formula { display: flex; align-items: center; justify-content: center; gap: 3mm; flex-wrap: wrap; margin: 3mm 0 2mm; padding: 4mm; border-radius: 14px; background: var(--cream); font-size: 11pt; }
+  .formula b { font: 700 13pt "El Messiri", serif; color: var(--ink); }
+  .formula .eq { color: var(--red); font-weight: 700; }
+  .ex2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 4mm; }
+  .ex2 .example { margin-top: 0; }
+  .ex2 table { width: 100%; border-collapse: collapse; margin-top: 1.5mm; font-size: 9.2pt; }
+  .ex2 td { padding: .6mm 0; border-top: 1px dashed rgba(46,36,33,.15); }
+  .ex2 td:last-child { text-align: end; }
+  .ex2 tr.total td { border-top: 1.3px solid var(--ink-2); font-weight: 600; color: var(--ink); }
+  .notes { list-style: none; margin-top: 4mm; display: grid; gap: 1.6mm; }
+  .notes li { font-size: 9.8pt; color: var(--ink-2); padding-inline-start: 5mm; position: relative; line-height: 1.6; }
+  .notes li::before { content: ""; position: absolute; inset-inline-start: 0; top: 2.4mm; width: 2.2mm; height: 1.3px; background: var(--red); }
+  .notes b { color: var(--ink); font-weight: 600; }
+  .duty { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 3mm; }
+  .duty > div { border-radius: 14px; padding: 4.5mm 5.5mm; }
+  .duty .yours { background: var(--blush); }
+  .duty .ours { background: var(--blue-soft); }
+  .duty ul { list-style: none; margin-top: 1.5mm; }
+  .duty li { font-size: 9.8pt; color: var(--ink-2); padding: .5mm 0; line-height: 1.55; }
+  .duty li::before { content: "✓"; color: var(--blue-deep); margin-inline-end: 2mm; font-size: 8.5pt; }
+  .duty .yours li::before { color: var(--red); }
+  .rules { display: grid; gap: 3.2mm; }
+  .rules > div { display: grid; grid-template-columns: 38mm 1fr; gap: 4mm; border-top: 1px solid var(--line); padding-top: 3mm; }
+  .rules h3 { font-size: 10.6pt; margin: 0; }
+  .rules p { font-size: 9.9pt; color: var(--ink-2); line-height: 1.62; }
+  .rules p + p { margin-top: 1mm; }
+  @media screen and (max-width: 820px) {
+    .kinds, .benefits, .ex2, .duty, .rules > div { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-show="ar">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="thread" d="M3 19 C 28 12, 50 23, 78 18 S 124 12, 146 17 C 158 20, 166 20, 170 13 C 174 5, 162 3, 162 11 C 162 19, 178 22, 197 18" />
+  </defs>
+</svg>
+
+<div class="ver" lang="ar" dir="rtl">
+
+  <!-- ١ الغلاف -->
+  <div class="page cover">
+    <div>
+      <div class="logo">
+        <span>giftful</span>
+        <svg class="thread" viewBox="0 0 200 30" fill="none"><use href="#thread" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div>
+      <p class="kicker">ملف الشراكة مع البراندات المحلية في أسيوط</p>
+      <h1>إنت اختار، وإحنا نفاجئه</h1>
+      <p class="lead">giftful براند هدايا من أسيوط. بنختار منتجات البراندات المحلية، ونغلّفها، ونكتب الكارت، ونوصّلها لحد الباب. والملف ده بيشرح إزاي نشتغل سوا.</p>
+      <div class="tags">
+        <span>هدايا متغلفة</span><span>توصيل لحد الباب</span><span>براندات من أسيوط</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <p>الفكرة إن الهدية توصل لصاحبها مفاجأة، من غير ما يعرف مين اللي باعتها، لحد ما يفتحها ويقرا الكارت. وده كله بنعمله بمنتجات البراندات المحلية في أسيوط، فمنتجاتكم هي اللي بتعمل الفرحة دي.</p>
+      <p class="hand">ومن هنا جت giftful.</p>
+    </div>
+  </div>
+
+  <!-- ٢ إحنا مين -->
+  <div class="page">
+    <section>
+      <p class="kicker">إحنا مين</p>
+      <h2>براند هدايا مستقل، بيشتغل مع براندات أسيوط</h2>
+      <p class="lead">giftful مش صفحة بتحوّل العميل لصفحتكم. العميل بيختار ويطلب ويدفع ويتكلم معانا إحنا، وإحنا بنجهّز الهدية كلها. وإنتو شركاءنا: اسمكم وقصتكم وانستجرامكم ظاهرين جنب كل منتج.</p>
+    </section>
+
+    <div class="story">
+      <div class="before">
+        <h3>اللي عايز يبعت هدية في أسيوط النهارده</h3>
+        <ul>
+          <li>بيدور على صفحات كتير على انستجرام</li>
+          <li>بيسأل على السعر ويستنى الرد</li>
+          <li>بيدور على حد يغلّف، وحد تاني يوصّل</li>
+          <li>مش عارف الهدية هتوصل إمتى ولا شكلها هيبقى إزاي</li>
+        </ul>
+      </div>
+      <div class="after">
+        <h3>مع giftful</h3>
+        <ul>
+          <li>بيختار من منتجات براندات أسيوط في مكان واحد</li>
+          <li>بيدفع ويختار يوم التوصيل والفترة</li>
+          <li>إحنا بنغلّف ونكتب الكارت برسالته</li>
+          <li>مندوب giftful بيوصّلها لحد الباب</li>
+        </ul>
+      </div>
+    </div>
+
+    <section>
+      <h3 class="sub">مين اللي بيشتري؟</h3>
+      <div class="who">
+        <div><h3>ناس من أسيوط</h3><p>عايزين يفرّحوا حد قريب في عيد ميلاد أو نجاح أو أي مناسبة.</p></div>
+        <div><h3>أهل أسيوط اللي برّاها</h3><p>في القاهرة أو باقي المحافظات أو برا مصر، وعايزين يبعتوا هدية لحد في أسيوط من غير ما ينزلوا.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="sub">بنبيع إيه؟</h3>
+      <div class="kinds">
+        <div class="brands">
+          <h3>منتجات البراندات</h3>
+          <p>دي اللي إنتو شركاء فيها.</p>
+          <ul>
+            <li>منتجاتكم المنفردة.</li>
+            <li>البوكسات الجاهزة اللي بتعملوها إنتو، بتتعرض كمنتج من منتجاتكم.</li>
+          </ul>
+        </div>
+        <div class="ours">
+          <h3>كيتات giftful الهاند ميد</h3>
+          <p>دي منتجاتنا إحنا، مش منتجات براندات.</p>
+          <ul>
+            <li>كيتات DIY وأنشطة للقعدات.</li>
+            <li>كيتات المواسم والمناسبات، زي قعدات الكريسماس.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tools">وعلى الموقع كمان <b>كروت هدايا</b> للي مش عارف يختار، و<b>مساعد هدايا</b> بيسأل العميل الهدية لمين ومناسبة إيه وميزانيته كام، ويقترح عليه منتجات.</p>
+    </section>
+
+    <div class="foot"><span class="mark">giftful</span><span>٢</span></div>
+  </div>
+
+  <!-- ٣ هتاخدوا إيه -->
+  <div class="page">
+    <section>
+      <p class="kicker">ليه تشتغلوا معانا؟</p>
+      <h2>هتاخدوا إيه من giftful</h2>
+    </section>
+
+    <div class="benefits">
+      <div class="b"><span class="n">1</span><div>
+        <h3>سعركم زي ما هو</h3>
+        <p>العميل بيشوف السعر اللي إنتو حاطينه بالظبط، من غير ما نزوّد عليه.</p>
+      </div></div>
+      <div class="b"><span class="n">2</span><div>
+        <h3>جزء من مبيعات كل شهر من غير عمولة</h3>
+        <p>والعمولة بعده بتزيد بالشرايح، وكل نسبة على الجزء اللي جوه شريحتها بس. التفاصيل في الصفحة الجاية.</p>
+      </div></div>
+      <div class="b"><span class="n">3</span><div>
+        <h3>بوستات وستوريز</h3>
+        <p>بننزّل منتجاتكم على انستجرام giftful مع منشن للبراند.</p>
+      </div></div>
+      <div class="b"><span class="n">4</span><div>
+        <h3>حملات المواسم</h3>
+        <p>منتجاتكم ممكن تدخل في حملات المواسم، زي عيد الأم ورمضان والأعياد.</p>
+      </div></div>
+      <div class="b"><span class="n">5</span><div>
+        <h3>صفحة باسمكم على الموقع</h3>
+        <p>فيها قصتكم ولينك الانستجرام وكل منتجاتكم.</p>
+      </div></div>
+      <div class="b"><span class="n">6</span><div>
+        <h3>مساعد الهدايا بيقترحكم</h3>
+        <p>لما منتجكم يناسب اللي العميل بيدور عليه، المساعد بيقترحه.</p>
+      </div></div>
+      <div class="b"><span class="n">7</span><div>
+        <h3>العميل والتغليف والتوصيل علينا</h3>
+        <p>الكلام مع العميل، والتغليف، والكارت، والتوصيل. إنتو تجهزوا المنتج وتسلموه بس.</p>
+      </div></div>
+    </div>
+
+    <div class="portal">
+      <h3>في حسابكم على الموقع</h3>
+      <ul>
+        <li>تضيفوا منتجاتكم بالصور والسعر ومدة التجهيز</li>
+        <li>العدد اللي عندكم، لكل لون أو مقاس، أو لكل تركيبة (ريحة × حجم)</li>
+        <li>الطلبات اللي محتاجة تتجهز وآخر ميعاد لتسليم كل واحد</li>
+        <li>مبيعات الشهر وعمولته وإنتو في أنهي شريحة</li>
+        <li>نصيبكم: اللي مستحق، واللي لسه، واللي اتحوّل</li>
+        <li>كشف حساب بكل طلب</li>
+      </ul>
+    </div>
+
+    <div class="foot"><span class="mark">giftful</span><span>٣</span></div>
+  </div>
+
+  <!-- ٤ العمولة -->
+  <div class="page">
+    <section>
+      <p class="kicker">العمولة</p>
+      <h2>العمولة بتتحسب إزاي</h2>
+      <p class="lead">كل براند ليه حساب لوحده كل شهر، وحده على قد أسعاره.</p>
+    </section>
+
+    <div class="formula">
+      <span>الجزء اللي من غير عمولة كل شهر</span><span class="eq">=</span>
+      <b>متوسط سعر القطعة عندكم × ١٠</b>
+    </div>
+    <p style="font-size:10pt;color:var(--ink-2)">يعني قيمة ١٠ قطع بمتوسط أسعاركم، مش أول ١٠ أوردرات. المتوسط بيتحسب من أسعار منتجاتكم المنفردة على الموقع، مش من قيمة الأوردر. ولو أسعاركم أعلى، الحد بتاعكم بيبقى أعلى.</p>
+
+    <div class="tiers">
+      <table>
+        <thead><tr><th>مبيعاتكم في الشهر</th><th>براند متوسط أسعاره ١٢٥<br>(الحد ١٬٢٥٠ ج.م)</th><th>براند متوسط أسعاره ٢٢٥<br>(الحد ٢٬٢٥٠ ج.م)</th><th>العمولة على الجزء ده</th></tr></thead>
+        <tbody>
+          <tr class="free"><td>لحد الحد</td><td class="num">أول ١٬٢٥٠</td><td class="num">أول ٢٬٢٥٠</td><td class="pct">٠٪</td></tr>
+          <tr><td>من الحد لضعفه</td><td class="num">١٬٢٥٠ لـ ٢٬٥٠٠</td><td class="num">٢٬٢٥٠ لـ ٤٬٥٠٠</td><td class="pct">١٠٪</td></tr>
+          <tr><td>من ضعفه لـ ٤ أضعافه</td><td class="num">٢٬٥٠٠ لـ ٥٬٠٠٠</td><td class="num">٤٬٥٠٠ لـ ٩٬٠٠٠</td><td class="pct">١٥٪</td></tr>
+          <tr><td>فوق ٤ أضعافه</td><td class="num">فوق ٥٬٠٠٠</td><td class="num">فوق ٩٬٠٠٠</td><td class="pct">٢٠٪</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ex2">
+      <div class="example">
+        <b>مثال ١:</b> متوسط أسعاركم ١٢٥، وبعتوا بـ <b class="num">٢٬٥٠٠ ج.م</b> في الشهر.
+        <table>
+          <tr><td>أول ١٬٢٥٠ × ٠٪</td><td class="num">٠</td></tr>
+          <tr><td>الـ ١٬٢٥٠ اللي بعدهم × ١٠٪</td><td class="num">١٢٥</td></tr>
+          <tr class="total"><td>العمولة</td><td class="num">١٢٥ ج.م</td></tr>
+          <tr class="total"><td>نصيبكم</td><td class="num">٢٬٣٧٥ ج.م</td></tr>
+        </table>
+      </div>
+      <div class="example">
+        <b>مثال ٢:</b> نفس البراند بعت بـ <b class="num">٦٬٠٠٠ ج.م</b> في شهر موسم.
+        <table>
+          <tr><td>أول ١٬٢٥٠ × ٠٪</td><td class="num">٠</td></tr>
+          <tr><td>من ١٬٢٥٠ لـ ٢٬٥٠٠ × ١٠٪</td><td class="num">١٢٥</td></tr>
+          <tr><td>من ٢٬٥٠٠ لـ ٥٬٠٠٠ × ١٥٪</td><td class="num">٣٧٥</td></tr>
+          <tr><td>من ٥٬٠٠٠ لـ ٦٬٠٠٠ × ٢٠٪</td><td class="num">٢٠٠</td></tr>
+          <tr class="total"><td>العمولة</td><td class="num">٧٠٠ ج.م</td></tr>
+          <tr class="total"><td>نصيبكم</td><td class="num">٥٬٣٠٠ ج.م</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>الـ ٢٠٪ مش على المبلغ كله.</b> في مثال ٢ العمولة كلها ٧٠٠ من ٦٬٠٠٠، يعني أقل من ١٢٪.</li>
+      <li><b>المبيعات</b> هي سعر منتجاتكم × العدد بس. التوصيل والبوكس والتغليف مش داخلين فيها.</li>
+      <li><b>الحساب بيبدأ من الأول كل شهر.</b> والطلب بيتحسب في الشهر اللي اتسلّم فيه للعميل، والطلب الملغي مالوش عمولة.</li>
+      <li><b>الحد بيتثبت</b> مع أول طلب يتسلّم في الشهر، فلو غيرتوا أسعاركم في نص الشهر، الحد الجديد بيبدأ الشهر اللي بعده.</li>
+      <li><b>الخصومات:</b> كوبونات giftful وكروت الهدايا علينا إحنا، ونصيبكم بيتحسب من السعر الكامل. ولو حبيتوا تعملوا عرض على منتج، بتنزّلوا سعره من حسابكم، ونصيبكم بيتحسب من السعر الجديد.</li>
+    </ul>
+
+    <div class="foot"><span class="mark">giftful</span><span>٤</span></div>
+  </div>
+
+  <!-- ٥ دورة الطلب والمسؤوليات -->
+  <div class="page">
+    <section>
+      <p class="kicker">الطلب بيمشي إزاي</p>
+      <h2>من أول ما العميل يطلب لحد ما فلوسكم توصل</h2>
+      <ol class="cycle">
+        <li><span class="dot">1</span><div><h3>العميل بيطلب ويدفع<span class="who-tag">العميل</span></h3><p>بيختار الهدية ويوم التوصيل والفترة، ويكتب رسالة الكارت، ويدفع بإنستاباي. والكاش عند الاستلام بس لو هو نفسه المستلم.</p></div></li>
+        <li><span class="dot">2</span><div><h3>بنأكد الدفع والطلب<span class="who-tag">giftful</span></h3><p>بنتأكد إن الفلوس وصلت ونراجع الطلب مع العميل. قبل كده الطلب ممكن يتلغي، وإنتو مش بتشوفوه أصلاً.</p></div></li>
+        <li class="you"><span class="dot">3</span><div><h3>الطلب بيوصلكم<span class="who-tag">إنتو</span></h3><p>بيظهر في حسابكم بمنتجاتكم بس، ومعاه آخر ميعاد للتسليم. ومن اللحظة دي الطلب مبيتلغيش.</p></div></li>
+        <li class="you"><span class="dot">4</span><div><h3>تجهزوا وتسلموا<span class="who-tag">إنتو</span></h3><p>قبل يوم التوصيل بيوم، وتدوسوا «سلّمت للمتجر».</p></div></li>
+        <li><span class="dot">5</span><div><h3>بنراجع ونغلّف ونوصّل<span class="who-tag">giftful</span></h3><p>بنشوف كل قطعة، ونغلّفها مع الكارت، ومندوبنا بيوصّلها في الفترة اللي العميل اختارها.</p></div></li>
+        <li class="you"><span class="dot">6</span><div><h3>نصيبكم<span class="who-tag">إنتو</span></h3><p>بيستحق بعد ٣ أيام من وصول الهدية، وبيتحوّلكم <span class="pending">كل ___ على ___</span></p></div></li>
+      </ol>
+      <p class="legend"><i></i>الخطوات اللي عليكم</p>
+    </section>
+
+    <section>
+      <h3 class="sub">مين عليه إيه</h3>
+      <div class="duty">
+        <div class="yours">
+          <h3>عليكم</h3>
+          <ul>
+            <li>وصف وسعر صح لكل منتج</li>
+            <li>العدد الحقيقي لكل لون أو مقاس أو تركيبة، وتحديثه أول بأول</li>
+            <li>مدة التجهيز لكل منتج</li>
+            <li>تجهيز أي طلب يوصلكم، وتسليمه قبل آخر ميعاد</li>
+            <li>جودة المنتج، وإنه يكون زي الصورة والوصف</li>
+            <li>صور واضحة، لحد ٥ صور للمنتج</li>
+          </ul>
+        </div>
+        <div class="ours">
+          <h3>علينا</h3>
+          <ul>
+            <li>الموقع وعرض منتجاتكم</li>
+            <li>مراجعة أي منتج جديد قبل ما ينزل</li>
+            <li>الكلام مع العميل وتأكيد الطلب</li>
+            <li>التغليف والكارت</li>
+            <li>التوصيل بمندوب giftful</li>
+            <li>نشوف المنتج قبل التغليف</li>
+            <li>متابعة الطلبات وحساباتكم وتحويل نصيبكم</li>
+            <li>التسويق لمنتجاتكم</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="foot"><span class="mark">giftful</span><span>٥</span></div>
+  </div>
+
+  <!-- ٦ القواعد -->
+  <div class="page">
+    <section>
+      <p class="kicker">القواعد</p>
+      <h2>علشان كل حاجة تبقى واضحة من الأول</h2>
+    </section>
+
+    <div class="rules">
+      <div><h3>الإلغاء</h3><div>
+        <p>الطلب ممكن يتلغي قبل ما يوصلكم بس، وساعتها مش هتشوفوه. أول ما يظهر في حسابكم مبيتلغيش، ونصيبكم فيه محفوظ.</p>
+      </div></div>
+      <div><h3>المنتج اللي خلص</h3><div>
+        <p>أول ما العدد يخلص، المنتج (أو اللون أو التركيبة) بيتقفل لوحده ويبان «خلص». علشان كده العدد لازم يبقى مظبوط، لأن أي طلب يوصلكم لازم يتجهز.</p>
+        <p><span class="pending">ولو حصل ومقدرتوش تجهزوا طلب وصلكم: ___</span></p>
+      </div></div>
+      <div><h3>مواعيد التسليم</h3><div>
+        <p>آخر ميعاد مكتوب على كل طلب في حسابكم، وهو قبل يوم التوصيل بيوم. ومدة التجهيز اللي بتكتبوها هي اللي بتحدد أقرب يوم توصيل يظهر للعميل.</p>
+        <p><span class="pending">ولو التسليم اتأخر: ___</span></p>
+      </div></div>
+      <div><h3>العيب والتلف</h3><div>
+        <p>بنشوف كل قطعة وإحنا بنستلمها. لو فيها مشكلة أو مختلفة عن الصورة، بتتبدّل قبل ميعاد التوصيل.</p>
+        <p><span class="pending">ولو العميل اشتكى من عيب في التصنيع بعد ما استلم: ___</span></p>
+      </div></div>
+      <div><h3>المرتجع والشكاوى</h3><div>
+        <p>الكلام مع العميل وشكواه علينا إحنا، وإحنا اللي بنرد عليه.</p>
+        <p><span class="pending">المرتجع لسبب غير العيب، ومين بيتحمّل تمنه: ___</span></p>
+      </div></div>
+      <div><h3>التغليف</h3><div>
+        <p>المنتج بييجي بتغليفكم أو من غيره، وتقدروا تحطوا كارت أو ستيكر صغير باسم البراند، بس من غير سعر ولا فاتورة لأنه هدية. والبوكس والتغليف من برا بشكل giftful، والعميل بيختاره من الموقع.</p>
+      </div></div>
+      <div><h3>الفلوس</h3><div>
+        <p>إحنا اللي بنحصّل من العميل. ونصيبكم (السعر ناقص العمولة) بيستحق بعد ٣ أيام من وصول الهدية، وكل تحويل بيتسجّل في حسابكم.</p>
+      </div></div>
+      <div><h3>الصور واسم البراند</h3><div>
+        <p>بنستخدم اسمكم وصور منتجاتكم على الموقع وعلى انستجرام giftful، دايمًا مع منشن للبراند. ولو التصوير مش سهل عليكم، نقدر نساعدكم في الصور ونظبطها بالـ AI.</p>
+      </div></div>
+      <div><h3>بيانات العملاء</h3><div>
+        <p>الطلب بيوصلكم من غير اسم العميل ولا رقمه ولا عنوانه. والعملاء اللي بيطلبوا من الموقع عملاء giftful، فمش بنتواصل معاهم من برا الموقع بخصوص طلباتهم.</p>
+      </div></div>
+    </div>
+
+    <div class="foot"><span class="mark">giftful</span><span>٦</span></div>
+  </div>
+
+  <!-- ٧ نبدأ -->
+  <div class="page">
+    <section>
+      <h2>نبدأ إزاي؟</h2>
+      <div class="steps">
+        <div><span class="s">1</span><p>نتكلم على الواتساب، ونمضي ورقة الاتفاق.</p></div>
+        <div><span class="s">2</span><p>نعملكم حساب ونبعتلكم بيانات الدخول.</p></div>
+        <div><span class="s">3</span><p>تضيفوا منتجاتكم بالصور والأسعار والعدد ومدة التجهيز.</p></div>
+        <div><span class="s">4</span><p>نراجعها وتنزل على الموقع.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <p class="kicker">في سطور</p>
+      <ul class="needs">
+        <li><b>سعركم زي ما هو</b>، ومن غير عمولة لحد متوسط سعركم × ١٠ كل شهر.</li>
+        <li><b>إنتو بتجهزوا وتسلموا</b> قبل يوم التوصيل بيوم، والباقي علينا.</li>
+        <li><b>الطلب اللي يوصلكم مبيتلغيش</b>، ونصيبكم بيستحق بعد ٣ أيام من التوصيل.</li>
+        <li><b>كل حاجة قدامكم</b> في حسابكم: الطلبات والعدد والعمولة والتحويلات.</li>
+      </ul>
+    </section>
+
+    <div class="contact">
+      <dl>
+        <dt>واتساب</dt><dd><span class="fill" data-contact="whatsapp">01X XXXX XXXX</span></dd>
+        <dt>انستجرام</dt><dd><span class="fill" data-contact="instagram">@giftful</span></dd>
+        <dt>الموقع</dt><dd><span class="fill" data-contact="website">giftful.site</span></dd>
+      </dl>
+      <p class="hand">مستنيينكم، <span class="sig">giftful</span></p>
+    </div>
+
+    <div class="foot"><span class="mark">giftful</span><span>٧</span></div>
+  </div>
+</div>
+</body>
+</html>

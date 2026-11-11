@@ -1,7 +1,7 @@
 "use client";
 
 import { useT } from "@/i18n/client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { egp } from "@/lib/format";
 import { describeChoices, missingOptions, optionsPrice, type OptionChoice } from "@/lib/options";
 import { packagingFee } from "@/lib/pricing";
@@ -68,6 +68,7 @@ export function BoxBuilder({
 
   const categories = useMemo(() => [...new Set(products.map((p) => p.category))], [products]);
   const shown = category ? products.filter((p) => p.category === category) : products;
+  const pickingProduct = picking ? byId.get(picking) : undefined;
   const qtyOf = (productId: string) => lines.filter((l) => l.productId === productId).reduce((s, l) => s + l.qty, 0);
 
   const basket: BasketItem[] = lines.map((l) => {
@@ -158,70 +159,47 @@ export function BoxBuilder({
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
+          {/* كروت صغيرة ونضيفة: صورة مربعة، الاسم والسعر، وزرار تحت. اللي في البوكس عليه إطار وعدد */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {shown.map((p) => {
               const n = qtyOf(p.id);
               const hasOptions = Boolean(p.options?.length);
-              const open = picking === p.id;
-              const draftMissing = open ? missingOptions(p.options, draft) : [];
               return (
-                <div key={p.id} className={`flex flex-col ${open ? "col-span-2 sm:col-span-3" : ""}`}>
-                  <div className={open ? "grid gap-4 rounded-2xl border border-ink p-3 sm:grid-cols-[10rem_1fr]" : ""}>
-                    <div className={`polaroid transition-transform ${n ? "-rotate-2 ring-2 ring-brand" : ""}`}><GiftArt image={p.images[0]} label={p.name} className="aspect-square" /></div>
-                    <div className="flex flex-1 flex-col pt-2.5">
-                      <p className="line-clamp-1 text-sm font-medium">{p.name}</p>
-                      <p className="tabular text-sm text-ink-2">
-                        {egp(p.price + (open ? optionsPrice(p.options, draft) : 0), t)}
-                        {n > 0 && hasOptions && <span className="text-xs text-brand"> · {t("في البوكس {n}", { n })}</span>}
-                      </p>
-                      {open ? (
-                        // اللون/المقاس بيتختار هنا قبل ما المنتج يدخل البوكس، وفرق السعر بيبان على طول
-                        <div className="mt-3 space-y-3">
-                          <OptionPicker options={p.options!} choices={draft} onChange={setDraft} size="sm" />
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              disabled={draftMissing.length > 0 || full}
-                              onClick={() => {
-                                change(p.id, draft, 1);
-                                setPicking(null);
-                                setDraft([]);
-                              }}
-                              className="btn-primary btn-sm flex-1"
-                            >
-                              {draftMissing.length
-                                ? t("اختار {name} الأول", { name: t.locale === "en" ? draftMissing[0].en || draftMissing[0].name : draftMissing[0].name })
-                                : t("حطه في البوكس")}
-                            </button>
-                            <button type="button" onClick={() => setPicking(null)} className="btn-outline btn-sm">
-                              {t("إلغاء")}
-                            </button>
-                          </div>
-                        </div>
+                <div key={p.id} className={`flex flex-col overflow-hidden rounded-2xl border bg-paper transition-shadow ${n ? "border-brand shadow-[0_0_0_1px_var(--color-brand)]" : "border-line hover:shadow-[0_10px_24px_-18px_rgb(60_30_20/0.5)]"}`}>
+                  <div className="relative">
+                    <GiftArt image={p.images[0]} label={p.name} className="aspect-square" sizes="(max-width: 640px) 50vw, 220px" />
+                    {n > 0 && (
+                      <span className="tabular absolute start-2 top-2 grid min-w-7 place-items-center rounded-full bg-brand px-2 py-0.5 text-xs font-bold text-white shadow">× {n}</span>
+                    )}
+                    {hasOptions && (
+                      <span className="absolute end-2 bottom-2 rounded-full bg-paper/95 px-2 py-0.5 text-[11px] font-medium text-ink-2 shadow-sm">{t("ليه اختيارات")}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-3">
+                    <p className="line-clamp-2 text-sm leading-5 font-medium">{p.name}</p>
+                    <p className="tabular mt-0.5 text-sm font-semibold text-brand">{hasOptions ? t("من {price}", { price: egp(p.price, t) }) : egp(p.price, t)}</p>
+                    <div className="mt-auto pt-3">
+                      {hasOptions ? (
+                        <button
+                          disabled={full}
+                          onClick={() => {
+                            setPicking(p.id);
+                            setDraft([]);
+                          }}
+                          className={`h-9 w-full rounded-full border text-sm font-medium transition-colors disabled:opacity-40 ${n ? "border-brand text-brand hover:bg-brand-soft" : "border-ink/15 hover:border-brand hover:text-brand"}`}
+                        >
+                          {n ? t("ضيف تاني") : t("اختار وضيف")}
+                        </button>
+                      ) : n === 0 ? (
+                        <button disabled={full} onClick={() => change(p.id, [], 1)} className="flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-ink/15 text-sm font-medium transition-colors hover:border-brand hover:text-brand disabled:opacity-40">
+                          <Icon name="plus" className="size-4" />
+                          {t("ضيف")}
+                        </button>
                       ) : (
-                        <div className="mt-auto pt-2">
-                          {hasOptions ? (
-                            <button
-                              disabled={full}
-                              onClick={() => {
-                                setPicking(p.id);
-                                setDraft([]);
-                              }}
-                              className="btn-outline btn-sm w-full"
-                            >
-                              {n ? t("ضيف لون أو مقاس تاني") : t("اختار وضيف")}
-                            </button>
-                          ) : n === 0 ? (
-                            <button disabled={full} onClick={() => change(p.id, [], 1)} className="btn-outline btn-sm w-full">
-                              {t("ضيف")}
-                            </button>
-                          ) : (
-                            <div className="flex h-10 items-center justify-between rounded-full bg-brand text-white">
-                              <button className="grid size-10 place-items-center" onClick={() => change(p.id, [], -1)} aria-label={t("شيل واحد")}><Icon name="minus" className="size-4" /></button>
-                              <span className="tabular font-bold">{n}</span>
-                              <button className="grid size-10 place-items-center disabled:opacity-30" disabled={full} onClick={() => change(p.id, [], 1)} aria-label={t("زوّد واحد")}><Icon name="plus" className="size-4" /></button>
-                            </div>
-                          )}
+                        <div className="flex h-9 items-center justify-between rounded-full bg-brand text-white">
+                          <button className="grid size-9 place-items-center" onClick={() => change(p.id, [], -1)} aria-label={t("شيل واحد")}><Icon name="minus" className="size-4" /></button>
+                          <span className="tabular text-sm font-bold">{n}</span>
+                          <button className="grid size-9 place-items-center disabled:opacity-30" disabled={full} onClick={() => change(p.id, [], 1)} aria-label={t("زوّد واحد")}><Icon name="plus" className="size-4" /></button>
                         </div>
                       )}
                     </div>
@@ -291,6 +269,99 @@ export function BoxBuilder({
         )}
       </aside>
       <BoxPreviewDock items={basket} />
+      {pickingProduct && (
+        <OptionsDialog
+          product={pickingProduct}
+          choices={draft}
+          onChange={setDraft}
+          full={full}
+          onClose={() => setPicking(null)}
+          onAdd={() => {
+            change(pickingProduct.id, draft, 1);
+            setPicking(null);
+            setDraft([]);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * اختيار اللون/المقاس قبل ما المنتج يدخل البوكس: نافذة في النص (وعلى الموبايل بتطلع من تحت)،
+ * فيها صورة المنتج والسعر بالفرق بيتغير مع الاختيار
+ */
+function OptionsDialog({
+  product: p,
+  choices,
+  onChange,
+  full,
+  onClose,
+  onAdd,
+}: {
+  product: Product;
+  choices: OptionChoice[];
+  onChange: (next: OptionChoice[]) => void;
+  full: boolean;
+  onClose: () => void;
+  onAdd: () => void;
+}) {
+  const t = useT();
+  const missing = missingOptions(p.options, choices);
+  const delta = optionsPrice(p.options, choices);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    // الصفحة اللي ورا متتحركش وهي مفتوحة
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={p.name}>
+      <button type="button" aria-label={t("إلغاء")} onClick={onClose} className="absolute inset-0 bg-ink/45 backdrop-blur-[2px]" />
+      <div className="relative max-h-[90dvh] w-full max-w-lg animate-fade-up overflow-y-auto rounded-t-[2rem] bg-paper p-5 shadow-2xl sm:rounded-[2rem] sm:p-6">
+        <button type="button" onClick={onClose} aria-label={t("إلغاء")} className="absolute end-4 top-4 grid size-9 place-items-center rounded-full bg-bg text-ink-2 hover:text-brand">
+          <Icon name="close" className="size-5" />
+        </button>
+        <div className="flex items-center gap-4 pe-10">
+          <div className="polaroid w-24 shrink-0 -rotate-3 sm:w-28">
+            <GiftArt image={p.images[0]} label={p.name} className="aspect-square" sizes="112px" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-heading text-2xl leading-tight">{p.name}</p>
+            <p className="tabular mt-1 font-heading text-2xl text-brand">{egp(p.price + delta, t)}</p>
+            {delta !== 0 && (
+              <p className="tabular text-xs text-muted">
+                {egp(p.price, t)} {delta > 0 ? "+" : "−"} {egp(Math.abs(delta), t)}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-5 border-t border-dashed border-line pt-5">
+          <OptionPicker options={p.options!} choices={choices} onChange={onChange} />
+        </div>
+        <div className="mt-6 flex gap-2">
+          <button type="button" disabled={missing.length > 0 || full} onClick={onAdd} className="btn-primary flex-1">
+            {missing.length ? (
+              t("اختار {name} الأول", { name: t.locale === "en" ? missing[0].en || missing[0].name : missing[0].name })
+            ) : (
+              <>
+                {t("حطه في البوكس")}
+                <span className="tabular opacity-90">· {egp(p.price + delta, t)}</span>
+              </>
+            )}
+          </button>
+          <button type="button" onClick={onClose} className="btn-outline">
+            {t("إلغاء")}
+          </button>
+        </div>
+        {full && <p className="mt-2 text-xs text-brand">{t("البوكس اتملى. كبّر الحجم أو شيل حاجة.")}</p>}
+      </div>
     </div>
   );
 }

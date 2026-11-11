@@ -665,6 +665,10 @@ export const en: Record<string, string> = {
   "اختار وضيف": "Choose and add",
   "ضيف لون أو مقاس تاني": "Add another color or size",
   "في البوكس {n}": "{n} in the box",
+  "ليه اختيارات": "Has options",
+  "من {price}": "From {price}",
+  "ضيف تاني": "Add another",
+  "البوكس اتملى. كبّر الحجم أو شيل حاجة.": "The box is full. Pick a bigger size or remove something.",
   // الكلام والصور على المنتجات المخصصة (صفحة الدفع)
   "اختار صورة": "Choose a photo",
   "الصورة كبيرة أوي": "The photo is too large",
