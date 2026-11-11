@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
-import { useDir, useT } from "@/i18n/client";
+import { Link, useDir, useT } from "@/i18n/client";
 import type { AssistantReply, ChatTurn, Suggestion } from "@/lib/assistant";
 import { askAssistant } from "@/lib/assistant-actions";
 import { egp } from "@/lib/format";
@@ -30,28 +30,46 @@ function SuggestionCard({ s, index }: { s: Suggestion; index: number }) {
   const t = useT();
   const addGift = useCart((st) => st.addGift);
   const [added, setAdded] = useState(false);
+  const line = (it: Suggestion["items"][number], unitPrice: number) => ({
+    productId: it.productId,
+    name: it.name,
+    unitPrice,
+    quantity: it.quantity,
+    customizable: it.isCustomizable,
+    maxChars: it.maxChars,
+    customKind: it.customKind,
+    customization: "",
+  });
   function add() {
-    addGift({
-      kind: "box",
-      title: t("بوكس {name}", { name: s.box.name }),
-      refId: s.box.id,
-      image: s.items[0]?.image ?? undefined,
-      basePrice: s.box.price,
-      lines: s.items.map((it) => ({
-        productId: it.productId,
-        name: it.name,
-        unitPrice: it.price,
-        quantity: 1,
-        customizable: it.isCustomizable,
-        maxChars: it.maxChars,
-        customKind: it.customKind,
-        customization: "",
-      })),
-      addons: [],
-      prepDays: Math.max(0, ...s.items.map((it) => it.prepDays)),
-    });
+    if (s.kind === "box" && s.box) {
+      addGift({
+        kind: "box",
+        title: t("بوكس {name}", { name: s.box.name }),
+        refId: s.box.id,
+        image: s.items[0]?.image ?? undefined,
+        basePrice: s.box.price,
+        lines: s.items.map((it) => line(it, it.price)),
+        addons: [],
+        prepDays: Math.max(0, ...s.items.map((it) => it.prepDays)),
+      });
+    } else if (s.ref) {
+      addGift({
+        kind: s.kind === "package" ? "package" : "product",
+        title: s.ref.name,
+        slug: s.ref.slug,
+        refId: s.ref.id,
+        image: s.ref.image ?? undefined,
+        // الباكدج بسعره الثابت، والمنتج لوحده سعره على السطر
+        basePrice: s.kind === "package" ? s.total : 0,
+        lines: s.items.map((it) => line(it, s.kind === "package" ? 0 : it.price)),
+        addons: [],
+        prepDays: s.ref.prepDays,
+      });
+    }
     setAdded(true);
   }
+  const kindLabel = s.kind === "box" ? t("بوكس متركّبلك") : s.kind === "package" ? t("باكدج جاهز") : t("هدية لوحدها");
+  const page = s.ref ? `/${s.kind === "package" ? "packages" : "products"}/${s.ref.slug}` : null;
   return (
     <motion.div
       className={`rounded-2xl border border-line bg-paper p-3`}
@@ -59,37 +77,62 @@ function SuggestionCard({ s, index }: { s: Suggestion; index: number }) {
       animate={{ opacity: 1, y: 0, rotate: index % 2 ? 1 : -1 }}
       transition={{ type: "spring", stiffness: 200, damping: 16, delay: index * 0.12 }}
     >
-      <div className="flex -space-x-3 rtl:space-x-reverse">
-        {s.items.map((it, i) => (
-          <div key={it.productId} className={`relative size-14 shrink-0 overflow-hidden border-2 border-white bg-blush shadow ${i % 2 ? "rotate-6" : "-rotate-6"}`}>
-            {it.image && <Image src={it.image} alt={it.name} fill sizes="56px" className="object-cover" />}
-          </div>
-        ))}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex -space-x-3 rtl:space-x-reverse">
+          {s.kind === "box" ? (
+            s.items.map((it, i) => (
+              <div key={it.productId} className={`relative size-14 shrink-0 overflow-hidden border-2 border-white bg-blush shadow ${i % 2 ? "rotate-6" : "-rotate-6"}`}>
+                {it.image && <Image src={it.image} alt={it.name} fill sizes="56px" className="object-cover" />}
+              </div>
+            ))
+          ) : (
+            <div className="relative size-16 shrink-0 -rotate-3 overflow-hidden border-2 border-white bg-blush shadow">
+              {s.ref?.image && <Image src={s.ref.image} alt={s.ref.name} fill sizes="64px" className="object-cover" />}
+            </div>
+          )}
+        </div>
+        <span className="chip shrink-0 border-line bg-bg text-[11px] text-ink-2">{kindLabel}</span>
       </div>
       <p className="mt-2 font-heading text-lg leading-tight text-brand">{s.title}</p>
-      <p className="mt-0.5 text-xs leading-5 text-ink-2">{s.items.map((it) => it.name).join(" · ")}</p>
+      <p className="mt-0.5 text-xs leading-5 text-ink-2">
+        {s.kind === "product" ? s.ref?.name : s.items.map((it) => (it.quantity > 1 ? `${it.quantity}× ${it.name}` : it.name)).join(" · ")}
+      </p>
       <p className="mt-1 font-script text-base leading-6 text-lilac">{s.reason}</p>
       <div className="mt-2 flex items-center justify-between gap-2">
         <p className="tabular text-sm">
           <span className="font-semibold text-brand">{egp(s.total, t)}</span>
           <span className="text-[11px] text-muted"> · {t("مبدئي")}</span>
         </p>
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          onClick={add}
-          disabled={added}
-          className={`btn-sm btn ${added ? "bg-success text-white" : "bg-brand text-white hover:bg-brand-dark"}`}
-        >
-          {added ? (
-            <>
-              <Icon name="check" className="size-4" /> {t("اتضاف")}
-            </>
-          ) : (
-            t("ضيفيه بوكس")
-          )}
-        </motion.button>
+        {s.needsChoice && page ? (
+          // فيه لون أو مقاس: يختار من صفحة الهدية الأول
+          <Link href={page} className="btn-sm btn bg-brand text-white hover:bg-brand-dark">
+            {t("اختار اللون أو المقاس")}
+          </Link>
+        ) : (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.94 }}
+            onClick={add}
+            disabled={added}
+            className={`btn-sm btn ${added ? "bg-success text-white" : "bg-brand text-white hover:bg-brand-dark"}`}
+          >
+            {added ? (
+              <>
+                <Icon name="check" className="size-4" /> {t("اتضاف")}
+              </>
+            ) : s.kind === "box" ? (
+              t("ضيفيه بوكس")
+            ) : (
+              t("ضيف للسلة")
+            )}
+          </motion.button>
+        )}
       </div>
+      {page && !s.needsChoice && (
+        <Link href={page} className="mt-1.5 inline-block text-xs text-muted underline underline-offset-4 hover:text-brand">
+          {t("شوف التفاصيل")}
+        </Link>
+      )}
     </motion.div>
   );
 }
@@ -192,7 +235,7 @@ export function GiftAssistant() {
             <header className="flex items-center gap-3 border-b-2 border-dashed border-line bg-[#fffdf6] px-4 pt-5 pb-3">
               <Bow className="w-10 text-brand" />
               <div className="min-w-0 flex-1">
-                <p className="font-heading text-xl leading-tight text-brand">{t("مساعد الهدايا")}</p>
+                <p className="font-logo text-2xl leading-tight font-semibold text-brand italic">giftful</p>
                 <p className="font-script text-sm text-candy">{t("قوليلي لمين ومناسبة إيه وميزانيتك")}</p>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label={t("قفل")} className="grid size-9 place-items-center rounded-full hover:bg-surface">
@@ -204,7 +247,7 @@ export function GiftAssistant() {
               {msgs.length === 0 && (
                 <div className="space-y-3">
                   <p className="font-script text-xl leading-8 text-ink-2">
-                    {t("أهلاً! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام، وأنا أجمعلك بوكسات من البراندات المحلية.")}
+                    {t("أهلاً، أنا giftful! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام. هدوّر في كل الهدايا اللي عندنا وأقترحلك باكدج جاهز، أو هدية لوحدها، أو أركّبلك بوكس.")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {starters.map((s) => (

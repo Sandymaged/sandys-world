@@ -4,7 +4,7 @@
 import type { Locale } from "@/i18n/config";
 import type { Storefront } from "./catalog";
 import { packagingFee } from "./pricing";
-import type { BoxSize, CustomizationKind, Product, RecipientTag } from "./types";
+import type { BoxSize, CustomizationKind, PackageView, Product, RecipientTag } from "./types";
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -21,15 +21,71 @@ export interface SuggestionItem {
   maxChars: number | null;
   customKind?: CustomizationKind;
   prepDays: number;
+  quantity: number;
 }
 
+/**
+ * اقتراح من المساعد، تلات أشكال:
+ * - box: بوكس متركّب من منتجات (بيتضاف للسلة على طول)
+ * - product: هدية لوحدها (منتج واحد)
+ * - package: باكدج جاهز
+ * المنتج أو الباكدج اللي فيه لون/مقاس (needsChoice) بيودّي لصفحته يختار الأول
+ */
 export interface Suggestion {
+  kind: "box" | "product" | "package";
   title: string;
   reason: string;
   items: SuggestionItem[];
-  box: { id: string; name: string; price: number };
+  box: { id: string; name: string; price: number } | null;
   packaging: number;
   total: number;
+  ref?: { id: string; slug: string; name: string; image: string | null; prepDays: number };
+  needsChoice?: boolean;
+}
+
+const toItem = (p: Product, quantity = 1): SuggestionItem => ({
+  productId: p.id,
+  name: p.name,
+  price: p.price,
+  image: p.images[0] ?? null,
+  brand: p.brand,
+  isCustomizable: p.isCustomizable,
+  maxChars: p.customizationMaxChars,
+  customKind: p.customizationKind,
+  prepDays: p.prepDays,
+  quantity,
+});
+
+/** هدية لوحدها: منتج واحد بسعره */
+export function productSuggestion(p: Product, budget: number | null, title: string, reason: string): Suggestion | null {
+  if (p.isAddon || (budget != null && p.price > budget)) return null;
+  return {
+    kind: "product",
+    title,
+    reason,
+    items: [toItem(p)],
+    box: null,
+    packaging: 0,
+    total: p.price,
+    ref: { id: p.id, slug: p.slug, name: p.name, image: p.images[0] ?? null, prepDays: p.prepDays },
+    needsChoice: Boolean(p.options?.length),
+  };
+}
+
+/** باكدج جاهز بسعره (البوكس اختياري وبيتختار من صفحته) */
+export function packageSuggestion(pkg: PackageView, budget: number | null, title: string, reason: string): Suggestion | null {
+  if (budget != null && pkg.price > budget) return null;
+  return {
+    kind: "package",
+    title,
+    reason,
+    items: pkg.products.map((p) => toItem(p, p.quantity)),
+    box: null,
+    packaging: 0,
+    total: pkg.price,
+    ref: { id: pkg.id, slug: pkg.slug, name: pkg.name, image: pkg.images[0] ?? pkg.products[0]?.images[0] ?? null, prepDays: pkg.prepDays },
+    needsChoice: pkg.products.some((p) => p.options?.length),
+  };
 }
 
 export interface AssistantReply {
@@ -67,19 +123,10 @@ export function priceSuggestion(
   const total = box.price + itemsTotal + packaging;
   if (budget != null && total > budget) return null;
   return {
+    kind: "box",
     title,
     reason,
-    items: products.map((p) => ({
-      productId: p.id,
-      name: p.name,
-      price: p.price,
-      image: p.images[0] ?? null,
-      brand: p.brand,
-      isCustomizable: p.isCustomizable,
-      maxChars: p.customizationMaxChars,
-      customKind: p.customizationKind,
-      prepDays: p.prepDays,
-    })),
+    items: products.map((p) => toItem(p)),
     box: { id: box.id, name: box.name, price: box.price },
     packaging,
     total,
@@ -198,8 +245,8 @@ const themes: Theme[] = [
     id: "relax",
     label: { ar: "الشموع والريحة الحلوة", en: "candles and cozy scents" },
     title: { ar: "بوكس الراحة", en: "Cozy calm box" },
-    user: /شمع|ريح|معطر|بخور|استرخ|هدوء|ريلاكس|candle|scent|relax|cozy|spa\b|sham3/,
-    product: /شمع|استرخا|عطر|معطر|بخور|صابون|اعشاب/,
+    user: /شمع|شموع|ريح|معطر|بخور|استرخ|هدوء|ريلاكس|candle|scent|relax|cozy|spa\b|sham3|shomo3/,
+    product: /شمع|شموع|استرخا|عطر|معطر|بخور|صابون|اعشاب|candle|musk|مسك/,
   },
   {
     id: "care",
@@ -227,7 +274,7 @@ const themes: Theme[] = [
     label: { ar: "ديكور البيت", en: "home decor" },
     title: { ar: "حاجات للبيت", en: "Home touches" },
     user: /ديكور|للبيت|البيت|اوضه|اوضتها|اوضته|decor|home|room/,
-    product: /ديكور|كوشن|برواز|زينه|شمع/,
+    product: /ديكور|كوشن|برواز|زينه|شمع|شموع/,
   },
   {
     id: "memories",
@@ -349,8 +396,8 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
       mode: "rules",
       suggestions: [],
       reply: en
-        ? "Tell me who the gift is for, what they love, and roughly your budget — e.g. “my brother loves food, 600”."
-        : "قولّي الهدية لمين، وبيحب إيه، وميزانيتك تقريباً كام. مثلاً: «أخويا بيحب الأكل، بـ 600».",
+        ? "Hi, I'm giftful! I look through all our gifts: ready packages, single gifts, or a box I put together for you. Tell me who it's for, what they love, and roughly your budget — e.g. “my brother loves food, 600”."
+        : "أهلاً، أنا giftful! بدوّر في كل الهدايا اللي عندنا: باكدجات جاهزة، هدايا لوحدها، أو بوكس أركّبهولك. قولّي الهدية لمين، وبيحب إيه، وميزانيتك تقريباً كام. مثلاً: «أخويا بيحب الأكل، بـ 600».",
     };
   }
   if (u.budget == null) {
@@ -434,22 +481,56 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
 
   // اتسعّر، وشيل اللي فوق الميزانية واللي متكرر
   const seen = new Set<string>();
-  const suggestions = plans
+  const boxes = plans
     .map((pl) => priceSuggestion(sf, map, pl.ids, budget, pl.title, pl.reason))
     .filter((s): s is Suggestion => {
-      if (!s) return false;
+      // البوكس فيه حاجتين على الأقل (الحاجة الواحدة بتتقترح «هدية لوحدها»)
+      if (!s || s.items.length < 2) return false;
       const key = s.items.map((i) => i.productId).sort().join("|");
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .slice(0, 3);
+    });
+
+  // باكدج جاهز يناسب (المناسبة، لمين، اللي بيحبه)
+  const pkgText = (p: PackageView) => norm([p.name, p.description, p.en?.name ?? "", ...p.products.map((x) => `${x.name} ${x.category} ${x.interests.join(" ")}`)].join(" "));
+  const pkgHits = (p: PackageView, list: Theme[]) => list.filter((th) => th.product.test(pkgText(p))).length;
+  const pkgScore = (p: PackageView) =>
+    pkgHits(p, u.likes) * 6 + (u.occasion && p.occasions.includes(u.occasion) ? 3 : 0) + (u.recipient && p.recipients.includes(u.recipient) ? 2 : 0) + p.price / 2000;
+  const pkg = sf.packages
+    .filter((p) => p.price <= budget && pkgHits(p, u.dislikes) === 0)
+    .sort((a, b) => pkgScore(b) - pkgScore(a))[0];
+  const pkgPick = pkg
+    ? packageSuggestion(
+        pkg,
+        budget,
+        pkg.name,
+        en ? `A ready-made package: ${joinList(pkg.products.map((x) => x.name), locale)}.` : `باكدج جاهز ومتظبط: ${joinList(pkg.products.map((x) => x.name), locale)}.`,
+      )
+    : null;
+
+  // هدية لوحدها: أحسن منتج (حتى لو مش بيدخل بوكس) في حدود الميزانية
+  const inBoxes = new Set(boxes.flatMap((b) => b.items.map((i) => i.productId)));
+  // الأول اللي مش في البوكسات، ولو مفيش: أحسن منتج يناسب
+  const singles = sf.products.filter((p) => !p.isAddon && p.price <= budget && hits(p, u.dislikes) === 0).sort((a, b) => score(b) - score(a));
+  const single = singles.find((p) => !inBoxes.has(p.id)) ?? (boxes.length < 2 ? singles[0] : undefined);
+  const singlePick = single
+    ? productSuggestion(
+        single,
+        budget,
+        en ? "One special gift" : "هدية واحدة مميزة",
+        en ? `${single.name} on its own makes a lovely gift${single.isCustomizable ? ", and it can carry their name" : ""}.` : `${single.name} لوحدها هدية حلوة${single.isCustomizable ? "، وممكن يتكتب عليها الاسم" : ""}.`,
+      )
+    : null;
+
+  // تنويع: بوكس، وباكدج، وهدية لوحدها، وبعدين باقي البوكسات
+  const suggestions = [boxes[0], pkgPick, singlePick, ...boxes.slice(1)].filter((s): s is Suggestion => Boolean(s)).slice(0, 3);
 
   let reply: string;
   if (!suggestions.length) {
     reply = en
-      ? "I couldn't fit a box in that budget. Try a slightly higher budget, or have a look at the ready packages."
-      : "ملقيتش بوكس يدخل في الميزانية دي. جرّب ميزانية أعلى شوية أو شوف الباكدجات الجاهزة.";
+      ? "I couldn't find a gift within that budget. Try a slightly higher budget."
+      : "ملقيتش هدية تدخل في الميزانية دي. جرّب ميزانية أعلى شوية.";
   } else {
     const head = summary(u, sf, locale);
     const missing =

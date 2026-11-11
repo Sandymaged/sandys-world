@@ -496,8 +496,12 @@ export const en: Record<string, string> = {
   "مساعد الهدايا": "Gift assistant",
   "محتارة؟ اسأليني": "Not sure? Ask me",
   "قوليلي لمين ومناسبة إيه وميزانيتك": "Tell me who, the occasion and your budget",
-  "أهلاً! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام، وأنا أجمعلك بوكسات من البراندات المحلية.":
-    "Hi! Tell me who the gift is for, what they love and your budget, and I'll put together boxes from our local brands.",
+  "أهلاً، أنا giftful! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام. هدوّر في كل الهدايا اللي عندنا وأقترحلك باكدج جاهز، أو هدية لوحدها، أو أركّبلك بوكس.":
+    "Hi, I'm giftful! Tell me who the gift is for, what they love and your budget. I'll look through all our gifts and suggest a ready package, a single gift, or a box I put together for you.",
+  "بوكس متركّبلك": "Box made for you",
+  "باكدج جاهز": "Ready package",
+  "هدية لوحدها": "Single gift",
+  "شوف التفاصيل": "See details",
   "بدوّرلك…": "Looking…",
   "مثلاً: هدية لأختي بـ 700، بتحب القهوة": "e.g. a gift for my sister, EGP 700, she loves coffee",
   "رسالتك": "Your message",
