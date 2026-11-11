@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Link, useT } from "@/i18n/client";
+import { barePath } from "@/i18n/config";
 import { usePathname } from "next/navigation";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useCart } from "@/store/cart";
@@ -18,7 +19,8 @@ const items: { href: string; label: string; icon: IconName }[] = [
 /** showBox: لو قسم البوكس اتقفل من اللوحة، الزرار بتاعه بيختفي */
 export function BottomNav({ showBox = true }: { showBox?: boolean }) {
   const t = useT();
-  const path = usePathname();
+  // من غير اللغة: عشان التاب الصح يتعلّم بالإنجليزي، وعشان السيرفر والمتصفح يطلعوا نفس الحاجة
+  const path = barePath(usePathname());
   const count = useCart((s) => s.gifts.length + s.giftCards.length);
   const hydrated = useHydrated();
 

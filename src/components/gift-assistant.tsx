@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
 import { Link, useDir, useT } from "@/i18n/client";
+import { barePath } from "@/i18n/config";
 import type { AssistantReply, ChatTurn, Suggestion } from "@/lib/assistant";
 import { askAssistant } from "@/lib/assistant-actions";
 import { egp } from "@/lib/format";
@@ -162,7 +163,7 @@ export function GiftAssistant() {
   const rtl = useDir() === "rtl";
   const [open, setOpen] = useState(false);
   // في الموبايل الصفحات اللي فيها زرار شراء ثابت تحت: الزرار العائم بيستخبى عشان ميغطيش عليه
-  const path = usePathname().replace(/^\/en(?=\/|$)/, "") || "/";
+  const path = barePath(usePathname());
   const busyBottom = /^\/(cart|checkout|box|products\/|packages\/|kits\/)/.test(path);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");

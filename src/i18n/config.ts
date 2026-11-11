@@ -14,7 +14,13 @@ export function localizeHref(locale: Locale, href: string) {
 }
 
 /** المسار نفسه في اللغة التانية (للزرار اللي بيبدّل اللغة) */
+/**
+ * المسار من غير اللغة: «/en/shop» و«/shop» و«/ar/shop» كلهم «/shop».
+ * على Vercel السيرفر بيشوف العربي «/ar/…» (بعد الـ rewrite) والمتصفح بيشوفه «/…»،
+ * فأي حاجة بتتحسب من المسار لازم تمشي من هنا وإلا الصفحة بتطلع مختلفة (hydration error)
+ */
+export const barePath = (pathname: string) => pathname.replace(/^\/(en|ar)(?=\/|$)/, "") || "/";
+
 export function switchLocalePath(pathname: string, to: Locale) {
-  const bare = pathname === "/en" ? "/" : pathname.startsWith("/en/") ? pathname.slice(3) : pathname;
-  return localizeHref(to, bare);
+  return localizeHref(to, barePath(pathname));
 }
