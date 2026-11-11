@@ -5,7 +5,9 @@ import { suggestGifts, type AssistantReply, type ChatTurn } from "./assistant";
 import { getStorefront, localizeStorefront } from "./catalog";
 
 /** رسالة للمساعد: المحادثة كلها بتتبعت (السيرفر مش بيحفظ حاجة) */
-export async function askAssistant(history: ChatTurn[], locale: string): Promise<AssistantReply> {
+export async function askAssistant(history: ChatTurn[], locale: string, shownIds: string[] = []): Promise<AssistantReply> {
+  // IDs اللي اتعرضت قبل كده (عشان «اقتراحات تانية» متكررش)
+  const shown = (Array.isArray(shownIds) ? shownIds : []).filter((x) => typeof x === "string").map((x) => x.slice(0, 64)).slice(-40);
   const lang = isLocale(locale) ? locale : "ar";
   const clean = history
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.text === "string")
@@ -13,5 +15,5 @@ export async function askAssistant(history: ChatTurn[], locale: string): Promise
     .slice(-12);
   if (!clean.some((m) => m.role === "user")) return { mode: "rules", reply: "", suggestions: [] };
   const sf = localizeStorefront(await getStorefront(), lang);
-  return suggestGifts(sf, clean, lang);
+  return suggestGifts(sf, clean, lang, shown);
 }

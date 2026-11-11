@@ -499,6 +499,7 @@ export const en: Record<string, string> = {
   "أهلاً، أنا giftful! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام. هدوّر في كل الهدايا اللي عندنا وأقترحلك باكدج جاهز، أو هدية لوحدها، أو أركّبلك بوكس.":
     "Hi, I'm giftful! Tell me who the gift is for, what they love and your budget. I'll look through all our gifts and suggest a ready package, a single gift, or a box I put together for you.",
   "بوكس متركّبلك": "Box made for you",
+  "محادثة جديدة": "New chat",
   "باكدج جاهز": "Ready package",
   "هدية لوحدها": "Single gift",
   "شوف التفاصيل": "See details",

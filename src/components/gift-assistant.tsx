@@ -14,6 +14,25 @@ import { Icon } from "./icons";
 
 interface Msg extends ChatTurn {
   suggestions?: Suggestion[];
+  quickReplies?: string[];
+}
+
+// المحادثة بتفضل لو قفل الشات أو نقل لصفحة تانية (لحد ما يقفل التاب)
+const STORE_KEY = "giftful-chat";
+function loadChat(): Msg[] {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(STORE_KEY) ?? "[]");
+    return Array.isArray(v) ? v.slice(-30) : [];
+  } catch {
+    return [];
+  }
+}
+function saveChat(msgs: Msg[]) {
+  try {
+    sessionStorage.setItem(STORE_KEY, JSON.stringify(msgs.slice(-30)));
+  } catch {
+    // مش مشكلة: المحادثة بس مش هتتحفظ
+  }
 }
 
 export const OPEN_EVENT = "open-gift-assistant";
@@ -149,10 +168,22 @@ export function GiftAssistant() {
   const [text, setText] = useState("");
   const [pending, start] = useTransition();
   const listRef = useRef<HTMLDivElement>(null);
+  const loaded = useRef(false);
+
+  // بنرجّع المحادثة القديمة بعد أول رسم (sessionStorage مش موجود على السيرفر)
+  useEffect(() => {
+    const old = loadChat();
+    loaded.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (old.length) setMsgs(old);
+  }, []);
+  useEffect(() => {
+    if (loaded.current) saveChat(msgs);
+  }, [msgs]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs, pending]);
+  }, [msgs, pending, open]);
 
   // أي زرار في الموقع يقدر يفتح المساعد (ومعاه رسالة جاهزة لو حابب)
   useEffect(() => {
@@ -183,14 +214,16 @@ export function GiftAssistant() {
     const next: Msg[] = [...msgs, { role: "user", text: v }];
     setMsgs(next);
     setText("");
+    // اللي اتعرض قبل كده: عشان «اقتراحات تانية» تجيب حاجات جديدة
+    const shown = [...new Set(msgs.flatMap((m) => m.suggestions ?? []).flatMap((s) => [...s.items.map((i) => i.productId), ...(s.ref ? [s.ref.id] : [])]))];
     start(async () => {
       let r: AssistantReply;
       try {
-        r = await askAssistant(next.map(({ role, text }) => ({ role, text })), t.locale);
+        r = await askAssistant(next.map(({ role, text }) => ({ role, text })), t.locale, shown);
       } catch {
         r = { mode: "rules", reply: t("حصلت مشكلة صغيرة، جرّبي تاني."), suggestions: [] };
       }
-      setMsgs((m) => [...m, { role: "assistant", text: r.reply, suggestions: r.suggestions }]);
+      setMsgs((m) => [...m, { role: "assistant", text: r.reply, suggestions: r.suggestions, quickReplies: r.quickReplies }]);
     });
   }
 
@@ -238,6 +271,11 @@ export function GiftAssistant() {
                 <p className="font-logo text-2xl leading-tight font-semibold text-brand italic">giftful</p>
                 <p className="font-script text-sm text-candy">{t("قوليلي لمين ومناسبة إيه وميزانيتك")}</p>
               </div>
+              {msgs.length > 0 && (
+                <button type="button" onClick={() => setMsgs([])} disabled={pending} className="rounded-full px-2.5 py-1 text-xs text-muted hover:bg-surface hover:text-brand">
+                  {t("محادثة جديدة")}
+                </button>
+              )}
               <button type="button" onClick={() => setOpen(false)} aria-label={t("قفل")} className="grid size-9 place-items-center rounded-full hover:bg-surface">
                 <Icon name="plus" className="size-5 rotate-45" />
               </button>
@@ -279,6 +317,16 @@ export function GiftAssistant() {
                     {m.suggestions?.map((s, j) => (
                       <SuggestionCard key={j} s={s} index={j} />
                     ))}
+                    {/* ردود جاهزة تحت آخر رد بس */}
+                    {i === msgs.length - 1 && !pending && m.quickReplies?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {m.quickReplies.map((q) => (
+                          <button key={q} type="button" onClick={() => send(q)} className="chip border-dashed border-brand bg-bg text-brand hover:bg-brand-soft">
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ),
               )}

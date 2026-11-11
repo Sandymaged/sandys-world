@@ -92,6 +92,8 @@ export interface AssistantReply {
   reply: string;
   suggestions: Suggestion[];
   mode: "ai" | "rules";
+  /** ردود جاهزة تحت الرد (العميل يدوس بدل ما يكتب) */
+  quickReplies?: string[];
 }
 
 // ───────────── الحسابات ─────────────
@@ -384,17 +386,67 @@ function fill(sf: Storefront, map: Map<string, Product>, start: string[], pool: 
   return pick;
 }
 
+// ───────────── المتابعة: «أرخص»، «حاجة تانية» ─────────────
+
+const cheaperRe = /ارخص|اوفر|cheaper|less expensive|lower budget|ar5as|arkhas|arkhs/;
+const differentRe = /غير دول|غيرهم|حاجه تانيه|حاجات تانيه|اقتراحات تانيه|مختلف|other ideas|something else|different|more ideas|7aga tanya|7agat tanya/;
+
+/**
+ * الميزانية من آخر رسالة فيها رقم (مش أكبر رقم في المحادثة كلها)،
+ * وكل «أرخص» بعدها بتنزّلها 30%
+ */
+export function latestBudget(history: ChatTurn[]): number | null {
+  const users = history.filter((m) => m.role === "user");
+  let cheaper = 0;
+  for (let i = users.length - 1; i >= 0; i--) {
+    const b = parseBudget(users[i].text);
+    if (b != null) return cheaper ? Math.max(100, Math.round((b * 0.7 ** cheaper) / 10) * 10) : b;
+    if (cheaperRe.test(norm(users[i].text))) cheaper++;
+  }
+  return null;
+}
+
+/** العميل عايز اقتراحات غير اللي ظهرت؟ */
+export const wantsDifferent = (history: ChatTurn[]) => {
+  const last = history.filter((m) => m.role === "user").at(-1)?.text ?? "";
+  return differentRe.test(norm(last));
+};
+
+// كلام عام مش بيدل على منتج (عشان البحث بالكلمات)
+const stopWords = new Set(
+  "هديه هدايا عايز عايزه عاوز عاوزه محتاج محتاجه بيحب بتحب يحب تحب حاجه حاجات ميزانيه ميزانيتي حوالي تقريبا علشان عشان بتاع بتاعه لماما لبابا لصاحبتي لصاحبي لاختي لاخويا جميله حلوه حلو كويسه ممكن اقتراح اقتراحات دلوقتي النهارده بكره gift gifts want need loves love like something nice please budget around".split(" "),
+);
+
 /** اقتراحات بالقواعد: بتركز على اللي الشخص بيحبه، وكل اقتراح مختلف عن التاني */
-export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale): AssistantReply {
+export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale, shown: string[] = []): AssistantReply {
   const en = locale === "en";
   const said = history.filter((m) => m.role === "user").map((m) => m.text).join(" \n ");
   const u = understand(said);
-  const nothingYet = u.budget == null && !u.recipient && !u.occasion && u.likes.length === 0;
+  u.budget = latestBudget(history);
+  const s = norm(said);
+  // المناسبات اللي المتجر ضافها من اللوحة (بالاسم)
+  u.occasion ??= sf.occasions.find((o) => o.name.length > 2 && s.includes(norm(o.name)))?.slug ?? null;
+  // البحث بالكلمات: كلمة من كلام العميل موجودة في اسم المنتج أو تصنيفه أو البراند
+  const words = [...new Set(s.split(/[^a-z0-9ء-ي]+/).filter((w) => w.length >= 3 && !stopWords.has(w) && !/^\d+$/.test(w)))];
+  const brandHit = (p: Product) => Boolean(p.brand && s.includes(norm(p.brand)));
+  const wordHits = (text: string) => words.filter((w) => text.includes(w) || (w.startsWith("ال") && w.length > 4 && text.includes(w.slice(2)))).length;
+  const searched = sf.products.some((p) => brandHit(p) || wordHits(norm(`${p.name} ${p.category} ${p.en?.name ?? ""}`)) > 0);
+  const different = wantsDifferent(history);
+  // «يتكتب عليها الاسم»: المنتجات المخصصة الأول
+  const wantsName = /اسم|يتكتب|محفور|مطبوع|صوره|personali[sz]|custom|engrav|their name|\bname\b|esm/.test(s);
+  const avoid = new Set(different ? shown : []);
+  const nothingYet = u.budget == null && !u.recipient && !u.occasion && u.likes.length === 0 && !searched;
+  const quick = {
+    budget: en ? ["Around 500", "Around 800", "Around 1200"] : ["في حدود 500", "في حدود 800", "في حدود 1200"],
+    after: en ? ["Something cheaper", "Other ideas", "With their name on it"] : ["عايز أرخص شوية", "اقتراحات تانية", "حاجة يتكتب عليها الاسم"],
+    start: en ? ["For mom", "For my friend", "For a colleague"] : ["هدية لماما", "لصاحبتي", "لزميل في الشغل"],
+  };
 
   if (nothingYet) {
     return {
       mode: "rules",
       suggestions: [],
+      quickReplies: quick.start,
       reply: en
         ? "Hi, I'm giftful! I look through all our gifts: ready packages, single gifts, or a box I put together for you. Tell me who it's for, what they love, and roughly your budget — e.g. “my brother loves food, 600”."
         : "أهلاً، أنا giftful! بدوّر في كل الهدايا اللي عندنا: باكدجات جاهزة، هدايا لوحدها، أو بوكس أركّبهولك. قولّي الهدية لمين، وبيحب إيه، وميزانيتك تقريباً كام. مثلاً: «أخويا بيحب الأكل، بـ 600».",
@@ -404,6 +456,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
     return {
       mode: "rules",
       suggestions: [],
+      quickReplies: quick.budget,
       reply: en
         ? `${summary(u, sf, locale)} What's your budget, roughly? (e.g. 500 or 800)`
         : `${summary(u, sf, locale)} ميزانيتك تقريباً كام؟ (مثلاً 500 أو 800)`,
@@ -413,10 +466,18 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
   const budget = u.budget;
   const textOf = (p: Product) => norm([p.name, p.category, ...p.interests, p.description, p.en?.name ?? ""].join(" "));
   const hits = (p: Product, list: Theme[]) => list.filter((th) => th.product.test(textOf(p))).length;
-  const candidates = sf.products.filter((p) => p.boxEligible && p.price < budget && hits(p, u.dislikes) === 0);
+  // «حاجة تانية»: اللي ظهر قبل كده بيتشال (لو فاضل غيره)
+  const fresh = (list: Product[]) => {
+    const rest = list.filter((p) => !avoid.has(p.id));
+    return rest.length ? rest : list;
+  };
+  const candidates = fresh(sf.products.filter((p) => p.boxEligible && p.price < budget && hits(p, u.dislikes) === 0));
   const map = new Map(candidates.map((p) => [p.id, p]));
   const score = (p: Product) =>
     hits(p, u.likes) * 6 +
+    wordHits(norm(`${p.name} ${p.category} ${p.en?.name ?? ""}`)) * 5 +
+    (brandHit(p) ? 8 : 0) +
+    (wantsName && p.isCustomizable ? 8 : 0) +
     (u.occasion && p.occasions.includes(u.occasion) ? 3 : 0) +
     (u.recipient && p.recipients.includes(u.recipient) ? 2 : 0) +
     p.price / 2000;
@@ -497,9 +558,10 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
   const pkgHits = (p: PackageView, list: Theme[]) => list.filter((th) => th.product.test(pkgText(p))).length;
   const pkgScore = (p: PackageView) =>
     pkgHits(p, u.likes) * 6 + (u.occasion && p.occasions.includes(u.occasion) ? 3 : 0) + (u.recipient && p.recipients.includes(u.recipient) ? 2 : 0) + p.price / 2000;
+  const pkgScoreAll = (p: PackageView) => pkgScore(p) + wordHits(norm(`${p.name} ${p.en?.name ?? ""}`)) * 5;
   const pkg = sf.packages
-    .filter((p) => p.price <= budget && pkgHits(p, u.dislikes) === 0)
-    .sort((a, b) => pkgScore(b) - pkgScore(a))[0];
+    .filter((p) => p.price <= budget && pkgHits(p, u.dislikes) === 0 && !avoid.has(p.id))
+    .sort((a, b) => pkgScoreAll(b) - pkgScoreAll(a))[0];
   const pkgPick = pkg
     ? packageSuggestion(
         pkg,
@@ -512,7 +574,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
   // هدية لوحدها: أحسن منتج (حتى لو مش بيدخل بوكس) في حدود الميزانية
   const inBoxes = new Set(boxes.flatMap((b) => b.items.map((i) => i.productId)));
   // الأول اللي مش في البوكسات، ولو مفيش: أحسن منتج يناسب
-  const singles = sf.products.filter((p) => !p.isAddon && p.price <= budget && hits(p, u.dislikes) === 0).sort((a, b) => score(b) - score(a));
+  const singles = fresh(sf.products.filter((p) => !p.isAddon && p.price <= budget && hits(p, u.dislikes) === 0)).sort((a, b) => score(b) - score(a));
   const single = singles.find((p) => !inBoxes.has(p.id)) ?? (boxes.length < 2 ? singles[0] : undefined);
   const singlePick = single
     ? productSuggestion(
@@ -532,7 +594,9 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
       ? "I couldn't find a gift within that budget. Try a slightly higher budget."
       : "ملقيتش هدية تدخل في الميزانية دي. جرّب ميزانية أعلى شوية.";
   } else {
-    const head = summary(u, sf, locale);
+    const lastSaid = norm(history.filter((m) => m.role === "user").at(-1)?.text ?? "");
+    const ack = cheaperRe.test(lastSaid) ? (en ? "Sure, cheaper ones. " : "ماشي، دي حاجات أوفر. ") : different ? (en ? "Here are some new ones. " : "دي اقتراحات جديدة. ") : "";
+    const head = ack + summary(u, sf, locale);
     const missing =
       theme && !matched.length
         ? en
@@ -549,5 +613,6 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale)
     const hint = !theme ? (en ? " Tell me what they love and I'll tailor it more." : ` لو قولتلي ${loves(u.recipient)} إيه هظبطها أكتر.`) : "";
     reply = head + missing + body + hint;
   }
-  return { mode: "rules", suggestions, reply };
+  const quickReplies = suggestions.length ? quick.after : en ? [`Around ${budget + 300}`] : [`في حدود ${budget + 300}`];
+  return { mode: "rules", suggestions, reply, quickReplies };
 }

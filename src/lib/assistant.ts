@@ -4,7 +4,8 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
 import type { Locale } from "@/i18n/config";
 import type { Storefront } from "./catalog";
-import { packageSuggestion, parseBudget, priceSuggestion as price, productSuggestion, ruleSuggest, type AssistantReply, type ChatTurn, type Suggestion } from "./assistant-rules";
+import { cairoNow } from "./delivery";
+import { latestBudget, packageSuggestion, priceSuggestion as price, productSuggestion, ruleSuggest, type AssistantReply, type ChatTurn, type Suggestion } from "./assistant-rules";
 import { GIFT_CARD_MAX, GIFT_CARD_MIN, GIFT_CARD_VALID_DAYS } from "./gift-card";
 import type { PackageView, Product } from "./types";
 
@@ -33,6 +34,7 @@ const AiOutput = z.object({
       }),
     )
     .max(3),
+  quick_replies: z.array(z.string()).max(3),
 });
 
 // ───────────── Claude ─────────────
@@ -80,6 +82,8 @@ function systemPrompt(sf: Storefront, products: Product[], packages: PackageView
     brands: sf.brands.map((b) => b.name),
     group_kits: sf.kits.map((k) => ({ name: k.name, price_per_person: k.pricePerPerson, kind: k.category })),
     card_message: `every gift can have a written card message (up to ${s.maxCardMessage} characters) and can hide the price`,
+    today: `${cairoNow().date} (Cairo)`,
+    current_season: sf.activeSeason ? { name: sf.activeSeason.name, date: sf.activeSeason.occasionDate } : null,
   };
   return `You are giftful — a gift shop in Assiut, Egypt — chatting with a customer on the shop's website. Speak as giftful itself ("I'm giftful", "عندنا", "هجهزهالك"), never as a generic AI or a separate assistant; if asked who you are, you are giftful. Customers describe who the gift is for, the occasion, interests and a budget (in Egyptian pounds, EGP), often in Egyptian Arabic, Franco-Arabic (Arabic in Latin letters with numbers like 3, 7, 2) or English.
 
@@ -95,6 +99,8 @@ How to answer:
 - Each suggestion: a short catchy "title", the "ids", and a one-sentence "reason" tied to what the customer said.
 - Products with colors or sizes are chosen on their page, personalised text or photos are added at checkout. Prices are estimates until the bag. Never invent products, prices or discounts.
 - Put the budget you understood (a number in EGP) in "budget", or null.
+- "quick_replies": up to 3 very short follow-ups the customer might tap next, written as the customer would say them in their language (e.g. "عايز أرخص شوية", "اقتراحات تانية", "حاجة يتكتب عليها الاسم", or budget options like "في حدود 500" when you asked for the budget).
+- If they ask for something cheaper, aim clearly lower than your last suggestions. If they ask for other ideas, don't repeat ids from ALREADY SHOWN.
 - If the customer asks about delivery, payment, gift cards, kits for groups or how ordering works, answer briefly from STORE INFO with no suggestions. Never make up policies; if something isn't in STORE INFO, say they can message giftful on WhatsApp.
 
 STORE INFO: ${JSON.stringify(store)}
@@ -106,8 +112,9 @@ READY PACKAGES: ${JSON.stringify(ready)}
 PRODUCTS (only what's available now): ${JSON.stringify(catalog)}`;
 }
 
-async function aiSuggest(sf: Storefront, history: ChatTurn[], locale: Locale): Promise<AssistantReply | null> {
-  const lastBudget = parseBudget(history.filter((m) => m.role === "user").map((m) => m.text).join(" "));
+async function aiSuggest(sf: Storefront, history: ChatTurn[], locale: Locale, shown: string[]): Promise<AssistantReply | null> {
+  // آخر ميزانية قالها (و«أرخص» بتنزّلها)، مش أكبر رقم في المحادثة
+  const lastBudget = latestBudget(history);
   // FR-151: الكود بيفلتر قبل ما الموديل يشوف حاجة (كل المنتجات والباكدجات اللي في الميزانية)
   const products = sf.products.filter((p) => !p.isAddon && (lastBudget == null || p.price <= lastBudget));
   const packages = sf.packages.filter((p) => lastBudget == null || p.price <= lastBudget);
@@ -121,8 +128,12 @@ async function aiSuggest(sf: Storefront, history: ChatTurn[], locale: Locale): P
     fallbacks: "default",
     output_config: { effort: "low", format: betaZodOutputFormat(AiOutput) },
     cache_control: { type: "ephemeral" },
+    // الكتالوج ثابت فبيتكاش، واللي اتعرض قبل كده في آخر المحادثة
     system: systemPrompt(sf, products, packages, locale),
-    messages: history.slice(-12).map((m) => ({ role: m.role, content: m.text })),
+    messages: history.slice(-12).map((m, i, all) => ({
+      role: m.role,
+      content: i === all.length - 1 && shown.length ? `${m.text}\n\n[ALREADY SHOWN ids: ${shown.join(", ")}]` : m.text,
+    })),
   });
 
   if (response.stop_reason === "refusal" || !response.parsed_output) return null;
@@ -145,15 +156,15 @@ async function aiSuggest(sf: Storefront, history: ChatTurn[], locale: Locale): P
     })
     .filter((s): s is Suggestion => s !== null)
     .slice(0, 3);
-  return { mode: "ai", reply: out.reply, suggestions };
+  return { mode: "ai", reply: out.reply, suggestions, quickReplies: out.quick_replies.map((q) => q.slice(0, 40)).slice(0, 3) };
 }
 
 export const aiEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
-export async function suggestGifts(sf: Storefront, history: ChatTurn[], locale: Locale): Promise<AssistantReply> {
+export async function suggestGifts(sf: Storefront, history: ChatTurn[], locale: Locale, shown: string[] = []): Promise<AssistantReply> {
   if (aiEnabled()) {
     try {
-      const r = await aiSuggest(sf, history, locale);
+      const r = await aiSuggest(sf, history, locale, shown);
       if (r && (r.suggestions.length > 0 || r.reply)) return r;
     } catch (err) {
       if (err instanceof Anthropic.RateLimitError) console.warn("[assistant] rate limited, using rules");
@@ -162,5 +173,5 @@ export async function suggestGifts(sf: Storefront, history: ChatTurn[], locale: 
       else console.error("[assistant] failed, using rules", err);
     }
   }
-  return ruleSuggest(sf, history, locale);
+  return ruleSuggest(sf, history, locale, shown);
 }
