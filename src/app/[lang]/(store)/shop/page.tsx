@@ -22,10 +22,11 @@ export default async function ShopPage({ searchParams }: PageProps<"/[lang]/shop
   const t = await getT();
   return (
     <>
-      <PageHeader kicker={t("دوّري براحتك")} title={t("كل الهدايا")} subtitle={t("حسب المناسبة، أو لمين، أو على قد ميزانيتك.")} />
+      <PageHeader kicker={t("دوّري براحتك")} title={t("كل الهدايا")} subtitle={t("حسب المناسبة، أو لمين، أو على قد ميزانيتك.")}>
+        {/* جوه العنوان تحت الوصف: لو مفيش صندوق بنغلّف الهدية في التغليف الأساسي */}
+        <WrapNote className="mx-auto mt-5 w-fit bg-paper/70 text-start" />
+      </PageHeader>
       <div className="container-x py-10">
-        {/* تحت عنوان الصفحة على طول: لو مفيش صندوق بنغلّف الهدية في التغليف الأساسي */}
-        <WrapNote className="mb-8" />
         <Suspense fallback={<p className="text-muted">{t("بنحمّل الهدايا…")}</p>}>
           <Results searchParams={searchParams} />
         </Suspense>
