@@ -8,7 +8,7 @@ import { formatDay } from "@/lib/format";
 
 export const instant = false;
 
-export const metadata = { title: "شغل التجهيز والتوصيل" };
+export const metadata = { title: "التجهيز والتوصيل" };
 
 /** شاشة "شغل النهارده" (FR-102): كل اللي لازم يتجهز ويتوصل النهارده وبكرة، مرتبين بالفترة */
 export default async function AdminToday() {
@@ -25,9 +25,9 @@ export default async function AdminToday() {
         return (
           <section key={d}>
             <h1 className="text-3xl text-brand">
-              {di === 0 ? "النهارده" : "بكرة"} <span className="text-lg text-muted">{formatDay(d)}</span>
+              {di === 0 ? "اليوم" : "غداً"} <span className="text-lg text-muted">{formatDay(d)}</span>
             </h1>
-            {rows.length === 0 && <p className="mt-2 bg-[#fffdf8] p-5 text-muted">مفيش هدايا.</p>}
+            {rows.length === 0 && <p className="mt-2 bg-[#fffdf8] p-5 text-muted">لا توجد هدايا.</p>}
             {sf.settings.periods.map((p) => {
               const list = rows.filter((r) => r.g.deliveryPeriod === p.id);
               if (!list.length) return null;
@@ -44,12 +44,12 @@ export default async function AdminToday() {
                           <span className="block font-semibold">{g.title}</span>
                           <span className="block text-xs text-muted">
                             لـ {g.recipient.name} · {g.recipient.zoneName}
-                            {g.items.some((it) => it.customization || it.customImage) && " · فيه تخصيص"}
+                            {g.items.some((it) => it.customization || it.customImage) && " · يتضمن تخصيصاً"}
                             {g.surprise && " · مفاجأة"}
-                            {g.hideSender && " · من غير اسم الباعت"}
+                            {g.hideSender && " · دون اسم المُرسِل"}
                           </span>
                         </span>
-                        {o.status === "awaiting_payment" && <span className="text-xs font-semibold text-butter">الدفع لسه</span>}
+                        {o.status === "awaiting_payment" && <span className="text-xs font-semibold text-butter">لم يُدفع بعد</span>}
                         <StatusBadge status={o.status} />
                         <Link href={`/admin/orders/${o.id}/print`} className="text-xs text-brand underline">طباعة</Link>
                       </li>

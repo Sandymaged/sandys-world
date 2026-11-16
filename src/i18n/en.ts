@@ -498,6 +498,13 @@ export const en: Record<string, string> = {
   "أهلاً، أنا giftful! اكتبيلي بالعامي أو بالفرانكو: الهدية لمين، بتحب إيه، وميزانيتك كام. هدوّر في كل الهدايا اللي عندنا وأقترحلك باكدج جاهز، أو هدية لوحدها، أو أركّبلك بوكس.":
     "Hi, I'm giftful! Tell me who the gift is for, what they love and your budget. I'll look through all our gifts and suggest a ready package, a single gift, or a box I put together for you.",
   "بوكس متركّبلك": "Box made for you",
+  "{tag}: هذا الصندوق لم يعد متاحاً للباقة": "{tag}: this box is no longer available for the package",
+  "حدثت مشكلة أثناء تسجيل الطلب. حاول مرة أخرى بعد قليل، أو تواصل معنا على واتساب.": "Something went wrong while placing your order. Please try again shortly, or message us on WhatsApp.",
+  // ── لو مفيش صندوق: التغليف الأساسي
+  "لا تريد صندوقاً؟": "Don't want a box?",
+  "نغلّف هديتك بتغليفنا الأساسي (ورق وشريطة تناسب المناسبة) مقابل {price}.": "We wrap your gift in our standard wrapping (paper and ribbon to suit the occasion) for {price}.",
+  "نغلّف هديتك بتغليفنا الأساسي مجاناً: ورق وشريطة تناسب المناسبة.": "We wrap your gift in our standard wrapping for free: paper and ribbon to suit the occasion.",
+  "أو صمّم صندوقك بنفسك": "or build your own box",
   // ── فكرتنا: إنت بعيد وإحنا نوصّلها
   "فكرتنا ببساطة": "The idea, simply",
   "إنت بعيد؟ هديتك توصل برضه": "Far away? Your gift still arrives",

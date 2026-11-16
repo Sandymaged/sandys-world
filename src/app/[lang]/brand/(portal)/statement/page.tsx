@@ -19,23 +19,23 @@ export default async function BrandStatementPage() {
       <div>
         <h1 className="text-3xl text-brand">حسابي مع المتجر</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          نصيبك = سعر منتجاتك ناقص عمولة المتجر، والعمولة بالشرايح تحت. الفلوس بتستحق بعد ما الطلب يتسلم للعميل بـ {HOLD_DAYS} أيام، والمتجر بيحوّلها بشكل دوري.
+          نصيبك = سعر منتجاتك مطروحاً منه عمولة المتجر، والعمولة حسب الشرائح أدناه. يُستحق المبلغ بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام، ويحوّله المتجر بشكل دوري.
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="مستحق ليك دلوقتي" value={money(st.balance)} tone="bg-blush" />
-        <Stat label="في مدة الاسترجاع" value={money(st.holding)} hint={`بيستحق بعد التسليم بـ ${HOLD_DAYS} أيام`} />
+        <Stat label="مستحق لك الآن" value={money(st.balance)} tone="bg-blush" />
+        <Stat label="في مدة الاسترجاع" value={money(st.holding)} hint={`يُستحق بعد التسليم بـ ${HOLD_DAYS} أيام`} />
         <Stat label="وصلك من المتجر" value={money(st.paid)} />
-        <Stat label="لسه في الشغل" value={money(st.pending)} hint={`مبيعات اتسلمت ${money(st.sales)} · عمولة ${money(st.commission)}`} />
+        <Stat label="قيد التنفيذ" value={money(st.pending)} hint={`مبيعات مسلّمة ${money(st.sales)} · عمولة ${money(st.commission)}`} />
       </div>
 
       <MonthTierCard p={st.progress} />
 
       <Box>
-        <h2 className="text-xl text-ink">التحويلات اللي وصلتك</h2>
+        <h2 className="text-xl text-ink">التحويلات التي وصلتك</h2>
         {st.payouts.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">لسه مفيش تحويلات.</p>
+          <p className="mt-3 text-sm text-muted">لا توجد تحويلات بعد.</p>
         ) : (
           <ul className="mt-3 divide-y divide-dashed divide-line">
             {st.payouts.map((p) => (
@@ -53,7 +53,7 @@ export default async function BrandStatementPage() {
       <Box>
         <h2 className="text-xl text-ink">الطلبات</h2>
         {rows.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">لسه مفيش طلبات.</p>
+          <p className="mt-3 text-sm text-muted">لا توجد طلبات بعد.</p>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[34rem] text-sm">

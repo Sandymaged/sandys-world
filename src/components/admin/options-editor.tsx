@@ -92,7 +92,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
   return (
     <div className="space-y-4">
       <input type="hidden" name="options" value={json} />
-      {options.length === 0 && <p className="text-sm text-muted">مفيش اختيارات. لو المنتج ليه ألوان أو مقاسات أو ريحة، ضيفيها من الزرار تحت.</p>}
+      {options.length === 0 && <p className="text-sm text-muted">لا توجد خيارات. إن كان للمنتج ألوان أو مقاسات أو روائح، أضفها من الزر بالأسفل.</p>}
 
       {options.map((o, i) => (
         <div key={i} className="space-y-3 rounded-2xl border border-line bg-bg p-4">
@@ -114,15 +114,15 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
               </select>
             </label>
             <label className="block">
-              <span className="label">اسم الاختيار</span>
+              <span className="label">اسم الخيار</span>
               <input className="field" value={o.name} onChange={(e) => setOption(i, { name: e.target.value })} placeholder="اللون" />
             </label>
             <label className="block">
-              <span className="label">بالإنجليزي</span>
+              <span className="label">بالإنجليزية</span>
               <input className="field" dir="ltr" value={o.en} onChange={(e) => setOption(i, { en: e.target.value })} placeholder="Color" />
             </label>
             <button type="button" onClick={() => setOptions((all) => all.filter((_, k) => k !== i))} className="btn-outline btn-sm text-brand">
-              شيل الاختيار
+              إزالة الخيار
             </button>
           </div>
 
@@ -131,7 +131,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
               <thead>
                 <tr className="text-start text-xs text-muted">
                   <th className="pb-2 text-start font-medium">القيمة</th>
-                  <th className="pb-2 text-start font-medium">بالإنجليزي</th>
+                  <th className="pb-2 text-start font-medium">بالإنجليزية</th>
                   {o.kind === "color" && <th className="pb-2 text-start font-medium">اللون</th>}
                   {!byCombo && <th className="pb-2 text-start font-medium">العدد في المخزن</th>}
                   <th className="pb-2 text-start font-medium">السعر</th>
@@ -161,7 +161,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                     <td className="py-2 pe-2">
                       <label className="mb-1 flex cursor-pointer items-center gap-1.5 text-xs whitespace-nowrap text-ink-2">
                         <input type="checkbox" className="size-4 accent-brand" checked={v.ownPrice} onChange={(e) => setValue(i, j, { ownPrice: e.target.checked, priceDelta: e.target.checked ? v.priceDelta : "" })} />
-                        سعره مختلف
+                        سعر مختلف
                       </label>
                       <input
                         className="field tabular h-10 w-28 disabled:opacity-50"
@@ -169,7 +169,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                         disabled={!v.ownPrice}
                         value={v.priceDelta}
                         onChange={(e) => setValue(i, j, { priceDelta: e.target.value.replace(/[^\d-]/g, "") })}
-                        placeholder={v.ownPrice ? "+ كام ج.م" : "السعر الأساسي"}
+                        placeholder={v.ownPrice ? "+ كم ج.م" : "السعر الأساسي"}
                         aria-label="فرق السعر عن السعر الأساسي"
                       />
                     </td>
@@ -177,7 +177,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
                       <input type="checkbox" aria-label="متاحة" className="size-5 accent-brand" checked={v.available} onChange={(e) => setValue(i, j, { available: e.target.checked })} />
                     </td>
                     <td className="py-2">
-                      <button type="button" aria-label="شيل القيمة" onClick={() => setOption(i, { values: o.values.filter((_, m) => m !== j) })} className="text-muted hover:text-brand">
+                      <button type="button" aria-label="إزالة القيمة" onClick={() => setOption(i, { values: o.values.filter((_, m) => m !== j) })} className="text-muted hover:text-brand">
                         ✕
                       </button>
                     </td>
@@ -200,7 +200,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
           onClick={() => setOptions((all) => [...all, { id: newOptionId(), name: "اللون", en: "Color", kind: "color", values: [emptyValue()] }])}
           className="btn-outline btn-sm"
         >
-          + اختيار جديد (لون، مقاس، ريحة…)
+          + خيار جديد (لون، مقاس، رائحة…)
         </button>
       )}
       {byCombo && (
@@ -208,11 +208,11 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
           <div>
             <h3 className="font-semibold">العدد في المخزن لكل تركيبة</h3>
             <p className="text-xs leading-5 text-muted">
-              عشان المنتج ليه أكتر من اختيار، العدد بيتكتب لكل تركيبة لوحدها. مثلاً عندك كام yara 50ml وكام yara 100ml. الطلب بيقلّل من التركيبة اللي العميل اختارها بس، ولما تخلص بتبان «خلص» مع الاختيار ده لوحده.
+              لأن للمنتج أكثر من خيار، يُكتب العدد لكل تركيبة على حدة. مثلاً: كم لديك من yara 50ml وكم من yara 100ml. يُنقص الطلب من التركيبة التي اختارها العميل فقط، وعند نفادها تظهر «نفد» بجانب هذا الخيار وحده.
             </p>
           </div>
           {rows.length > MAX_COMBOS ? (
-            <p className="text-sm text-brand">التركيبات كتير أوي ({rows.length}). أقصى حاجة {MAX_COMBOS}، قللي القيم شوية.</p>
+            <p className="text-sm text-brand">التركيبات كثيرة جداً ({rows.length}). الحد الأقصى {MAX_COMBOS}، قلّل عدد القيم.</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {rows.map((r) => (
@@ -234,7 +234,7 @@ export function OptionsEditor({ initial }: { initial: ProductOption[] }) {
       )}
 
       <p className="text-xs leading-5 text-muted">
-        كل قيمة بتتباع بالسعر الأساسي للمنتج. لو قيمة سعرها مختلف (مقاس كبير مثلاً)، علّمي «سعره مختلف» واكتبي الفرق (+50 أو -20). العدد في المخزن اختياري: سيبيه فاضي من غير عدّ، ولو كتبتيه بيقل لوحده مع كل طلب وأول ما يوصل صفر القيمة بتبان «خلص».
+        تُباع كل قيمة بالسعر الأساسي للمنتج. إن كان سعر قيمة ما مختلفاً (مقاس كبير مثلاً)، فعّل «سعر مختلف» واكتب الفرق (+50 أو -20). العدد في المخزن اختياري: اتركه فارغاً إن لم تكن تعدّ، وإن كتبته يقلّ تلقائياً مع كل طلب، وعندما يصل إلى صفر تظهر القيمة «نفد».
       </p>
     </div>
   );

@@ -15,14 +15,14 @@ const MAX_IMAGE = 5 * 1024 * 1024;
 async function imageFor(f: FormData, field: string, url: unknown): Promise<string | null | { error: string }> {
   const file = f.get(field);
   if (file instanceof File && file.size > 0) {
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return { error: "الصورة لازم تكون JPG أو PNG أو WebP" };
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return { error: "يجب أن تكون الصورة بصيغة JPG أو PNG أو WebP" };
     if (file.size > MAX_IMAGE) return { error: "الصورة أكبر من 5 ميجا" };
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
     return saveMedia(`box.${ext}`, Buffer.from(await file.arrayBuffer()));
   }
   const s = typeof url === "string" ? url.trim() : "";
   if (!s) return null;
-  if (!/^(https:\/\/|\/media\/)/.test(s)) return { error: "لينك الصورة لازم يبدأ بـ https://" };
+  if (!/^(https:\/\/|\/media\/)/.test(s)) return { error: "يجب أن يبدأ رابط الصورة بـ https://" };
   return s;
 }
 
@@ -37,7 +37,7 @@ export async function saveStoreConfigAction(f: FormData): Promise<ConfigResult> 
     rawBoxes = JSON.parse(String(f.get("boxes") ?? "[]"));
     rawWraps = JSON.parse(String(f.get("wrappings") ?? "[]"));
   } catch {
-    return { ok: false, error: "في مشكلة في البيانات، حدّثي الصفحة وجربي تاني" };
+    return { ok: false, error: "حدثت مشكلة في البيانات، حدّث الصفحة وحاول مرة أخرى" };
   }
 
   const boxSizes: BoxSize[] = [];
@@ -46,8 +46,8 @@ export async function saveStoreConfigAction(f: FormData): Promise<ConfigResult> 
     if (!name) continue;
     const price = Math.round(Number(b?.price));
     const maxItems = Math.round(Number(b?.maxItems));
-    if (!(price >= 0)) return { ok: false, error: `سعر بوكس «${name}» مش مظبوط` };
-    if (!(maxItems >= 1 && maxItems <= 30)) return { ok: false, error: `بوكس «${name}» لازم يساع من 1 لـ 30 حاجة` };
+    if (!(price >= 0)) return { ok: false, error: `سعر الصندوق «${name}» غير صحيح` };
+    if (!(maxItems >= 1 && maxItems <= 30)) return { ok: false, error: `يجب أن يتسع الصندوق «${name}» لعدد من 1 إلى 30 قطعة` };
     const image = await imageFor(f, `bimg_${i}`, b?.image);
     if (image && typeof image === "object") return { ok: false, error: image.error };
     const nameEn = String(b?.nameEn ?? "").trim().slice(0, 40);
@@ -63,7 +63,7 @@ export async function saveStoreConfigAction(f: FormData): Promise<ConfigResult> 
       isActive: b?.isActive !== false,
     });
   }
-  if (!boxSizes.some((b) => b.isActive)) return { ok: false, error: "لازم يفضل بوكس واحد على الأقل مفتوح" };
+  if (!boxSizes.some((b) => b.isActive)) return { ok: false, error: "يجب أن يبقى صندوق واحد على الأقل متاحاً" };
 
   const wrappings: WrappingOption[] = [];
   const seen = new Set<string>();
@@ -85,13 +85,13 @@ export async function saveStoreConfigAction(f: FormData): Promise<ConfigResult> 
       descriptionEn: String(w?.descriptionEn ?? "").trim().slice(0, 120) || undefined,
     });
   }
-  if (!wrappings.length) return { ok: false, error: "لازم يبقى فيه اختيار تغليف واحد على الأقل (العادي)" };
+  if (!wrappings.length) return { ok: false, error: "يجب وجود خيار تغليف واحد على الأقل (العادي)" };
 
   const rate = Number(f.get("rate"));
   const min = Number(f.get("min"));
   const max = Number(f.get("max"));
-  if (!(rate >= 0 && rate <= 50)) return { ok: false, error: "نسبة التغليف لازم تكون من 0 لـ 50٪" };
-  if (!(min >= 0) || !(max >= 0) || (max > 0 && max < min)) return { ok: false, error: "الحد الأقصى للتغليف لازم يكون أكبر من الأدنى" };
+  if (!(rate >= 0 && rate <= 50)) return { ok: false, error: "يجب أن تكون نسبة التغليف من 0 إلى 50٪" };
+  if (!(min >= 0) || !(max >= 0) || (max > 0 && max < min)) return { ok: false, error: "يجب أن يكون الحد الأقصى للتغليف أكبر من الحد الأدنى" };
 
   try {
     const current = await loadStoreConfig();
@@ -101,7 +101,7 @@ export async function saveStoreConfigAction(f: FormData): Promise<ConfigResult> 
       boxSizes,
     });
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   updateTag("catalog");
   return { ok: true };

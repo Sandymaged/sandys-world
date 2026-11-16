@@ -1,4 +1,5 @@
 import { getT } from "@/i18n/server";
+import { WrapNote } from "@/components/wrap-note";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Chip, Grid, PackageCard, ProductCard, SectionHeading } from "@/components/cards";
@@ -125,6 +126,7 @@ async function Results({ searchParams }: { searchParams: Promise<Params> }) {
       {products.length > 0 && (
         <section>
           <SectionHeading title={t("منتجات")} subtitle={t("تتبعت لوحدها أو تحطها في بوكس")} />
+          <WrapNote className="mb-6" />
           <Grid>
             {products.map((p) => (
               <ProductCard key={p.id} product={p} />

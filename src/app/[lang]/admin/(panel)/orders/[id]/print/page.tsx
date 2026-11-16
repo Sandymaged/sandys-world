@@ -26,7 +26,7 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 print:hidden">
-        <Link href={`/admin/orders/${order.id}`} className="text-sm text-muted hover:text-brand">← الأوردر #{order.number}</Link>
+        <Link href={`/admin/orders/${order.id}`} className="text-sm text-muted hover:text-brand">← الطلب #{order.number}</Link>
         <PrintButton />
       </div>
 
@@ -49,14 +49,14 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
                 <li key={it.productId}>
                   {it.name} × <span className="tabular">{it.quantity}</span>
                   {it.optionsText && <span> ({it.optionsText})</span>}
-                  {it.customization && <b> — يتكتب: «{it.customization}»</b>}
+                  {it.customization && <b> — يُكتب: «{it.customization}»</b>}
                   {it.customImage && <b> — عليه صورة العميل</b>}
                 </li>
               ))}
             </ul>
-            {g.people && <p className="mt-2">العدد: <b className="tabular">{g.people}</b>{g.names && <span className="block whitespace-pre-line">الأسماء على الكروت:{"\n"}{g.names}</span>}</p>}
-            {g.hideSender && <p className="mt-3 font-bold">⚠ من غير اسم الباعت: متكتبش اسمه على الكارت ولا تقوله للمستلم</p>}
-            <p className="mt-3">{g.hidePrice ? "⚠ متحطش أي سعر في الهدية" : ""}</p>
+            {g.people && <p className="mt-2">العدد: <b className="tabular">{g.people}</b>{g.names && <span className="block whitespace-pre-line">الأسماء على البطاقات:{"\n"}{g.names}</span>}</p>}
+            {g.hideSender && <p className="mt-3 font-bold">⚠ دون اسم المُرسِل: لا تكتب اسمه على البطاقة ولا تخبر به المستلم</p>}
+            <p className="mt-3">{g.hidePrice ? "⚠ لا تضع أي سعر في الهدية" : ""}</p>
             <p>التوصيل: <b>{formatDay(g.deliveryDate)} · {periodLabel(g.deliveryPeriod, settings)}</b></p>
           </section>
 
@@ -69,10 +69,10 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
             {g.recipient.landmark && <p>علامة مميزة: {g.recipient.landmark}</p>}
             {g.recipient.locationUrl && <p dir="ltr" className="break-all">{g.recipient.locationUrl}</p>}
             <p className="mt-2">الفترة: <b>{formatDay(g.deliveryDate)} · {periodLabel(g.deliveryPeriod, settings)}</b></p>
-            {g.surprise && <p className="font-bold">⚠ مفاجأة: متكلمش المستلم غير وإنت قدام الباب</p>}
-            {g.hideSender && <p className="font-bold">⚠ متقولش للمستلم مين اللي باعت الهدية</p>}
+            {g.surprise && <p className="font-bold">⚠ مفاجأة: لا تتصل بالمستلم إلا وأنت أمام الباب</p>}
+            {g.hideSender && <p className="font-bold">⚠ لا تخبر المستلم بمن أرسل الهدية</p>}
             {g.wantsDeliveryPhoto && <p>📷 صوّر الهدية مع المستلم وقت التسليم</p>}
-            <p className="mt-2 text-base font-bold">{cod ? `تحصيل كاش: ${money(order.totals.total)}` : "مدفوع، متحصّلش حاجة"}</p>
+            <p className="mt-2 text-base font-bold">{cod ? `تحصيل نقدي: ${money(order.totals.total)}` : "مدفوع، لا تحصّل أي مبلغ"}</p>
           </section>
         </div>
       ))}

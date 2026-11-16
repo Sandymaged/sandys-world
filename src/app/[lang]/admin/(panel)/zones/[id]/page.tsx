@@ -27,8 +27,8 @@ export default async function AdminZone({ params }: PageProps<"/[lang]/admin/zon
       <CatalogForm action={saveZone.bind(null, z?.id ?? null)} backTo={back}>
         <Section title="المنطقة">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={z?.name} required placeholder="أسيوط الجديدة" />
-            <Field label="الاسم بالإنجليزي" name="nameEn" defaultValue={z?.en?.name} dir="ltr" placeholder="New Assiut" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={z?.name} required placeholder="أسيوط الجديدة" />
+            <Field label="الاسم بالإنجليزية" name="nameEn" defaultValue={z?.en?.name} dir="ltr" placeholder="New Assiut" />
           </Row>
           <Row>
             <Select
@@ -38,18 +38,18 @@ export default async function AdminZone({ params }: PageProps<"/[lang]/admin/zon
               options={[
                 { value: "city", label: "مدينة أسيوط" },
                 { value: "markaz", label: "مركز في أسيوط" },
-                { value: "governorate", label: "محافظة تانية (شركة شحن)" },
+                { value: "governorate", label: "محافظة أخرى (شركة شحن)" },
               ]}
             />
-            <Field label="رسوم التوصيل اللي العميل بيدفعها (ج.م)" name="fee" type="number" defaultValue={z?.fee ?? ""} required />
+            <Field label="رسوم التوصيل التي يدفعها العميل (ج.م)" name="fee" type="number" defaultValue={z?.fee ?? ""} required />
           </Row>
           <Row>
-            <Field label="أيام زيادة للتوصيل" name="extraDays" type="number" defaultValue={z?.extraDays ?? 0} hint="للمحافظات التانية: أقرب يوم توصيل بيتأخر بالعدد ده." />
-            <Field label="الترتيب" name="sort" type="number" defaultValue={z?.sort ?? zones.length + 1} hint="الأصغر بيظهر الأول في القايمة." />
+            <Field label="أيام إضافية للتوصيل" name="extraDays" type="number" defaultValue={z?.extraDays ?? 0} hint="للمحافظات الأخرى: يتأخر أقرب يوم توصيل بهذا العدد." />
+            <Field label="الترتيب" name="sort" type="number" defaultValue={z?.sort ?? zones.length + 1} hint="الأصغر يظهر أولاً في القائمة." />
           </Row>
           <div className="flex flex-wrap gap-6">
-            <Check label="ينفع توصيل في نفس اليوم" name="sameDay" defaultChecked={z?.sameDay ?? false} />
-            <Check label="مفتوحة (بتظهر للعميل)" name="isActive" defaultChecked={z?.isActive ?? true} />
+            <Check label="التوصيل في اليوم نفسه متاح" name="sameDay" defaultChecked={z?.sameDay ?? false} />
+            <Check label="مفعّلة (تظهر للعميل)" name="isActive" defaultChecked={z?.isActive ?? true} />
           </div>
         </Section>
       </CatalogForm>

@@ -31,72 +31,72 @@ export default async function BrandProduct({ params }: PageProps<"/[lang]/brand/
       </div>
       {pending && (
         <p className="rounded-2xl bg-butter-soft p-4 text-sm leading-6 text-butter">
-          {p ? "المنتج ده مستني موافقة المتجر، وهيظهر على الموقع أول ما يتوافق عليه." : "بعد الحفظ المنتج بيروح للمتجر يراجعه، وبيظهر على الموقع أول ما يوافق."}
+          {p ? "هذا المنتج بانتظار موافقة المتجر، وسيظهر على الموقع فور الموافقة عليه." : "بعد الحفظ يُرسل المنتج إلى المتجر لمراجعته، ويظهر على الموقع فور الموافقة."}
         </p>
       )}
       <CatalogForm action={saveBrandProduct.bind(null, p?.id ?? null)} backTo={back}>
-        <Section title="الأساسي">
+        <Section title="الأساسيات">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={p?.name} required />
-            <Field label="الاسم بالإنجليزي (اختياري)" name="nameEn" defaultValue={p?.en?.name} dir="ltr" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={p?.name} required />
+            <Field label="الاسم بالإنجليزية (اختياري)" name="nameEn" defaultValue={p?.en?.name} dir="ltr" />
           </Row>
           <Row>
-            <TextArea label="الوصف بالعربي" name="description" defaultValue={p?.description} />
-            <TextArea label="الوصف بالإنجليزي (اختياري)" name="descriptionEn" defaultValue={p?.en?.description} dir="ltr" />
+            <TextArea label="الوصف بالعربية" name="description" defaultValue={p?.description} />
+            <TextArea label="الوصف بالإنجليزية (اختياري)" name="descriptionEn" defaultValue={p?.en?.description} dir="ltr" />
           </Row>
           <Row>
-            <Field label="السعر للعميل (ج.م)" name="price" type="number" defaultValue={p?.price} required hint="ده السعر اللي العميل بيشوفه بالظبط. عمولة المتجر بتبدأ بس لما مبيعاتك في الشهر تعدّي حد معين (شوف «حسابي مع المتجر»)." />
+            <Field label="السعر للعميل (ج.م)" name="price" type="number" defaultValue={p?.price} required hint="هذا هو السعر الذي يراه العميل تماماً. تبدأ عمولة المتجر فقط عندما تتجاوز مبيعاتك في الشهر حداً معيناً (راجع «حسابي مع المتجر»)." />
             <Field
-              label="بتجهّزه في كام يوم؟"
+              label="كم يوماً يستغرق تجهيزه؟"
               name="prepDays"
               type="number"
               defaultValue={p?.prepDays ?? ""}
               required
-              hint="من ساعة ما الطلب يوصلك لحد ما تسلّمه للمتجر. صفر يعني جاهز ويتسلّم في نفس اليوم. العميل بيشوف على أساسه أقرب يوم توصيل وهو بيدفع."
+              hint="من لحظة وصول الطلب إليك حتى تسليمه للمتجر. صفر يعني أنه جاهز ويُسلَّم في اليوم نفسه. على أساسه يرى العميل أقرب يوم للتوصيل عند الدفع."
             />
           </Row>
           <Row>
-            <Field label="التصنيف بالعربي" name="category" defaultValue={p?.category} placeholder="مجات، شموع، إكسسوارات…" />
-            <Field label="التصنيف بالإنجليزي (اختياري)" name="categoryEn" defaultValue={p?.en?.category} dir="ltr" />
+            <Field label="التصنيف بالعربية" name="category" defaultValue={p?.category} placeholder="أكواب، شموع، إكسسوارات…" />
+            <Field label="التصنيف بالإنجليزية (اختياري)" name="categoryEn" defaultValue={p?.en?.category} dir="ltr" />
           </Row>
         </Section>
 
         <Section title="الصور">
-          <ProductImagesField current={p?.images ?? []} label="ارفع صور" />
+          <ProductImagesField current={p?.images ?? []} label="رفع الصور" />
         </Section>
 
-        <Section title="مناسب لإيه ولمين">
+        <Section title="المناسبات والفئات المناسبة">
           <ChecksGroup label="المناسبات" name="occasions" options={opts.occasions} selected={p?.occasions ?? []} />
-          <ChecksGroup label="لمين" name="recipients" options={opts.recipients} selected={p?.recipients ?? []} />
-          <Field label="الاهتمامات" name="interests" defaultValue={p?.interests.join("، ")} hint="مفصولة بفاصلة: قهوة، ديكور، قراية (بتساعد مساعد الهدايا يرشّح المنتج)" />
+          <ChecksGroup label="لمن" name="recipients" options={opts.recipients} selected={p?.recipients ?? []} />
+          <Field label="الاهتمامات" name="interests" defaultValue={p?.interests.join("، ")} hint="مفصولة بفاصلة: قهوة، ديكور، قراءة (تساعد مساعد الهدايا على ترشيح المنتج)" />
         </Section>
 
-        <Section title="الألوان والمقاسات والريحة">
+        <Section title="الألوان والمقاسات والروائح">
           <OptionsEditor initial={p?.options ?? []} />
         </Section>
 
         <Section title="المخزون والإعدادات">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Check label="متاح للبيع (شيله لو عايز توقف المنتج مؤقتاً)" name="isAvailable" defaultChecked={p?.isAvailable ?? true} />
-            <Check label="ينفع يتحط في بوكس" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
+            <Check label="متاح للبيع (ألغِ التحديد لإيقاف المنتج مؤقتاً)" name="isAvailable" defaultChecked={p?.isAvailable ?? true} />
+            <Check label="يمكن وضعه في صندوق" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
           </div>
           <CustomizationFields
             defaultChecked={p?.isCustomizable ?? false}
             defaultMax={p?.customizationMaxChars ?? null}
             defaultKind={p ? (opts.productCustomization[p.id] ?? "text") : "text"}
-            hint="زي مج بالاسم، أو برواز بصورة. العميل بيكتب الكلام أو بيرفع الصورة في صفحة الدفع، وبيوصلك مع الطلب. عدد الحروف على قد المساحة اللي على المنتج."
+            hint="مثل كوب بالاسم، أو برواز بصورة. يكتب العميل النص أو يرفع الصورة في صفحة الدفع، ويصلك مع الطلب. عدد الحروف حسب المساحة المتاحة على المنتج."
           />
           <Row>
             <StockField
-              label="العدد اللي عندك"
+              label="الكمية المتوفرة لديك"
               defaultValue={p?.stock}
               hasOptions={Boolean(p?.options?.length)}
-              hint="لازم يتكتب. العدد بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيتقفل «خلص». أي طلب بيوصلك لازم يتجهز، فخلّي العدد مظبوط أول بأول."
+              hint="حقل مطلوب. تقل الكمية تلقائياً مع كل طلب، وعند نفادها يُغلق المنتج بحالة «نفد». كل طلب يصلك يجب تجهيزه، لذلك حدّث الكمية أولاً بأول."
             />
           </Row>
         </Section>
       </CatalogForm>
-      {p && <DeleteButton action={deleteBrandProduct.bind(null, p.id)} backTo={back} what="المنتج" confirmText="متأكد إنك عايز تمسح المنتج ده؟ مفيش رجوع." />}
+      {p && <DeleteButton action={deleteBrandProduct.bind(null, p.id)} backTo={back} what="المنتج" confirmText="هل تريد حذف هذا المنتج؟ لا يمكن التراجع عن ذلك." />}
     </div>
   );
 }

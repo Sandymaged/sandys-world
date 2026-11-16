@@ -26,7 +26,7 @@ export async function expireUnpaid(): Promise<number> {
     (o) => o.paymentStatus === "awaiting_proof" && o.paymentDueAt && Date.parse(o.paymentDueAt) < now,
   );
   for (const o of due) {
-    await r.update(o.id, { status: "cancelled" }, { status: "cancelled", note: "اتلغى تلقائياً: الدفع متأكدش في المهلة" });
+    await r.update(o.id, { status: "cancelled" }, { status: "cancelled", note: "أُلغي تلقائياً: لم يُؤكَّد الدفع في المهلة" });
     for (const s of uniqueSlots(o.gifts)) await r.releaseSlot(s.date, s.period);
     if (o.giftCardUse) await r.restoreGiftCard(o.giftCardUse.code, o.giftCardUse.ref);
     // طلبات زمان كان المخزون بيتخصم وقت الطلب؛ الجديدة مش بتتخصم غير في «بيتجهز»

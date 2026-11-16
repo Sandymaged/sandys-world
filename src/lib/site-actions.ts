@@ -43,7 +43,7 @@ export async function saveSiteSettings(form: FormData): Promise<SiteSaveResult> 
   try {
     await writeSiteSettings(next);
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : "حصلت مشكلة"}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : "حدثت مشكلة"}` };
   }
   updateTag("site");
   updateTag("catalog");

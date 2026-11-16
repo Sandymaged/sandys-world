@@ -12,7 +12,7 @@ export function AdminLoginForm() {
         <input id="user" name="username" className="field" dir="ltr" autoComplete="username" autoCapitalize="none" spellCheck={false} required autoFocus />
       </div>
       <div>
-        <label className="label" htmlFor="pw">كلمة السر</label>
+        <label className="label" htmlFor="pw">كلمة المرور</label>
         <input id="pw" name="password" type="password" className="field" autoComplete="current-password" required />
       </div>
       {state?.error && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{state.error}</p>}

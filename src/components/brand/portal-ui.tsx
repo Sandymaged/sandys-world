@@ -14,11 +14,11 @@ export function BrandLoginForm() {
   return (
     <form action={action} className="space-y-4">
       <div>
-        <label className="label" htmlFor="email">الإيميل</label>
+        <label className="label" htmlFor="email">البريد الإلكتروني</label>
         <input id="email" name="email" type="email" dir="ltr" className="field" autoComplete="username" required autoFocus />
       </div>
       <div>
-        <label className="label" htmlFor="pw">كلمة السر</label>
+        <label className="label" htmlFor="pw">كلمة المرور</label>
         <input id="pw" name="password" type="password" dir="ltr" className="field" autoComplete="current-password" required />
       </div>
       {state?.error && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{state.error}</p>}
@@ -32,7 +32,7 @@ const tabs: { href: string; label: string; icon: IconName }[] = [
   { href: "/brand/orders", label: "الطلبات", icon: "bag" },
   { href: "/brand/products", label: "منتجاتي", icon: "gift" },
   { href: "/brand/statement", label: "حسابي مع المتجر", icon: "wallet" },
-  { href: "/brand/account", label: "كلمة السر", icon: "key" },
+  { href: "/brand/account", label: "كلمة المرور", icon: "key" },
 ];
 
 export function BrandNav({ brandName }: { brandName: string }) {
@@ -47,7 +47,7 @@ export function BrandNav({ brandName }: { brandName: string }) {
         <form action={brandLogout} className="ms-auto">
           <button className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-muted hover:bg-brand-soft hover:text-brand">
             <Icon name="logout" className="size-4" />
-            خروج
+            تسجيل الخروج
           </button>
         </form>
       </div>
@@ -91,7 +91,7 @@ export function OrderActions({ orderId, handed }: { orderId: string; handed: boo
         className={handed ? "btn-outline btn-sm" : "btn-primary btn-sm"}
       >
         <Icon name="check" className="size-4" />
-        {handed ? "اتسلّم للمتجر ✓ (دوس للإلغاء)" : "سلّمت للمتجر"}
+        {handed ? "سُلّم للمتجر ✓ (اضغط للإلغاء)" : "سلّمت للمتجر"}
       </button>
       {error && <p className="text-sm text-brand">{error}</p>}
     </div>

@@ -35,13 +35,13 @@ export async function deleteProduct(id: string): Promise<SaveResult> {
 export async function saveBrand(id: string | null, f: FormData): Promise<SaveResult> {
   await requireAdmin();
   const name = str(f, "name");
-  if (!name) return { ok: false, error: "اكتبي اسم البراند" };
+  if (!name) return { ok: false, error: "أدخل اسم العلامة التجارية" };
   const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `b-${Date.now().toString(36)}`;
 
   return mutateCatalog(async (d) => {
-    if (d.partners.some((b) => b.slug === slug && b.id !== id)) return { ok: false as const, error: "الرابط ده مستخدم لبراند تاني" };
+    if (d.partners.some((b) => b.slug === slug && b.id !== id)) return { ok: false as const, error: "هذا الرابط مستخدم لعلامة تجارية أخرى" };
     const existing = id ? d.partners.find((b) => b.id === id) : undefined;
-    if (id && !existing) return { ok: false as const, error: "البراند ده مش موجود" };
+    if (id && !existing) return { ok: false as const, error: "هذه العلامة التجارية غير موجودة" };
     const images = await image(f, existing?.cover ? [existing.cover] : []);
     if (typeof images === "string") return { ok: false as const, error: images };
     const rec: Partner = {
@@ -75,19 +75,19 @@ export async function savePackage(id: string | null, f: FormData): Promise<SaveR
       .filter((i) => i.productId && i.quantity > 0)
       .map((i) => ({ productId: String(i.productId), quantity: Math.round(i.quantity) }));
   } catch {
-    return { ok: false, error: "محتويات الباكدج مش مظبوطة" };
+    return { ok: false, error: "محتويات الباقة غير صحيحة" };
   }
-  if (!name) return { ok: false, error: "اكتبي اسم الباكدج" };
-  if (!(price > 0)) return { ok: false, error: "السعر لازم يكون رقم أكبر من صفر" };
-  if (items.length === 0) return { ok: false, error: "اختاري منتج واحد على الأقل جوه الباكدج" };
+  if (!name) return { ok: false, error: "أدخل اسم الباقة" };
+  if (!(price > 0)) return { ok: false, error: "يجب أن يكون السعر رقماً أكبر من صفر" };
+  if (items.length === 0) return { ok: false, error: "اختر منتجاً واحداً على الأقل داخل الباقة" };
   const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `pk-${Date.now().toString(36)}`;
   const tier = (["latif", "momayaz", "fakher"].includes(str(f, "tier")) ? str(f, "tier") : "latif") as PackageTier;
 
   return mutateCatalog(async (d) => {
-    if (d.packages.some((p) => p.slug === slug && p.id !== id)) return { ok: false as const, error: "الرابط ده مستخدم لباكدج تاني" };
-    if (items.some((i) => !d.products.some((p) => p.id === i.productId))) return { ok: false as const, error: "فيه منتج في الباكدج مش موجود" };
+    if (d.packages.some((p) => p.slug === slug && p.id !== id)) return { ok: false as const, error: "هذا الرابط مستخدم لباقة أخرى" };
+    if (items.some((i) => !d.products.some((p) => p.id === i.productId))) return { ok: false as const, error: "يوجد منتج غير موجود في الباقة" };
     const existing = id ? d.packages.find((p) => p.id === id) : undefined;
-    if (id && !existing) return { ok: false as const, error: "الباكدج ده مش موجود" };
+    if (id && !existing) return { ok: false as const, error: "هذه الباقة غير موجودة" };
     const images = await image(f, existing?.images ?? []);
     if (typeof images === "string") return { ok: false as const, error: images };
     const rec: GiftPackage = {
@@ -124,7 +124,7 @@ async function savePackageBoxes(packageId: string, boxIds: string[]): Promise<st
   if (boxIds.length) map[packageId] = boxIds;
   else delete map[packageId];
   const { error } = await db.from("settings").upsert({ key: "packageBoxes", value: map });
-  return error ? `الباكدج اتحفظ بس البوكسات ماتحفظتش: ${error.message}` : null;
+  return error ? `حُفظت الباقة لكن تعذّر حفظ الصناديق: ${error.message}` : null;
 }
 
 export async function deletePackage(id: string): Promise<SaveResult> {
@@ -143,17 +143,17 @@ export async function saveKit(id: string | null, f: FormData): Promise<SaveResul
   const price = num(f, "pricePerPerson");
   const min = Math.round(num(f, "minPeople"));
   const max = Math.round(num(f, "maxPeople"));
-  if (!name) return { ok: false, error: "اكتبي اسم الكيت" };
-  if (!(price > 0)) return { ok: false, error: "سعر الفرد لازم يكون رقم أكبر من صفر" };
-  if (!(min >= 1 && max >= min)) return { ok: false, error: "أقل عدد لازم يكون 1 أو أكتر، وأكبر عدد مش أقل منه" };
+  if (!name) return { ok: false, error: "أدخل اسم الطقم" };
+  if (!(price > 0)) return { ok: false, error: "يجب أن يكون سعر الفرد رقماً أكبر من صفر" };
+  if (!(min >= 1 && max >= min)) return { ok: false, error: "يجب أن يكون أقل عدد 1 أو أكثر، وألا يقل أكبر عدد عنه" };
   const slug = slugify(str(f, "slug") || str(f, "nameEn")) || `k-${Date.now().toString(36)}`;
   const category = (str(f, "category") === "bridal" ? "bridal" : "workshop") as KitCategory;
   const role = (["bride", "bridesmaid", "mother", "flower-girl"].includes(str(f, "role")) ? str(f, "role") : undefined) as BridalRole | undefined;
 
   return mutateCatalog(async (d) => {
-    if (d.kits.some((k) => k.slug === slug && k.id !== id)) return { ok: false as const, error: "الرابط ده مستخدم لكيت تاني" };
+    if (d.kits.some((k) => k.slug === slug && k.id !== id)) return { ok: false as const, error: "هذا الرابط مستخدم لطقم آخر" };
     const existing = id ? d.kits.find((k) => k.id === id) : undefined;
-    if (id && !existing) return { ok: false as const, error: "الكيت ده مش موجود" };
+    if (id && !existing) return { ok: false as const, error: "هذا الطقم غير موجود" };
     const images = await image(f, existing?.images ?? []);
     if (typeof images === "string") return { ok: false as const, error: images };
     const rec: Kit = {

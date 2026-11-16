@@ -17,7 +17,7 @@ export async function createBrandAccountAction(_: unknown, f: FormData): Promise
   await requireAdmin();
   const partnerId = String(f.get("partnerId") ?? "");
   const email = String(f.get("email") ?? "").trim().toLowerCase();
-  if (!(await loadCatalogData()).partners.some((p) => p.id === partnerId)) return { ok: false, error: "اختاري البراند" };
+  if (!(await loadCatalogData()).partners.some((p) => p.id === partnerId)) return { ok: false, error: "اختر العلامة التجارية" };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "الإيميل مش مظبوط" };
   const r = await createBrandAccount(partnerId, email);
   if (!r.ok) return r;
@@ -42,8 +42,8 @@ export async function addPayoutAction(partnerId: string, f: FormData): Promise<R
   await requireAdmin();
   const amount = Number(String(f.get("amount") ?? "").replace(/,/g, ""));
   const paidAt = String(f.get("paidAt") ?? "") || new Date().toISOString().slice(0, 10);
-  if (!(amount > 0)) return { ok: false, error: "اكتبي المبلغ" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) return { ok: false, error: "التاريخ مش مظبوط" };
+  if (!(amount > 0)) return { ok: false, error: "أدخل المبلغ" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) return { ok: false, error: "التاريخ غير صحيح" };
   try {
     await addPayout({
       partnerId,
@@ -53,7 +53,7 @@ export async function addPayoutAction(partnerId: string, f: FormData): Promise<R
       note: String(f.get("note") ?? "").trim().slice(0, 300),
     });
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   refresh();
   return { ok: true };
@@ -63,7 +63,7 @@ export async function addPayoutAction(partnerId: string, f: FormData): Promise<R
 export async function payBalanceAction(partnerId: string, f: FormData): Promise<Result> {
   await requireAdmin();
   const { balance } = await brandStatement(partnerId);
-  if (!(balance > 0)) return { ok: false, error: "مفيش حاجة مستحقة للبراند ده دلوقتي" };
+  if (!(balance > 0)) return { ok: false, error: "لا توجد مستحقات لهذه العلامة التجارية الآن" };
   try {
     await addPayout({
       partnerId,
@@ -73,7 +73,7 @@ export async function payBalanceAction(partnerId: string, f: FormData): Promise<
       note: "تصفية الحساب",
     });
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   refresh();
   return { ok: true };
@@ -84,7 +84,7 @@ export async function deletePayoutAction(id: string): Promise<Result> {
   try {
     await deletePayout(id);
   } catch (e) {
-    return { ok: false, error: `ماتمسحش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحذف: ${e instanceof Error ? e.message : ""}` };
   }
   refresh();
   return { ok: true };

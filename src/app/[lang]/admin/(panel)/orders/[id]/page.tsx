@@ -22,9 +22,9 @@ import { STORE_NAME } from "@/lib/settings";
 
 export const instant = false;
 
-export const metadata = { title: "تفاصيل الأوردر" };
+export const metadata = { title: "تفاصيل الطلب" };
 
-const refundLabel = { refund: "فلوس رجعت", compensation: "تعويض", return: "مرتجع" } as const;
+const refundLabel = { refund: "استرداد مبلغ", compensation: "تعويض", return: "مرتجع" } as const;
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-EG-u-nu-latn", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" }).format(new Date(iso));
@@ -66,20 +66,20 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/admin/orders" className="text-sm text-muted hover:text-brand">← الأوردرات</Link>
+        <Link href="/admin/orders" className="text-sm text-muted hover:text-brand">← الطلبات</Link>
         <h1 className="tabular text-4xl text-brand">#{order.number}</h1>
         <StatusBadge status={order.status} />
-        <span className="text-sm text-muted">اتعمل {when(order.createdAt)}</span>
-        <Link href={`/admin/orders/${order.id}/print`} className="btn-outline btn-sm ms-auto">طباعة الكروت والأوراق</Link>
+        <span className="text-sm text-muted">أُنشئ {when(order.createdAt)}</span>
+        <Link href={`/admin/orders/${order.id}/print`} className="btn-outline btn-sm ms-auto">طباعة البطاقات والأوراق</Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-6">
           {cards.map(({ gc, record: card, message: gcMessage, cardUrl }) => (
             <section key={gc.code ?? `${gc.design}-${gc.amount}-${gc.toPhone}`} className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
-              <h2 className="text-2xl text-brand">كارت هدية · <span className="tabular">{money(gc.amount)}</span></h2>
+              <h2 className="text-2xl text-brand">بطاقة هدية · <span className="tabular">{money(gc.amount)}</span></h2>
               <div className="mt-4 grid gap-5 sm:grid-cols-[1fr_1.1fr] sm:items-center">
-                <GiftCardArt design={gc.design} amount={gc.amount} amountLabel={money(gc.amount)} title="كارت هدية" storeName={STORE_NAME} code={gc.code} />
+                <GiftCardArt design={gc.design} amount={gc.amount} amountLabel={money(gc.amount)} title="بطاقة هدية" storeName={STORE_NAME} code={gc.code} />
                 <div className="space-y-1.5 text-sm">
                   <p>الشكل: <b>{giftCardDesigns.find((d) => d.id === gc.design)?.label}</b></p>
                   {gc.asGift ? (
@@ -89,30 +89,30 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                       {gc.message && <p className="font-script text-lg leading-7 text-lilac">«{gc.message}»</p>}
                     </>
                   ) : (
-                    <p className="text-muted">الكود للمشتري، وهو هيبعته بنفسه</p>
+                    <p className="text-muted">الكود للمشتري، وسيرسله بنفسه</p>
                   )}
                   {gc.code ? (
                     <>
                       <p className="pt-2">الكود: <b className="tabular tracking-wider" dir="ltr">{gc.code}</b></p>
-                      {card && <p>الرصيد الباقي: <b className="tabular">{money(card.balance)}</b> من {money(card.amount)}</p>}
+                      {card && <p>الرصيد المتبقي: <b className="tabular">{money(card.balance)}</b> من {money(card.amount)}</p>}
                       <GiftCardSendButtons
                         id={order.id}
                         code={gc.code}
                         waHref={waLink(gc.asGift && gc.toPhone ? gc.toPhone : order.sender.phone, gcMessage)}
-                        label={gc.asGift ? `ابعت الكارت لـ ${gc.toName} على واتساب` : "ابعت الكارت للمشتري على واتساب"}
+                        label={gc.asGift ? `إرسال البطاقة إلى ${gc.toName} عبر واتساب` : "إرسال البطاقة إلى المشتري عبر واتساب"}
                         sentAt={gc.sentAt ?? null}
-                        sentLabel={gc.sentAt ? `اتبعت ${when(gc.sentAt)}` : null}
+                        sentLabel={gc.sentAt ? `أُرسلت ${when(gc.sentAt)}` : null}
                       />
                       <a href={cardUrl} target="_blank" rel="noreferrer" className="chip border-line bg-white text-ink-2 hover:border-brand hover:text-brand">
-                        صفحة الكارت (صور)
+                        صفحة البطاقة (صور)
                       </a>
                       <p className="text-xs text-muted">
-                        الرسالة فيها لينك صفحة الكارت. من الموبايل تقدري تفتحي الصفحة وتبعتي الكارت صورتين (الوش والضهر).
-                        {gc.asGift && " المشتري مش بيشوف الكود، بيشوف بس إنه اتبعت."}
+                        تتضمن الرسالة رابط صفحة البطاقة. من الهاتف يمكنك فتح الصفحة وإرسال البطاقة في صورتين (الوجه والظهر).
+                        {gc.asGift && " لا يرى المشتري الكود، بل يرى فقط أنها أُرسلت."}
                       </p>
                     </>
                   ) : (
-                    <p className="pt-2 text-butter">الكود هيتعمل أول ما تأكدي الدفع.</p>
+                    <p className="pt-2 text-butter">يُنشأ الكود فور تأكيد الدفع.</p>
                   )}
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                         <a href={`/admin/files/${it.customImage}`} target="_blank" rel="noreferrer" className="mt-1 flex w-fit items-center gap-2 rounded bg-butter-soft p-1 pe-2 text-xs text-butter hover:underline">
                           {/* eslint-disable-next-line @next/next/no-img-element -- صورة العميل من التخزين الخاص */}
                           <img src={`/admin/files/${it.customImage}`} alt="" className="size-12 rounded object-cover" />
-                          صورة العميل للطباعة (افتحيها)
+                          صورة العميل للطباعة (افتحها)
                         </a>
                       )}
                     </span>
@@ -151,15 +151,15 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                   <p className="tabular" dir="ltr">{g.recipient.phone}</p>
                   <p>{g.recipient.zoneName} — {g.recipient.address}</p>
                   {g.recipient.landmark && <p className="text-muted">علامة: {g.recipient.landmark}</p>}
-                  {g.recipient.locationUrl && <a href={g.recipient.locationUrl} target="_blank" rel="noreferrer" className="text-brand underline">اللوكيشن</a>}
+                  {g.recipient.locationUrl && <a href={g.recipient.locationUrl} target="_blank" rel="noreferrer" className="text-brand underline">الموقع على الخريطة</a>}
                 </div>
                 <div className="space-y-1">
                   {g.cardMessage && <p className="font-script text-lg leading-7 text-lilac">«{g.cardMessage}»</p>}
                   <p className="flex flex-wrap gap-1.5 text-xs">
-                    {g.hideSender && <span className="rounded-full bg-brand px-2 py-0.5 font-semibold text-white">من غير اسم الباعت: متكتبش اسمه ولا تقوله للمستلم</span>}
-                    {g.hidePrice && <span className="rounded-full bg-surface px-2 py-0.5">متكتبش السعر</span>}
-                    {g.surprise && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">مفاجأة: متكلمش المستلم</span>}
-                    {g.wantsDeliveryPhoto && <span className="rounded-full bg-success-soft px-2 py-0.5 text-success">عايز صورة التسليم</span>}
+                    {g.hideSender && <span className="rounded-full bg-brand px-2 py-0.5 font-semibold text-white">دون اسم المُرسِل: لا تكتب اسمه ولا تخبر به المستلم</span>}
+                    {g.hidePrice && <span className="rounded-full bg-surface px-2 py-0.5">لا تكتب السعر</span>}
+                    {g.surprise && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">مفاجأة: لا تتصل بالمستلم</span>}
+                    {g.wantsDeliveryPhoto && <span className="rounded-full bg-success-soft px-2 py-0.5 text-success">يريد صورة التسليم</span>}
                   </p>
                 </div>
               </div>
@@ -173,9 +173,9 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
             side="store"
             send={sendStoreMessage.bind(null, order.id)}
             markRead={markStoreRead.bind(null, order.id)}
-            title="الشات مع العميل"
-            whatsapp={{ phone: order.sender.phone, footer: order.locale === "en" ? `Reply here: ${orderUrl}` : `تقدر ترد علينا من هنا: ${orderUrl}` }}
-            placeholder="اكتبي للعميل (مثلاً: تحبي الكارت بخط عربي ولا إنجليزي؟)"
+            title="المحادثة مع العميل"
+            whatsapp={{ phone: order.sender.phone, footer: order.locale === "en" ? `Reply here: ${orderUrl}` : `يمكنك الرد علينا من هنا: ${orderUrl}` }}
+            placeholder="اكتب للعميل (مثلاً: هل تفضّل البطاقة بخط عربي أم إنجليزي؟)"
           />
           {brands.length > 0 && (
             <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
@@ -190,9 +190,9 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                       ) : (
                         bo!.open &&
                         (bo!.late ? (
-                          <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">متأخر · كان آخره {formatDay(bo!.handBy)}</span>
+                          <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">متأخر · كان آخر موعد {formatDay(bo!.handBy)}</span>
                         ) : (
-                          <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs text-butter">لسه مسلّمش · آخره {formatDay(bo!.handBy)}</span>
+                          <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs text-butter">لم يُسلِّم بعد · آخر موعد {formatDay(bo!.handBy)}</span>
                         ))
                       )}
                     </p>
@@ -217,7 +217,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
 
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">الدفع</h2>
-            <p className="mt-1 text-sm">{order.paymentMethod === "cod" ? "كاش عند الاستلام" : "إنستاباي"} · <b>{paymentLabel[order.paymentStatus]}</b></p>
+            <p className="mt-1 text-sm">{order.paymentMethod === "cod" ? "الدفع عند الاستلام" : "إنستاباي"} · <b>{paymentLabel[order.paymentStatus]}</b></p>
             {order.paymentMethod === "instapay" && (
               <PaymentPanel
                 id={order.id}
@@ -229,17 +229,17 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
             )}
             <dl className="mt-4 space-y-1 border-t border-dashed border-line pt-3 text-sm">
               <div className="flex justify-between"><dt className="text-muted">الهدايا</dt><dd className="tabular">{money(order.totals.items)}</dd></div>
-              {order.totals.packaging > 0 && <div className="flex justify-between"><dt className="text-muted">تغليف</dt><dd className="tabular">{money(order.totals.packaging)}</dd></div>}
+              {order.totals.packaging > 0 && <div className="flex justify-between"><dt className="text-muted">التغليف</dt><dd className="tabular">{money(order.totals.packaging)}</dd></div>}
               <div className="flex justify-between"><dt className="text-muted">التوصيل</dt><dd className="tabular">{money(order.totals.delivery)}</dd></div>
               {order.totals.discount > 0 && <div className="flex justify-between text-success"><dt>خصم {order.couponCode}</dt><dd className="tabular">− {money(order.totals.discount)}</dd></div>}
-              {(order.totals.giftCard ?? 0) > 0 && <div className="flex justify-between text-success"><dt>كارت هدية {order.giftCardUse?.code}</dt><dd className="tabular">− {money(order.totals.giftCard ?? 0)}</dd></div>}
+              {(order.totals.giftCard ?? 0) > 0 && <div className="flex justify-between text-success"><dt>بطاقة هدية {order.giftCardUse?.code}</dt><dd className="tabular">− {money(order.totals.giftCard ?? 0)}</dd></div>}
               <div className="flex justify-between font-heading text-xl text-brand"><dt>الإجمالي</dt><dd className="tabular">{money(order.totals.total)}</dd></div>
             </dl>
           </section>
 
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">مرتجع أو تعويض</h2>
-            <p className="mt-1 text-xs text-muted">لو فلوس رجعت للعميل، أو اتعوّض عن حاجة، أو هدية رجعت. بيتخصم من المكسب في التقارير.</p>
+            <p className="mt-1 text-xs text-muted">عند استرداد مبلغ للعميل، أو تعويضه عن شيء، أو إرجاع هدية. يُخصم من الربح في التقارير.</p>
             {(order.refunds ?? []).length > 0 && (
               <ul className="mt-3 space-y-1.5 text-sm">
                 {order.refunds!.map((r, i) => (
@@ -252,33 +252,33 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                 ))}
               </ul>
             )}
-            <ActionForm action={addRefundAction.bind(null, order.id)} submitLabel="سجّلي" doneLabel="اتسجل ✓" resetOnSuccess className="mt-3 space-y-3">
+            <ActionForm action={addRefundAction.bind(null, order.id)} submitLabel="تسجيل" doneLabel="تم التسجيل ✓" resetOnSuccess className="mt-3 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <select name="kind" className="field" defaultValue="refund" aria-label="النوع">
-                  <option value="refund">فلوس رجعت للعميل</option>
+                  <option value="refund">استرداد مبلغ للعميل</option>
                   <option value="compensation">تعويض</option>
                   <option value="return">مرتجع</option>
                 </select>
                 <input name="amount" inputMode="numeric" placeholder="المبلغ" className="field tabular" aria-label="المبلغ" />
               </div>
-              <input name="reason" placeholder="السبب (مثلاً: الورد وصل دبلان)" className="field" aria-label="السبب" />
+              <input name="reason" placeholder="السبب (مثلاً: وصل الورد ذابلاً)" className="field" aria-label="السبب" />
             </ActionForm>
           </section>
 
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">المرسل</h2>
-            {order.source && <p className="mt-1 text-xs text-muted">عرفنا من: {order.source}</p>}
+            {order.source && <p className="mt-1 text-xs text-muted">عرفنا عن طريق: {order.source}</p>}
             <p className="mt-1 text-sm font-semibold">{order.sender.name}</p>
             <p className="tabular text-sm" dir="ltr">{order.sender.phone}</p>
             {order.sender.email && <p className="text-sm text-muted" dir="ltr">{order.sender.email}</p>}
-            <p className="mt-3 text-xs text-muted">رسايل واتساب جاهزة (بتفتح واتساب برسالة مكتوبة):</p>
+            <p className="mt-3 text-xs text-muted">رسائل واتساب جاهزة (تفتح واتساب برسالة مكتوبة):</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {[
                 ["تأكيد الدفع", msgs.confirmed],
-                ["التحويل اترفض", msgs.rejected],
+                ["رُفض التحويل", msgs.rejected],
                 ["جاهز + صورة", msgs.ready],
                 ["خرج للتوصيل", msgs.out],
-                ["اتسلم + صورة", msgs.delivered],
+                ["تم التسليم + صورة", msgs.delivered],
               ].map(([label, text]) => (
                 <a key={label} href={waLink(order.sender.phone, text)} target="_blank" rel="noreferrer" className="chip border-success bg-success-soft text-success hover:bg-success hover:text-white">
                   {label}

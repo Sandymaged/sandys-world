@@ -18,9 +18,9 @@ export default async function AdminOccasions() {
         <h1 className="text-3xl text-brand">المناسبات</h1>
         <Link href="/admin/catalog/occasions/new" className="btn-primary btn-sm ms-auto">+ مناسبة جديدة</Link>
       </div>
-      <p className="text-sm text-muted">بتظهر في تاب «المناسبات» فوق في الموقع. بعد ما تضيفي مناسبة، علّمي عليها في صفحة كل منتج أو باكدج عشان يظهر فيها.</p>
+      <p className="text-sm text-muted">تظهر في تبويب «المناسبات» أعلى الموقع. بعد إضافة مناسبة، حددها في صفحة كل منتج أو باقة ليظهر فيها.</p>
       {occasions.length === 0 ? (
-        <Empty>لسه مفيش مناسبات.</Empty>
+        <Empty>لا توجد مناسبات بعد.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {occasions.map((o) => (

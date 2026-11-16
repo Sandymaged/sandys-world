@@ -9,7 +9,7 @@ import { addExpenseAction, deleteExpenseAction } from "@/lib/finance-actions";
 
 export const instant = false;
 
-export const metadata = { title: "المصاريف" };
+export const metadata = { title: "المصروفات" };
 
 const monthName = (ym: string) =>
   new Intl.DateTimeFormat("ar-EG-u-nu-latn", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${ym}-01T00:00:00Z`));
@@ -35,12 +35,12 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/[lang]/
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-3xl text-brand">المصاريف</h1>
-        <p className="mt-1 text-sm text-muted">أي فلوس بتطلع على المتجر غير المنتجات. بتتخصم من المكسب في التقارير.</p>
+        <h1 className="text-3xl text-brand">المصروفات</h1>
+        <p className="mt-1 text-sm text-muted">أي مبالغ تُنفق على المتجر غير المنتجات. تُخصم من الربح في التقارير.</p>
       </div>
 
       <Section title="مصروف جديد">
-        <ActionForm action={addExpenseAction} submitLabel="ضيفي المصروف" doneLabel="اتضاف ✓" resetOnSuccess>
+        <ActionForm action={addExpenseAction} submitLabel="إضافة المصروف" doneLabel="تمت الإضافة ✓" resetOnSuccess>
           <Row>
             <Field label="المبلغ (ج.م)" name="amount" type="number" required />
             <Field label="التاريخ" name="spentOn" type="date" defaultValue={today} />
@@ -62,10 +62,10 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/[lang]/
 
       <section className="space-y-4 bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
         <div className="flex flex-wrap items-center gap-3">
-          <Link href={`/admin/expenses?m=${shiftMonth(month, -1)}`} className="btn-outline btn-sm">← الشهر اللي فات</Link>
+          <Link href={`/admin/expenses?m=${shiftMonth(month, -1)}`} className="btn-outline btn-sm">← الشهر السابق</Link>
           <h2 className="text-xl text-brand">{monthName(month)}</h2>
           {month < today.slice(0, 7) && (
-            <Link href={`/admin/expenses?m=${shiftMonth(month, 1)}`} className="btn-outline btn-sm">الشهر اللي بعده →</Link>
+            <Link href={`/admin/expenses?m=${shiftMonth(month, 1)}`} className="btn-outline btn-sm">الشهر التالي →</Link>
           )}
           <p className="ms-auto font-heading text-2xl text-brand">
             <span className="tabular">{money(total)}</span>
@@ -83,7 +83,7 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/[lang]/
         )}
 
         {list.length === 0 ? (
-          <Empty>مفيش مصاريف متسجلة في الشهر ده.</Empty>
+          <Empty>لا توجد مصروفات مسجّلة في هذا الشهر.</Empty>
         ) : (
           <ul className="divide-y divide-dashed divide-line">
             {list.map((e) => (
@@ -92,7 +92,7 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/[lang]/
                 <span className="chip border-line bg-bg text-ink-2">{e.category}</span>
                 <span className="min-w-0 flex-1 text-sm">{e.note}</span>
                 <span className="tabular font-semibold">{money(e.amount)}</span>
-                <ConfirmButton action={deleteExpenseAction.bind(null, e.id)} confirm="تمسحي المصروف ده؟" label="مسح" />
+                <ConfirmButton action={deleteExpenseAction.bind(null, e.id)} confirm="حذف هذا المصروف؟" label="حذف" />
               </li>
             ))}
           </ul>

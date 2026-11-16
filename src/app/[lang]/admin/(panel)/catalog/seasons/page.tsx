@@ -18,9 +18,9 @@ export default async function AdminSeasons() {
         <h1 className="text-3xl text-brand">المواسم</h1>
         <Link href="/admin/catalog/seasons/new" className="btn-primary btn-sm ms-auto">+ موسم جديد</Link>
       </div>
-      <p className="text-sm text-muted">الموسم بيظهر على الصفحة الرئيسية في الفترة اللي تحدديها. عشان تحطي باكدج في الموسم، اختاريه من صفحة الباكدج.</p>
+      <p className="text-sm text-muted">يظهر الموسم على الصفحة الرئيسية في الفترة التي تحددها. لإضافة باقة إلى الموسم، اختره من صفحة الباقة.</p>
       {seasons.length === 0 ? (
-        <Empty>لسه مفيش مواسم.</Empty>
+        <Empty>لا توجد مواسم بعد.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {seasons.map((s) => {
@@ -32,11 +32,11 @@ export default async function AdminSeasons() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{s.name}</span>
                     <span className="tabular block text-xs text-muted">
-                      بيظهر من {cairoDay(s.visibleFrom)} لـ {cairoDay(s.visibleUntil)} · يوم المناسبة {s.occasionDate}
+                      يظهر من {cairoDay(s.visibleFrom)} إلى {cairoDay(s.visibleUntil)} · يوم المناسبة {s.occasionDate}
                     </span>
                   </span>
                   <span className={`chip text-xs ${live ? "border-success bg-success/10 text-success" : "border-line bg-white text-muted"}`}>
-                    {live ? "ظاهر دلوقتي" : over ? "خلص" : "لسه"}
+                    {live ? "ظاهر الآن" : over ? "انتهى" : "لم يبدأ"}
                   </span>
                 </Link>
               </li>

@@ -8,7 +8,7 @@ export const instant = false;
 
 export const metadata = { title: "مناطق التوصيل" };
 
-const zoneKindLabel: Record<string, string> = { city: "مدينة أسيوط", markaz: "مركز في أسيوط", governorate: "محافظة تانية" };
+const zoneKindLabel: Record<string, string> = { city: "مدينة أسيوط", markaz: "مركز في أسيوط", governorate: "محافظة أخرى" };
 
 /** المناطق اللي العميل بيختار منها في الدفع، برسوم التوصيل بتاعة كل واحدة */
 export default async function AdminZones() {
@@ -21,11 +21,11 @@ export default async function AdminZones() {
         <Link href="/admin/zones/new" className="btn-primary btn-sm ms-auto">+ منطقة جديدة</Link>
       </div>
       <p className="text-sm text-muted">
-        العميل بيختار منطقة منهم في صفحة الدفع، ورسومها بتتضاف على الطلب. تكلفة التوصيل الفعلية عليكي بتتكتب في{" "}
+        يختار العميل منطقة منها في صفحة الدفع، وتُضاف رسومها إلى الطلب. تُسجَّل تكلفة التوصيل الفعلية عليك في{" "}
         <Link href="/admin/costs" className="text-brand underline underline-offset-4">التكاليف</Link>.
       </p>
       {zones.length === 0 ? (
-        <Empty>لسه مفيش مناطق. من غيرها محدش هيقدر يطلب هدية بتوصيل.</Empty>
+        <Empty>لا توجد مناطق بعد. بدونها لن يتمكن أحد من طلب هدية مع التوصيل.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {zones.map((z) => (
@@ -35,12 +35,12 @@ export default async function AdminZones() {
                   <span className="block truncate font-semibold">{z.name}</span>
                   <span className="block text-xs text-muted">
                     {zoneKindLabel[z.kind]}
-                    {z.sameDay && " · توصيل في نفس اليوم"}
-                    {z.extraDays > 0 && ` · ${z.extraDays} أيام زيادة`}
+                    {z.sameDay && " · توصيل في اليوم نفسه"}
+                    {z.extraDays > 0 && ` · ${z.extraDays} أيام إضافية`}
                   </span>
                 </span>
                 <span className="tabular text-sm font-semibold">{egp(z.fee)}</span>
-                {!z.isActive && <span className="chip border-line bg-white text-xs text-muted">مقفولة</span>}
+                {!z.isActive && <span className="chip border-line bg-white text-xs text-muted">متوقفة</span>}
               </Link>
             </li>
           ))}

@@ -240,8 +240,8 @@ export async function markHanded(orderId: string, partnerId: string, brandName: 
   const o = await repo().getById(orderId);
   const catalog = await loadCatalogData();
   const bo = o && brandOrderOf(o, partnerId, catalog);
-  if (!bo || !bo.open) return { ok: false as const, error: "الطلب ده مش متاح" };
-  await patchBrandStatus(orderId, partnerId, (s) => ({ ...s, handedAt: handed ? new Date().toISOString() : null }), handed ? `${brandName} سلّم المنتجات للمتجر` : `${brandName} لغى «سلّمت»`);
+  if (!bo || !bo.open) return { ok: false as const, error: "هذا الطلب غير متاح" };
+  await patchBrandStatus(orderId, partnerId, (s) => ({ ...s, handedAt: handed ? new Date().toISOString() : null }), handed ? `${brandName} سلّم المنتجات للمتجر` : `${brandName} ألغى «سلّمت»`);
   return { ok: true as const };
 }
 

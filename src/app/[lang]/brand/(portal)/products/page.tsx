@@ -18,9 +18,9 @@ export default async function BrandProducts() {
         <h1 className="text-3xl text-brand">منتجاتي</h1>
         <Link href="/brand/products/new" className="btn-primary btn-sm ms-auto">+ منتج جديد</Link>
       </div>
-      <p className="text-sm leading-6 text-ink-2">المنتج الجديد بيظهر على الموقع بعد ما المتجر يوافق عليه. السعر والعدد والاختيارات بتتغير على طول.</p>
+      <p className="text-sm leading-6 text-ink-2">يظهر المنتج الجديد على الموقع بعد موافقة المتجر عليه. أما السعر والكمية والخيارات فتتغير فوراً.</p>
       {mine.length === 0 ? (
-        <Empty>لسه مضفتش منتجات. ابدأ بـ «منتج جديد».</Empty>
+        <Empty>لم تُضف أي منتجات بعد. ابدأ بـ «منتج جديد».</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line overflow-hidden rounded-3xl border border-line bg-paper">
           {mine.map((p) => {
@@ -32,15 +32,15 @@ export default async function BrandProducts() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block truncate text-xs text-muted">
-                      {p.category || "من غير تصنيف"}
-                      {typeof p.stock === "number" && <> · فاضل <span className="tabular">{p.stock}</span></>}
+                      {p.category || "بدون تصنيف"}
+                      {typeof p.stock === "number" && <> · المتبقي <span className="tabular">{p.stock}</span></>}
                     </span>
                   </span>
                   <span className="tabular w-20 text-end text-sm font-semibold">{money(p.price)}</span>
                   {p.reviewStatus === "pending" ? (
-                    <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs text-butter">مستني موافقة</span>
+                    <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs text-butter">بانتظار الموافقة</span>
                   ) : (
-                    out && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">خلص</span>
+                    out && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">نفد</span>
                   )}
                 </Link>
               </li>

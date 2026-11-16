@@ -61,7 +61,7 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
       <input type="hidden" name="wrappings" value={JSON.stringify(ws)} />
 
       <div className="space-y-3">
-        <h3 className="font-semibold">مقاسات البوكسات</h3>
+        <h3 className="font-semibold">مقاسات الصناديق</h3>
         {bs.map((b, i) => (
           <div key={i} className="grid gap-3 rounded-2xl border border-line bg-bg p-4 sm:grid-cols-[auto_1fr]">
             <Thumb src={b.image} />
@@ -69,20 +69,20 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
               <div className="grid gap-3 sm:grid-cols-4">
                 <label className="block sm:col-span-2">
                   <span className="label">الاسم</span>
-                  <input className="field" value={b.name} onChange={(e) => setB(i, { name: e.target.value })} placeholder="وسط" />
+                  <input className="field" value={b.name} onChange={(e) => setB(i, { name: e.target.value })} placeholder="متوسط" />
                 </label>
                 <label className="block">
                   <span className="label">السعر (ج.م)</span>
                   <input className="field tabular" inputMode="numeric" value={b.price} onChange={(e) => setB(i, { price: e.target.value.replace(/\D/g, "") })} />
                 </label>
                 <label className="block">
-                  <span className="label">بيساع كام حاجة</span>
+                  <span className="label">عدد القطع التي يسعها</span>
                   <input className="field tabular" inputMode="numeric" value={b.maxItems} onChange={(e) => setB(i, { maxItems: e.target.value.replace(/\D/g, "") })} />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="label">الاسم بالإنجليزي</span>
+                  <span className="label">الاسم بالإنجليزية</span>
                   <input className="field" dir="ltr" value={b.nameEn} onChange={(e) => setB(i, { nameEn: e.target.value })} placeholder="Medium" />
                 </label>
                 <label className="block">
@@ -92,11 +92,11 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="label">لينك صورة الشكل</span>
+                  <span className="label">رابط صورة الشكل</span>
                   <input className="field" dir="ltr" value={b.image} onChange={(e) => setB(i, { image: e.target.value })} placeholder="https://…" />
                 </label>
                 <label className="block">
-                  <span className="label">أو ارفعي صورة</span>
+                  <span className="label">أو ارفع صورة</span>
                   <input type="file" name={`bimg_${i}`} accept="image/jpeg,image/png,image/webp" className="field py-2" />
                 </label>
               </div>
@@ -106,7 +106,7 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
                   مفتوح للعملاء
                 </label>
                 <button type="button" onClick={() => setBs((all) => all.filter((_, k) => k !== i))} className="text-muted underline-offset-4 hover:text-brand hover:underline">
-                  مسح البوكس
+                  حذف الصندوق
                 </button>
               </div>
             </div>
@@ -117,13 +117,13 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
           onClick={() => setBs((all) => [...all, { id: "", name: "", nameEn: "", price: "", maxItems: "4", description: "", image: "", isActive: true }])}
           className="btn-outline btn-sm"
         >
-          + بوكس جديد
+          + صندوق جديد
         </button>
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold">اختيارات التغليف للعميل</h3>
-        <p className="text-sm text-muted">العميل بيختار واحد منهم لكل هدية في السلة. خلي أول واحد هو العادي (من غير زيادة).</p>
+        <h3 className="font-semibold">خيارات التغليف للعميل</h3>
+        <p className="text-sm text-muted">يختار العميل واحداً منها لكل هدية في السلة. اجعل الخيار الأول هو العادي (دون زيادة).</p>
         {ws.map((w, i) => (
           <div key={i} className="grid gap-3 rounded-2xl border border-line bg-bg p-4 sm:grid-cols-[auto_1fr]">
             <Thumb src={w.image} />
@@ -134,7 +134,7 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
                   <input className="field" value={w.name} onChange={(e) => setW(i, { name: e.target.value })} placeholder="علبة فاخرة" />
                 </label>
                 <label className="block">
-                  <span className="label">بالإنجليزي</span>
+                  <span className="label">بالإنجليزية</span>
                   <input className="field" dir="ltr" value={w.en} onChange={(e) => setW(i, { en: e.target.value })} placeholder="Luxury box" />
                 </label>
                 <label className="block">
@@ -145,26 +145,26 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="label">وصف قصير</span>
-                  <input className="field" value={w.description} onChange={(e) => setW(i, { description: e.target.value })} placeholder="علبة بغطا مغناطيس وشريطة ستان" />
+                  <input className="field" value={w.description} onChange={(e) => setW(i, { description: e.target.value })} placeholder="علبة بغطاء مغناطيسي وشريط ساتان" />
                 </label>
                 <label className="block">
-                  <span className="label">الوصف بالإنجليزي</span>
+                  <span className="label">الوصف بالإنجليزية</span>
                   <input className="field" dir="ltr" value={w.descriptionEn} onChange={(e) => setW(i, { descriptionEn: e.target.value })} />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="label">لينك الصورة</span>
+                  <span className="label">رابط الصورة</span>
                   <input className="field" dir="ltr" value={w.image} onChange={(e) => setW(i, { image: e.target.value })} placeholder="https://…" />
                 </label>
                 <label className="block">
-                  <span className="label">أو ارفعي صورة</span>
+                  <span className="label">أو ارفع صورة</span>
                   <input type="file" name={`wimg_${i}`} accept="image/jpeg,image/png,image/webp" className="field py-2" />
                 </label>
               </div>
               {ws.length > 1 && (
                 <button type="button" onClick={() => setWs((all) => all.filter((_, k) => k !== i))} className="text-sm text-muted underline-offset-4 hover:text-brand hover:underline">
-                  مسح الاختيار
+                  حذف الخيار
                 </button>
               )}
             </div>
@@ -175,7 +175,7 @@ export function BoxesEditor({ boxes, wrappings }: { boxes: BoxSize[]; wrappings:
           onClick={() => setWs((all) => [...all, { id: "", name: "", en: "", price: "", description: "", descriptionEn: "", image: "" }])}
           className="btn-outline btn-sm"
         >
-          + اختيار تغليف جديد
+          + خيار تغليف جديد
         </button>
       </div>
     </div>

@@ -15,7 +15,7 @@ const shrink = (file: File) => shrinkImage(file, SIDE);
  * صور المنتج: لحد 5، بتترفع مع بعض وتتشال وتترتب، والأولى هي الأساسية (اللي بتظهر في الكروت).
  * بيبعت «imagesOrder» (الترتيب) و«imageFiles» (الصور الجديدة) مع الفورم.
  */
-export function ProductImagesField({ current, label = "ارفعي صور" }: { current: string[]; label?: string }) {
+export function ProductImagesField({ current, label = "رفع صور" }: { current: string[]; label?: string }) {
   const [items, setItems] = useState<Item[]>(() => current.slice(0, MAX).map((url) => ({ kind: "url", url })));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +46,10 @@ export function ProductImagesField({ current, label = "ارفعي صور" }: { c
         const small = await shrink(f);
         added.push({ kind: "file", file: small, preview: URL.createObjectURL(small) });
       } catch {
-        setError(`الصورة «${f.name}» مش مدعومة. جربي JPG أو PNG.`);
+        setError(`الصورة «${f.name}» غير مدعومة. جرّب JPG أو PNG.`);
       }
     }
-    if (list.length > room) setError(`أقصى حاجة ${MAX} صور للمنتج.`);
+    if (list.length > room) setError(`الحد الأقصى ${MAX} صور للمنتج.`);
     setItems((x) => [...x, ...added]);
     setBusy(false);
   }
@@ -72,23 +72,23 @@ export function ProductImagesField({ current, label = "ارفعي صور" }: { c
                 <span className="absolute start-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-white">الأساسية</span>
               ) : (
                 <button type="button" onClick={() => makeMain(i)} className="absolute start-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-ink hover:bg-brand hover:text-white">
-                  خليها الأساسية
+                  جعلها الأساسية
                 </button>
               )}
-              <button type="button" onClick={() => remove(i)} aria-label="شيل الصورة" className="absolute end-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-ink hover:bg-brand hover:text-white">
+              <button type="button" onClick={() => remove(i)} aria-label="إزالة الصورة" className="absolute end-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/90 text-ink hover:bg-brand hover:text-white">
                 <Icon name="close" className="size-4" />
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="rounded-xl bg-surface p-4 text-center text-sm text-muted">لسه مفيش صور.</p>
+        <p className="rounded-xl bg-surface p-4 text-center text-sm text-muted">لا توجد صور بعد.</p>
       )}
 
       {items.length < MAX && (
         <div className="space-y-3">
           <div>
-            <label className="label" htmlFor="imagesPick">{label} (لحد {MAX})</label>
+            <label className="label" htmlFor="imagesPick">{label} (حتى {MAX})</label>
             <input
               id="imagesPick"
               type="file"
@@ -103,26 +103,26 @@ export function ProductImagesField({ current, label = "ارفعي صور" }: { c
             />
           </div>
           <div className="flex gap-2">
-            <input value={link} onChange={(e) => setLink(e.target.value)} dir="ltr" placeholder="أو لينك صورة https://..." aria-label="لينك صورة" className="field" />
+            <input value={link} onChange={(e) => setLink(e.target.value)} dir="ltr" placeholder="أو رابط صورة https://..." aria-label="رابط صورة" className="field" />
             <button
               type="button"
               onClick={() => {
                 const u = link.trim();
-                if (!/^https:\/\//.test(u)) return setError("لينك الصورة لازم يبدأ بـ https://");
+                if (!/^https:\/\//.test(u)) return setError("يجب أن يبدأ رابط الصورة بـ https://");
                 setItems((x) => [...x, { kind: "url", url: u }]);
                 setLink("");
                 setError(null);
               }}
               className="btn-outline btn-sm shrink-0"
             >
-              ضيفي
+              إضافة
             </button>
           </div>
         </div>
       )}
-      {busy && <p className="text-sm text-muted">بنجهّز الصور…</p>}
+      {busy && <p className="text-sm text-muted">جارٍ تجهيز الصور…</p>}
       {error && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
-      <p className="text-xs leading-5 text-muted">الصورة الأولى هي اللي بتظهر في الموقع على كارت المنتج. الصور بتتصغّر لوحدها قبل الرفع.</p>
+      <p className="text-xs leading-5 text-muted">الصورة الأولى هي التي تظهر في الموقع على بطاقة المنتج. تُصغَّر الصور تلقائياً قبل الرفع.</p>
     </div>
   );
 }

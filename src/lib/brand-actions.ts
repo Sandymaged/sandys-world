@@ -13,7 +13,7 @@ type Result = { ok: true } | { ok: false; error: string };
 export async function brandLogin(_: unknown, form: FormData): Promise<{ error: string } | void> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const password = String(form.get("password") ?? "");
-  if (!email || !password) return { error: "اكتب الإيميل وكلمة السر" };
+  if (!email || !password) return { error: "أدخل البريد الإلكتروني وكلمة المرور" };
   const r = await signInBrand(email, password);
   if (!r.ok) return { error: r.error };
   redirect("/brand");
@@ -47,6 +47,6 @@ export async function changePasswordAction(f: FormData): Promise<Result> {
   const s = await requireBrand();
   const current = String(f.get("current") ?? "");
   const next = String(f.get("next") ?? "");
-  if (next !== String(f.get("confirm") ?? "")) return { ok: false, error: "كلمة السر الجديدة مش زي التأكيد" };
+  if (next !== String(f.get("confirm") ?? "")) return { ok: false, error: "كلمة المرور الجديدة لا تطابق التأكيد" };
   return changeBrandPassword(s, current, next);
 }

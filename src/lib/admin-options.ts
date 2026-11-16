@@ -10,7 +10,7 @@ export async function adminOptions() {
   return {
     occasions: occasions.map((o) => ({ value: o.slug, label: o.name })),
     recipients: recipientOrder.map((r) => ({ value: r, label: recipientLabels[r] })),
-    seasons: [{ value: "", label: "من غير موسم" }, ...seasons.map((x) => ({ value: x.id, label: x.name }))],
+    seasons: [{ value: "", label: "بدون موسم" }, ...seasons.map((x) => ({ value: x.id, label: x.name }))],
     minPackageMargin: sf.settings.minPackageMargin,
     packageBoxes: sf.settings.packageBoxes ?? {},
     productCustomization: sf.settings.productCustomization ?? {},

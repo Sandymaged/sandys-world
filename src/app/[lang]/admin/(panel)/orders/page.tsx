@@ -8,7 +8,7 @@ import type { OrderStatus } from "@/lib/db/types";
 
 export const instant = false;
 
-export const metadata = { title: "الأوردرات" };
+export const metadata = { title: "الطلبات" };
 
 const statuses = Object.keys(statusLabel) as OrderStatus[];
 
@@ -27,7 +27,7 @@ export default async function AdminOrders({ searchParams }: PageProps<"/[lang]/a
   return (
     <div className="space-y-5">
       <form className="grid gap-3 bg-[#fffdf8] p-4 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)] sm:grid-cols-5">
-        <input name="q" defaultValue={q} placeholder="رقم الأوردر، اسم، موبايل" className="field sm:col-span-2" />
+        <input name="q" defaultValue={q} placeholder="رقم الطلب، الاسم، الهاتف" className="field sm:col-span-2" />
         <select name="status" defaultValue={status ?? ""} className="field">
           <option value="">كل الحالات</option>
           {statuses.map((s) => (
@@ -42,9 +42,9 @@ export default async function AdminOrders({ searchParams }: PageProps<"/[lang]/a
           ))}
         </select>
         <div className="flex gap-2 sm:col-span-5">
-          <button className="btn-primary btn-sm">فلتر</button>
-          <Link href="/admin/orders" className="btn-outline btn-sm">مسح</Link>
-          <span className="ms-auto self-center text-sm text-muted">{orders.length} أوردر</span>
+          <button className="btn-primary btn-sm">تصفية</button>
+          <Link href="/admin/orders" className="btn-outline btn-sm">مسح الفلاتر</Link>
+          <span className="ms-auto self-center text-sm text-muted">{orders.length} طلب</span>
         </div>
       </form>
 
@@ -55,7 +55,7 @@ export default async function AdminOrders({ searchParams }: PageProps<"/[lang]/a
           ))}
         </div>
       ) : (
-        <Empty>مفيش أوردرات بالفلتر ده.</Empty>
+        <Empty>لا توجد طلبات مطابقة لهذا الفلتر.</Empty>
       )}
     </div>
   );

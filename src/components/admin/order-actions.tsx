@@ -29,12 +29,12 @@ export function GiftCardSendButtons({ id, code, waHref, label, sentAt, sentLabel
         <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-success">
           ✓ {sentLabel}
           <button type="button" disabled={pending} onClick={() => mark(false)} className="text-xs font-normal text-muted underline underline-offset-4 hover:text-brand">
-            لسه ماتبعتش؟
+            لم تُرسَل بعد؟
           </button>
         </p>
       ) : (
         <button type="button" disabled={pending} onClick={() => mark(true)} className="text-xs text-muted underline underline-offset-4 hover:text-brand">
-          {pending ? "لحظة…" : "بعتّيه من الموبايل؟ علّمي إنه اتبعت"}
+          {pending ? "لحظة…" : "أرسلتها من الهاتف؟ علّمها كمُرسَلة"}
         </button>
       )}
     </div>
@@ -58,12 +58,12 @@ export function StatusButtons({ id, status }: { id: string; status: OrderStatus 
           ← {statusLabel[s]}
         </button>
       ))}
-      {status === "awaiting_payment" && <p className="text-sm text-muted">بيتحرك أول ما الدفع يتأكد.</p>}
+      {status === "awaiting_payment" && <p className="text-sm text-muted">ينتقل فور تأكيد الدفع.</p>}
       {canCancel && (
         <button
           disabled={pending}
           onClick={() => {
-            if (window.confirm("متأكدة إنك عايزة تلغي الأوردر؟ فترات التوصيل هتتفك.")) run("cancelled", "اتلغى من اللوحة");
+            if (window.confirm("هل تريد إلغاء الطلب؟ ستُحرَّر فترات التوصيل.")) run("cancelled", "أُلغي من لوحة التحكم");
           }}
           className="btn-outline btn-sm text-brand"
         >
@@ -71,8 +71,8 @@ export function StatusButtons({ id, status }: { id: string; status: OrderStatus 
         </button>
       )}
       {error && <p className="w-full rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
-      {status === "delivery_failed" && <p className="w-full text-xs text-muted">سجّلي المحاولة التانية من «محاولة توصيل تانية» تحت: نفس اليوم ببلاش، ويوم تاني برسوم جديدة.</p>}
-      {!canCancel && status !== "cancelled" && status !== "delivered" && <p className="w-full text-xs text-muted">التجهيز بدأ، فالطلب مينفعش يتلغي.</p>}
+      {status === "delivery_failed" && <p className="w-full text-xs text-muted">سجّل المحاولة الثانية من «محاولة توصيل ثانية» بالأسفل: في اليوم نفسه مجاناً، وفي يوم آخر برسوم جديدة.</p>}
+      {!canCancel && status !== "cancelled" && status !== "delivered" && <p className="w-full text-xs text-muted">بدأ التجهيز، فلا يمكن إلغاء الطلب.</p>}
     </div>
   );
 }
@@ -107,14 +107,14 @@ export function RedeliveryPanel({
   };
   return (
     <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
-      <h2 className="text-xl text-brand">محاولة توصيل تانية</h2>
+      <h2 className="text-xl text-brand">محاولة توصيل ثانية</h2>
       {status === "delivery_failed" && (
         <form action={(f) => start(async () => done(await redeliverAction(id, f)))} className="mt-3 space-y-3 text-sm">
           <div className="flex flex-wrap gap-2">
             {(
               [
-                ["same_day", "نفس اليوم (ببلاش)"],
-                ["other_day", "يوم تاني (برسوم)"],
+                ["same_day", "نفس اليوم (مجاناً)"],
+                ["other_day", "يوم آخر (برسوم)"],
               ] as const
             ).map(([v, label]) => (
               <label key={v} className={`chip cursor-pointer ${mode === v ? "border-brand bg-brand-soft text-brand" : ""}`}>
@@ -135,9 +135,9 @@ export function RedeliveryPanel({
             </div>
           )}
           <button disabled={pending} className="btn-primary btn-sm">
-            {pending ? "لحظة…" : mode === "same_day" ? "← خرج للتوصيل تاني" : "سجّلي الميعاد الجديد"}
+            {pending ? "لحظة…" : mode === "same_day" ? "← خرج للتوصيل مرة أخرى" : "تسجيل الموعد الجديد"}
           </button>
-          {mode === "other_day" && <p className="text-xs text-muted">الرسوم بتتزود على إجمالي الطلب، والطلب بيرجع «جاهز» لحد اليوم ده.</p>}
+          {mode === "other_day" && <p className="text-xs text-muted">تُضاف الرسوم إلى إجمالي الطلب، ويعود الطلب إلى «جاهز» حتى ذلك اليوم.</p>}
         </form>
       )}
       {redeliveries.length > 0 && (
@@ -146,7 +146,7 @@ export function RedeliveryPanel({
             <li key={r.at} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
               <span className="tabular">{r.date} · رسوم {r.fee.toLocaleString("en-US")} ج.م</span>
               {r.paidAt ? (
-                <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{r.fee ? "اتدفعت" : "ببلاش"}</span>
+                <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{r.fee ? "مدفوعة" : "مجاناً"}</span>
               ) : (
                 <button
                   type="button"
@@ -154,7 +154,7 @@ export function RedeliveryPanel({
                   onClick={() => start(async () => done(await markRedeliveryPaid(id, i)))}
                   className="btn btn-sm bg-success text-white"
                 >
-                  ✓ العميل دفع
+                  ✓ دفع العميل
                 </button>
               )}
             </li>
@@ -201,7 +201,7 @@ export function PaymentPanel({
       {status === "awaiting_confirmation" && (
         <div className="flex flex-wrap gap-2">
           <button disabled={pending} onClick={() => start(() => confirmPayment(id))} className="btn btn-sm bg-success text-white">
-            ✓ المبلغ وصل، أكّد
+            ✓ وصل المبلغ، تأكيد
           </button>
           <button disabled={pending} onClick={() => setRejecting((v) => !v)} className="btn-outline btn-sm text-brand">
             رفض
@@ -210,8 +210,8 @@ export function PaymentPanel({
       )}
       {rejecting && (
         <form action={(f) => start(() => rejectPayment(id, f).then(() => setRejecting(false)))} className="flex gap-2">
-          <input name="reason" className="field h-10" placeholder="السبب: المبلغ ناقص / التحويل مش موجود" />
-          <button className="btn btn-sm shrink-0 bg-brand text-white">ابعت</button>
+          <input name="reason" className="field h-10" placeholder="السبب: المبلغ ناقص / التحويل غير موجود" />
+          <button className="btn btn-sm shrink-0 bg-brand text-white">إرسال</button>
         </form>
       )}
     </div>

@@ -3,14 +3,14 @@
 import type { OrderRecord, OrderStatus, PaymentStatus } from "./db/types";
 
 export const statusLabel: Record<OrderStatus, string> = {
-  awaiting_payment: "مستني الدفع",
+  awaiting_payment: "بانتظار الدفع",
   new: "جديد",
-  awaiting_design_approval: "مستني موافقة التصميم",
-  preparing: "بيتجهز",
+  awaiting_design_approval: "بانتظار موافقة التصميم",
+  preparing: "قيد التجهيز",
   ready: "جاهز",
   out_for_delivery: "خرج للتوصيل",
-  delivery_failed: "التوصيل ماتمش",
-  delivered: "اتسلم",
+  delivery_failed: "تعذّر التوصيل",
+  delivered: "تم التسليم",
   cancelled: "ملغي",
 };
 
@@ -27,11 +27,11 @@ export const statusTone: Record<OrderStatus, string> = {
 };
 
 export const paymentLabel: Record<PaymentStatus, string> = {
-  awaiting_proof: "مستني صورة التحويل",
-  awaiting_confirmation: "مستني تأكيدك",
+  awaiting_proof: "بانتظار صورة التحويل",
+  awaiting_confirmation: "بانتظار تأكيدك",
   confirmed: "مدفوع",
-  rejected: "التحويل اترفض",
-  cod: "كاش عند الاستلام",
+  rejected: "رُفض التحويل",
+  cod: "الدفع عند الاستلام",
 };
 
 /**
@@ -69,14 +69,14 @@ export function waMessages(o: OrderRecord, orderUrl: string) {
   return {
     confirmed: en
       ? `Hi ${name}! Your payment for order #${o.number} is confirmed and we're preparing it now. Track it here: ${orderUrl}`
-      : `أهلاً ${name}! الدفع بتاع طلب رقم #${o.number} اتأكد، وبنجهزه دلوقتي. تقدر تتابعه من هنا: ${orderUrl}`,
+      : `أهلاً ${name}! تم تأكيد الدفع للطلب رقم #${o.number}، ونجهّزه الآن. يمكنك متابعته من هنا: ${orderUrl}`,
     rejected: en
       ? `Hi ${name}, we couldn't confirm the transfer for order #${o.number} (${o.paymentRejectionReason ?? ""}). You can upload it again here: ${orderUrl}`
-      : `أهلاً ${name}، مقدرناش نأكد تحويل طلب رقم #${o.number} (${o.paymentRejectionReason ?? ""}). تقدر ترفعه تاني من هنا: ${orderUrl}`,
+      : `أهلاً ${name}، تعذّر تأكيد التحويل للطلب رقم #${o.number} (${o.paymentRejectionReason ?? ""}). يمكنك رفعه مرة أخرى من هنا: ${orderUrl}`,
     ready: en
       ? `Hi ${name}! Order #${o.number} is wrapped and ready. Here's a photo before it goes out 🎁`
-      : `أهلاً ${name}! طلب رقم #${o.number} اتغلف وجاهز، ودي صورته قبل ما يخرج 🎁`,
-    out: en ? `Order #${o.number} is out for delivery now!` : `طلب رقم #${o.number} خرج للتوصيل دلوقتي!`,
-    delivered: en ? `Order #${o.number} was delivered 💝 Here's the delivery photo.` : `طلب رقم #${o.number} اتسلم 💝 ودي صورة التسليم.`,
+      : `أهلاً ${name}! الطلب رقم #${o.number} مغلّف وجاهز، وهذه صورته قبل خروجه 🎁`,
+    out: en ? `Order #${o.number} is out for delivery now!` : `الطلب رقم #${o.number} خرج للتوصيل الآن!`,
+    delivered: en ? `Order #${o.number} was delivered 💝 Here's the delivery photo.` : `تم تسليم الطلب رقم #${o.number} 💝 وهذه صورة التسليم.`,
   };
 }

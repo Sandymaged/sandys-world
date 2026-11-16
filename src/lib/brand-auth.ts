@@ -74,10 +74,10 @@ function toAccount(u: any): BrandAccount | null {
 
 /** بيتأكد من الإيميل وكلمة السر، ولو الحساب حساب براند بيبدأ الجلسة */
 export async function signInBrand(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!brandAccountsAvailable()) return { ok: false, error: "حسابات البراندات لسه مش متفعلة" };
+  if (!brandAccountsAvailable()) return { ok: false, error: "حسابات العلامات التجارية غير مفعّلة بعد" };
   const { data, error } = await authClient().auth.signInWithPassword({ email, password });
   const account = !error ? toAccount(data.user) : null;
-  if (!account) return { ok: false, error: "الإيميل أو كلمة السر مش مظبوطين" };
+  if (!account) return { ok: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحين" };
   const exp = Date.now() + DAYS * 86_400_000;
   const payload = `${account.userId}.${exp}`;
   (await cookies()).set(COOKIE, `${payload}.${sign(payload)}`, {
@@ -131,15 +131,15 @@ export function tempPassword() {
 
 /** البراند بيغيّر كلمة السر: لازم القديمة تكون صح */
 export async function changeBrandPassword(s: BrandSession, current: string, next: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (next.length < 8) return { ok: false, error: "كلمة السر الجديدة لازم تكون 8 حروف أو أكتر" };
-  if (next === current) return { ok: false, error: "كلمة السر الجديدة لازم تختلف عن القديمة" };
+  if (next.length < 8) return { ok: false, error: "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف أو أكثر" };
+  if (next === current) return { ok: false, error: "يجب أن تختلف كلمة المرور الجديدة عن القديمة" };
   const { error } = await authClient().auth.signInWithPassword({ email: s.email, password: current });
-  if (error) return { ok: false, error: "كلمة السر الحالية مش مظبوطة" };
+  if (error) return { ok: false, error: "كلمة المرور الحالية غير صحيحة" };
   const { error: e2 } = await adminClient().auth.admin.updateUserById(s.userId, {
     password: next,
     app_metadata: { role: "brand", partner_id: s.partnerId, must_change_password: false },
   });
-  return e2 ? { ok: false, error: "مقدرناش نغيّر كلمة السر، جرّب تاني" } : { ok: true };
+  return e2 ? { ok: false, error: "تعذّر تغيير كلمة المرور، حاول مرة أخرى" } : { ok: true };
 }
 
 // ───────────── إدارة الحسابات من لوحة المتجر ─────────────
@@ -168,8 +168,8 @@ export async function createBrandAccount(partnerId: string, email: string): Prom
     app_metadata: { role: "brand", partner_id: partnerId, must_change_password: true },
   });
   if (error) {
-    if (/already|registered|exists/i.test(error.message)) return { ok: false, error: "الإيميل ده عليه حساب قبل كده" };
-    return { ok: false, error: `مقدرناش نعمل الحساب: ${error.message}` };
+    if (/already|registered|exists/i.test(error.message)) return { ok: false, error: "هذا البريد الإلكتروني مسجّل بحساب بالفعل" };
+    return { ok: false, error: `تعذّر إنشاء الحساب: ${error.message}` };
   }
   return { ok: true, password };
 }
@@ -177,18 +177,18 @@ export async function createBrandAccount(partnerId: string, email: string): Prom
 export async function resetBrandPassword(userId: string): Promise<{ ok: true; password: string } | { ok: false; error: string }> {
   const { data, error } = await adminClient().auth.admin.getUserById(userId);
   const a = !error ? toAccount(data.user) : null;
-  if (!a) return { ok: false, error: "الحساب ده مش موجود" };
+  if (!a) return { ok: false, error: "هذا الحساب غير موجود" };
   const password = tempPassword();
   const { error: e2 } = await adminClient().auth.admin.updateUserById(userId, {
     password,
     app_metadata: { role: "brand", partner_id: a.partnerId, must_change_password: true },
   });
-  return e2 ? { ok: false, error: "مقدرناش نغيّر كلمة السر" } : { ok: true, password };
+  return e2 ? { ok: false, error: "تعذّر تغيير كلمة المرور" } : { ok: true, password };
 }
 
 export async function deleteBrandAccount(userId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const { data, error } = await adminClient().auth.admin.getUserById(userId);
-  if (error || !toAccount(data.user)) return { ok: false, error: "الحساب ده مش موجود" };
+  if (error || !toAccount(data.user)) return { ok: false, error: "هذا الحساب غير موجود" };
   const { error: e2 } = await adminClient().auth.admin.deleteUser(userId);
-  return e2 ? { ok: false, error: "مقدرناش نمسح الحساب" } : { ok: true };
+  return e2 ? { ok: false, error: "تعذّر حذف الحساب" } : { ok: true };
 }

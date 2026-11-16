@@ -21,7 +21,7 @@ export async function adminLogin(_: unknown, form: FormData): Promise<{ error: s
   if (!(await checkLogin(user, pass))) {
     // تأخير بسيط عشان محدش يجرّب كلمات سر كتير ورا بعض بسرعة
     await new Promise((r) => setTimeout(r, 800));
-    return { error: "اسم المستخدم أو كلمة السر غلط" };
+    return { error: "اسم المستخدم أو كلمة المرور غير صحيحة" };
   }
   await startSession();
   redirect("/admin");
@@ -35,14 +35,14 @@ export async function changeAdminAccount(f: FormData): Promise<{ ok: true } | { 
   const password = String(f.get("password") ?? "");
   const confirm = String(f.get("confirm") ?? "");
   const info = await adminAccountInfo();
-  if (!(await checkLogin(info.username, current))) return { ok: false, error: "كلمة السر الحالية غلط" };
-  if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) return { ok: false, error: "اسم المستخدم من 3 لـ 30 حرف إنجليزي أو رقم (ومسموح . _ -)" };
-  if (password.length < 8) return { ok: false, error: "كلمة السر الجديدة لازم تكون 8 حروف على الأقل" };
-  if (password !== confirm) return { ok: false, error: "تأكيد كلمة السر مش زي كلمة السر" };
+  if (!(await checkLogin(info.username, current))) return { ok: false, error: "كلمة المرور الحالية غير صحيحة" };
+  if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) return { ok: false, error: "اسم المستخدم من 3 إلى 30 حرفاً إنجليزياً أو رقماً (مسموح بـ . _ -)" };
+  if (password.length < 8) return { ok: false, error: "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل" };
+  if (password !== confirm) return { ok: false, error: "تأكيد كلمة المرور لا يطابق كلمة المرور" };
   try {
     await setAdminAccount(username, password);
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   // الجلسات القديمة (أي جهاز تاني) بتقفل، والجهاز ده بيفضل داخل بجلسة جديدة
   await startSession();
@@ -63,19 +63,19 @@ const allowed: OrderStatus[] = ["new", "awaiting_design_approval", "preparing", 
  */
 export async function setOrderStatus(id: string, status: OrderStatus, note?: string): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireAdmin();
-  if (!allowed.includes(status)) return { ok: false, error: "الحالة دي مش مسموحة" };
+  if (!allowed.includes(status)) return { ok: false, error: "هذه الحالة غير مسموحة" };
   const db = repo();
   const order = await db.getById(id);
-  if (!order) return { ok: false, error: "الأوردر مش موجود" };
+  if (!order) return { ok: false, error: "الطلب غير موجود" };
   if (order.status === status) return { ok: true };
-  if (status === "cancelled" && !cancellable.includes(order.status)) return { ok: false, error: "التجهيز بدأ، فالطلب مينفعش يتلغي" };
+  if (status === "cancelled" && !cancellable.includes(order.status)) return { ok: false, error: "بدأ التجهيز، لذا لا يمكن إلغاء الطلب" };
 
   let patch: Partial<typeof order> = { status };
   if (status === "preparing" && order.stockTaken === false) {
     const r = await takeStock(orderStockLines(order.gifts));
     if (!r.ok) {
       const name = order.gifts.flatMap((g) => g.items).find((it) => it.productId === r.productId)?.name ?? "منتج";
-      return { ok: false, error: `المخزون مش كفاية لـ «${name}». زوّدي العدد أو كلّمي العميل قبل ما الطلب يبدأ يتجهز.` };
+      return { ok: false, error: `المخزون غير كافٍ لـ «${name}». زِد الكمية أو تواصل مع العميل قبل بدء تجهيز الطلب.` };
     }
     patch = { status, stockTaken: true };
     updateTag("catalog");
@@ -104,11 +104,11 @@ export async function redeliverAction(id: string, f: FormData): Promise<{ ok: tr
   await requireAdmin();
   const db = repo();
   const order = await db.getById(id);
-  if (!order) return { ok: false, error: "الأوردر مش موجود" };
-  if (order.status !== "delivery_failed") return { ok: false, error: "المحاولة التانية بتتسجل بس لما التوصيل مايتمش" };
+  if (!order) return { ok: false, error: "الطلب غير موجود" };
+  if (order.status !== "delivery_failed") return { ok: false, error: "تُسجَّل المحاولة الثانية فقط عند تعذّر التوصيل" };
 
   if (f.get("mode") === "same_day") {
-    await db.update(id, { status: "out_for_delivery" }, { status: "out_for_delivery", note: "محاولة تانية في نفس اليوم (ببلاش)", by: "admin" });
+    await db.update(id, { status: "out_for_delivery" }, { status: "out_for_delivery", note: "محاولة ثانية في اليوم نفسه (مجاناً)", by: "admin" });
     revalidatePath("/[lang]/admin", "layout");
     return { ok: true };
   }
@@ -118,11 +118,11 @@ export async function redeliverAction(id: string, f: FormData): Promise<{ ok: tr
   const period = String(f.get("period") ?? "") as DeliveryPeriod;
   const fee = Number(toLatinDigits(String(f.get("fee") ?? "")).trim());
   const today = cairoNow().date;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "اختاري اليوم" };
-  if (date <= today) return { ok: false, error: "اليوم لازم يكون بعد النهارده (نفس اليوم ببلاش)" };
-  if (!settings.periods.some((p) => p.id === period)) return { ok: false, error: "اختاري الفترة" };
-  if (!Number.isFinite(fee) || fee < 0 || fee > 5000) return { ok: false, error: "اكتبي رسوم التوصيل بالأرقام" };
-  if (!(await db.reserveSlot(date, period, settings.defaultSlotCapacity))) return { ok: false, error: "الفترة دي اتملت، اختاري فترة أو يوم تاني" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "اختر اليوم" };
+  if (date <= today) return { ok: false, error: "يجب أن يكون اليوم بعد اليوم الحالي (اليوم نفسه مجاناً)" };
+  if (!settings.periods.some((p) => p.id === period)) return { ok: false, error: "اختر الفترة" };
+  if (!Number.isFinite(fee) || fee < 0 || fee > 5000) return { ok: false, error: "أدخل رسوم التوصيل بالأرقام" };
+  if (!(await db.reserveSlot(date, period, settings.defaultSlotCapacity))) return { ok: false, error: "هذه الفترة ممتلئة، اختر فترة أو يوماً آخر" };
 
   const r: Redelivery = { at: new Date().toISOString(), date, period, fee: Math.round(fee), paidAt: fee > 0 ? null : new Date().toISOString() };
   const gifts = order.gifts.map((g, i) => ({
@@ -135,7 +135,7 @@ export async function redeliverAction(id: string, f: FormData): Promise<{ ok: tr
   await db.update(
     id,
     { gifts, totals, status: "ready" },
-    { status: "ready", note: `التوصيل اتأجل لـ ${formatDay(date)} (${periodLabel(period, settings)})${r.fee ? `، برسوم توصيل ${r.fee} ج.م` : " ببلاش"}`, by: "admin" },
+    { status: "ready", note: `تأجّل التوصيل إلى ${formatDay(date)} (${periodLabel(period, settings)})${r.fee ? `، برسوم توصيل ${r.fee} ج.م` : " مجاناً"}`, by: "admin" },
   );
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
@@ -147,11 +147,11 @@ export async function markRedeliveryPaid(id: string, index: number): Promise<{ o
   const db = repo();
   const order = await db.getById(id);
   const list = order?.gifts[0]?.redeliveries ?? [];
-  if (!order || !list[index]) return { ok: false, error: "مش موجودة" };
+  if (!order || !list[index]) return { ok: false, error: "غير موجودة" };
   if (list[index].paidAt) return { ok: true };
   const updated = list.map((r, i) => (i === index ? { ...r, paidAt: new Date().toISOString() } : r));
   const gifts = order.gifts.map((g, i) => (i === 0 ? { ...g, redeliveries: updated } : g));
-  await db.update(id, { gifts }, { note: `رسوم التوصيل التاني (${list[index].fee} ج.م) اتدفعت`, by: "admin" });
+  await db.update(id, { gifts }, { note: `تم دفع رسوم التوصيل الثاني (${list[index].fee} ج.م)`, by: "admin" });
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
 }
@@ -190,7 +190,7 @@ export async function confirmPayment(id: string) {
       status,
       ...(giftCards.length ? { giftCards } : {}),
     },
-    { status, note: codes ? `الدفع اتأكد وكروت الهدايا اتعملت: ${codes}` : "الدفع اتأكد", by: "admin" },
+    { status, note: codes ? `تم تأكيد الدفع وإنشاء بطاقات الهدايا: ${codes}` : "تم تأكيد الدفع", by: "admin" },
   );
   revalidatePath("/[lang]/admin", "layout");
 }
@@ -204,17 +204,17 @@ export async function setGiftCardSent(id: string, code: string, sent: boolean) {
   if (!order || !card || Boolean(card.sentAt) === sent) return;
   const giftCards = order.giftCards!.map((c) => (c.code === code ? { ...c, sentAt: sent ? new Date().toISOString() : null } : c));
   const to = card.asGift ? card.toName : "المشتري";
-  await db.update(id, { giftCards }, { note: sent ? `كارت ${code} اتبعت لـ ${to} على واتساب` : `كارت ${code}: اترجع «لسه ماتبعتش»`, by: "admin" });
+  await db.update(id, { giftCards }, { note: sent ? `أُرسلت البطاقة ${code} إلى ${to} على واتساب` : `البطاقة ${code}: أُعيدت إلى «لم تُرسل بعد»`, by: "admin" });
   revalidatePath("/[lang]/admin", "layout");
 }
 
 /** رفض التحويل مع سبب (FR-64): العميل بيقدر يرفع إثبات تاني من نفس اللينك */
 export async function rejectPayment(id: string, form: FormData) {
   await requireAdmin();
-  const reason = String(form.get("reason") ?? "").trim() || "المبلغ موصلش";
+  const reason = String(form.get("reason") ?? "").trim() || "لم يصل المبلغ";
   const db = repo();
   const order = await db.getById(id);
   if (!order) return;
-  await db.update(id, { paymentStatus: "rejected", paymentRejectionReason: reason.slice(0, 200) }, { note: `التحويل اترفض: ${reason}`, by: "admin" });
+  await db.update(id, { paymentStatus: "rejected", paymentRejectionReason: reason.slice(0, 200) }, { note: `رُفض التحويل: ${reason}`, by: "admin" });
   revalidatePath("/[lang]/admin", "layout");
 }

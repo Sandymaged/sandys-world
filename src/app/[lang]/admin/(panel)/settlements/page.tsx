@@ -31,25 +31,25 @@ export default async function AdminSettlements() {
       <div>
         <h1 className="text-3xl text-brand">حسابات البراندات</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          نصيب البراند = سعر منتجاته ناقص عمولتك. العمولة بالشرايح كل شهر: أول (متوسط أسعاره × {FREE_PIECES}) ببلاش، وبعدها 10% ثم 15% ثم 20%. النصيب بيستحق بعد ما الطلب يتسلم للعميل بـ {HOLD_DAYS} أيام. حوّلي للبراند ودوسي «✓ حوّلت» جنبه، والحساب بيتصفّى لوحده.
+          نصيب العلامة التجارية = سعر منتجاتها ناقص عمولتك. العمولة بالشرائح كل شهر: أول (متوسط أسعارها × {FREE_PIECES}) مجاناً، وبعدها 10% ثم 15% ثم 20%. يُستحق النصيب بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام. حوّل للعلامة التجارية واضغط «✓ تم التحويل» بجانبها، ويُصفّى الحساب تلقائياً.
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="bg-blush p-4 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
-          <p className="text-sm text-ink-2">مطلوب تحوّليه دلوقتي</p>
+          <p className="text-sm text-ink-2">مطلوب تحويله الآن</p>
           <p className="tabular mt-1 font-heading text-4xl text-brand">{money(total)}</p>
         </div>
         <div className={`${card} p-4`}>
-          <p className="text-sm text-ink-2">هيستحق قريب (في مدة الاسترجاع أو لسه في الشغل)</p>
+          <p className="text-sm text-ink-2">يُستحق قريباً (في مدة الاسترجاع أو قيد التنفيذ)</p>
           <p className="tabular mt-1 font-heading text-4xl text-brand">{money(soon)}</p>
         </div>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-2xl text-ink">محتاجين تحويل ({toPay.length})</h2>
+        <h2 className="text-2xl text-ink">بحاجة إلى تحويل ({toPay.length})</h2>
         {toPay.length === 0 ? (
-          <Empty>كل البراندات حسابها صافي ✓</Empty>
+          <Empty>حسابات كل العلامات التجارية مسوّاة ✓</Empty>
         ) : (
           <ul className={`divide-y divide-dashed divide-line ${card}`}>
             {toPay.map((r) => (
@@ -57,13 +57,13 @@ export default async function AdminSettlements() {
                 <div className="min-w-40 flex-1">
                   <Link href={`/admin/settlements/${r.partnerId}`} className="font-semibold text-brand hover:underline">{r.name}</Link>
                   <p className="text-xs text-muted">
-                    {tierLine(r.progress)} · آخر تحويل: {r.s.lastPaidAt ? day(r.s.lastPaidAt) : "لسه"}
-                    {r.s.holding + r.s.pending > 0 && <> · هيستحق بعدين {money(r.s.holding + r.s.pending)}</>}
+                    {tierLine(r.progress)} · آخر تحويل: {r.s.lastPaidAt ? day(r.s.lastPaidAt) : "لا يوجد"}
+                    {r.s.holding + r.s.pending > 0 && <> · يُستحق لاحقاً {money(r.s.holding + r.s.pending)}</>}
                   </p>
                 </div>
                 <p className="tabular font-heading text-3xl text-brand">{money(r.s.balance)}</p>
-                <ActionForm action={payBalanceAction.bind(null, r.partnerId)} submitLabel="✓ حوّلت" doneLabel="اتسجل ✓" className="flex flex-wrap items-center gap-2">
-                  <input name="method" aria-label="حوّلتي إزاي" placeholder="إنستاباي، كاش…" className="field h-10 w-36 text-sm" />
+                <ActionForm action={payBalanceAction.bind(null, r.partnerId)} submitLabel="✓ تم التحويل" doneLabel="تم التسجيل ✓" className="flex flex-wrap items-center gap-2">
+                  <input name="method" aria-label="طريقة التحويل" placeholder="إنستاباي، نقداً…" className="field h-10 w-36 text-sm" />
                 </ActionForm>
               </li>
             ))}
@@ -73,14 +73,14 @@ export default async function AdminSettlements() {
 
       {settled.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-2xl text-ink">حسابهم صافي</h2>
+          <h2 className="text-2xl text-ink">حساباتها مسوّاة</h2>
           <ul className={`divide-y divide-dashed divide-line ${card}`}>
             {settled.map((r) => (
               <li key={r.partnerId} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3 text-sm">
                 <Link href={`/admin/settlements/${r.partnerId}`} className="min-w-40 flex-1 font-semibold hover:text-brand">{r.name}</Link>
-                <span className="text-muted">اتحوّل له {money(r.s.paid)}{r.s.lastPaidAt && <> · آخر مرة {day(r.s.lastPaidAt)}</>}</span>
-                {r.s.holding + r.s.pending > 0 && <span className="text-ink-2">هيستحق بعدين {money(r.s.holding + r.s.pending)}</span>}
-                {r.s.balance < 0 && <span className="text-success">دافعة زيادة {money(-r.s.balance)}</span>}
+                <span className="text-muted">حُوِّل لها {money(r.s.paid)}{r.s.lastPaidAt && <> · آخر مرة {day(r.s.lastPaidAt)}</>}</span>
+                {r.s.holding + r.s.pending > 0 && <span className="text-ink-2">يُستحق لاحقاً {money(r.s.holding + r.s.pending)}</span>}
+                {r.s.balance < 0 && <span className="text-success">مدفوع زيادة {money(-r.s.balance)}</span>}
               </li>
             ))}
           </ul>

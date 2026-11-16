@@ -10,11 +10,11 @@ import { Icon, type IconName } from "../icons";
 /** التابات متقسمة مجموعات، وأي تاب جديد بيتضاف هنا بس */
 const groups: { title: string; items: { href: string; label: string; icon: IconName }[] }[] = [
   {
-    title: "الشغل اليومي",
+    title: "العمل اليومي",
     items: [
-      { href: "/admin", label: "النهارده", icon: "home" },
-      { href: "/admin/orders", label: "الأوردرات", icon: "bag" },
-      { href: "/admin/payments", label: "مدفوعات مستنية", icon: "wallet" },
+      { href: "/admin", label: "اليوم", icon: "home" },
+      { href: "/admin/orders", label: "الطلبات", icon: "bag" },
+      { href: "/admin/payments", label: "مدفوعات معلّقة", icon: "wallet" },
       { href: "/admin/today", label: "التجهيز والتوصيل", icon: "truck" },
     ],
   },
@@ -23,14 +23,14 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
     items: [
       { href: "/admin/catalog/products", label: "المنتجات", icon: "gift" },
       { href: "/admin/catalog/brands", label: "البراندات", icon: "store" },
-      { href: "/admin/catalog/kits", label: "الكيتات", icon: "layers" },
-      { href: "/admin/catalog/packages", label: "الباكدجات", icon: "box" },
-      { href: "/admin/packaging", label: "البوكسات والتغليف", icon: "gift" },
+      { href: "/admin/catalog/kits", label: "الأطقم", icon: "layers" },
+      { href: "/admin/catalog/packages", label: "الباقات", icon: "box" },
+      { href: "/admin/packaging", label: "الصناديق والتغليف", icon: "gift" },
       { href: "/admin/catalog/occasions", label: "المناسبات", icon: "calendar" },
       { href: "/admin/catalog/seasons", label: "المواسم", icon: "sparkle" },
       { href: "/admin/zones", label: "مناطق التوصيل", icon: "route" },
       { href: "/admin/coupons", label: "أكواد الخصم", icon: "tag" },
-      { href: "/admin/catalog/group-discounts", label: "خصم الجروبات", icon: "users" },
+      { href: "/admin/catalog/group-discounts", label: "خصم المجموعات", icon: "users" },
     ],
   },
   {
@@ -38,7 +38,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
     items: [
       { href: "/admin/reports", label: "التقارير", icon: "chart" },
       { href: "/admin/settlements", label: "حسابات البراندات", icon: "handshake" },
-      { href: "/admin/expenses", label: "المصاريف", icon: "receipt" },
+      { href: "/admin/expenses", label: "المصروفات", icon: "receipt" },
       { href: "/admin/costs", label: "التكاليف", icon: "receipt" },
       { href: "/admin/payment", label: "الدفع والتواصل", icon: "wallet" },
     ],
@@ -47,7 +47,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
     title: "الموقع",
     items: [
       { href: "/admin/settings", label: "إعدادات الموقع", icon: "sliders" },
-      { href: "/admin/users", label: "المستخدمين", icon: "users" },
+      { href: "/admin/users", label: "المستخدمون", icon: "users" },
       { href: "/admin/account", label: "حسابي", icon: "key" },
     ],
   },
@@ -104,7 +104,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         className="flex items-center justify-center gap-2 rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink-2 hover:border-brand hover:text-brand"
       >
         <Icon name="external" className="size-4" />
-        شوف الموقع
+        عرض الموقع
       </a>
       <div className="scroll-thin min-h-0 flex-1 overflow-y-auto">
         <NavLinks onNavigate={onNavigate} />
@@ -112,7 +112,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
       <form action={adminLogout} className="border-t border-line pt-4">
         <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-muted hover:bg-brand-soft hover:text-brand">
           <Icon name="logout" className="size-5" />
-          خروج
+          تسجيل الخروج
         </button>
       </form>
     </div>
@@ -134,16 +134,16 @@ export function AdminNav() {
 
       {/* الموبايل */}
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-bg px-4 lg:hidden print:hidden">
-        <button type="button" onClick={() => setOpen(true)} aria-label="افتح القايمة" aria-expanded={open} className="grid size-10 place-items-center rounded-xl text-ink hover:bg-brand-soft">
+        <button type="button" onClick={() => setOpen(true)} aria-label="فتح القائمة" aria-expanded={open} className="grid size-10 place-items-center rounded-xl text-ink hover:bg-brand-soft">
           <Icon name="menu" className="size-6" />
         </button>
         <Brand />
       </header>
       {open && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="قايمة لوحة التحكم">
-          <button type="button" aria-label="اقفل القايمة" onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/40" />
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="قائمة لوحة التحكم">
+          <button type="button" aria-label="إغلاق القائمة" onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/40" />
           <aside className="absolute inset-y-0 start-0 w-72 max-w-[85%] animate-fade-up bg-bg shadow-2xl">
-            <button type="button" onClick={() => setOpen(false)} aria-label="اقفل القايمة" className="absolute top-4 end-3 grid size-9 place-items-center rounded-xl text-muted hover:bg-brand-soft">
+            <button type="button" onClick={() => setOpen(false)} aria-label="إغلاق القائمة" className="absolute top-4 end-3 grid size-9 place-items-center rounded-xl text-muted hover:bg-brand-soft">
               <Icon name="close" className="size-5" />
             </button>
             <SidebarBody onNavigate={() => setOpen(false)} />

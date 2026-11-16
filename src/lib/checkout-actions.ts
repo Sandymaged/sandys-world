@@ -235,7 +235,7 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
   } catch (e) {
     console.error("createOrder failed", e);
     await undo();
-    return { ok: false, errors: [t("حصلت مشكلة وإحنا بنسجل الطلب. جرّب تاني بعد شوية، أو كلمنا على واتساب.")] };
+    return { ok: false, errors: [t("حدثت مشكلة أثناء تسجيل الطلب. حاول مرة أخرى بعد قليل، أو تواصل معنا على واتساب.")] };
   }
   // قاعدة البيانات لسه من غير عمود stock_taken: المخزون بيتخصم دلوقتي زي الأول
   if (order.stockTaken !== false) {

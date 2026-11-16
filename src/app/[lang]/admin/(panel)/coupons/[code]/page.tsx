@@ -25,7 +25,7 @@ export default async function AdminCoupon({ params }: PageProps<"/[lang]/admin/c
       </div>
       <CatalogForm action={saveCoupon.bind(null, c?.code ?? null)} backTo={back}>
         <Section title="الكود">
-          {!c && <Field label="الكود" name="code" dir="ltr" required placeholder="EID20" hint="حروف إنجليزي وأرقام بس، من 3 لـ 20. العميل بيكتبه في صفحة الدفع." />}
+          {!c && <Field label="الكود" name="code" dir="ltr" required placeholder="EID20" hint="حروف إنجليزية وأرقام فقط، من 3 إلى 20. يكتبه العميل في صفحة الدفع." />}
           <Row>
             <Select
               label="نوع الخصم"
@@ -39,17 +39,17 @@ export default async function AdminCoupon({ params }: PageProps<"/[lang]/admin/c
             <Field label="القيمة" name="value" type="number" defaultValue={c?.value ?? ""} required placeholder="10" />
           </Row>
           <Row>
-            <Field label="أقل طلب يتطبق عليه (ج.م)" name="minOrder" type="number" defaultValue={c?.minOrder || ""} placeholder="0" hint="فاضي = أي طلب." />
-            <Field label="آخر يوم للكود" name="expiresAt" type="date" defaultValue={cairoDay(c?.expiresAt)} hint="فاضي = مالوش آخر." />
+            <Field label="أقل قيمة طلب يُطبَّق عليها (ج.م)" name="minOrder" type="number" defaultValue={c?.minOrder || ""} placeholder="0" hint="فارغ = أي طلب." />
+            <Field label="آخر يوم للكود" name="expiresAt" type="date" defaultValue={cairoDay(c?.expiresAt)} hint="فارغ = بلا تاريخ انتهاء." />
           </Row>
           <Field
             label="أقصى عدد مرات استخدام"
             name="maxUses"
             type="number"
             defaultValue={c?.maxUses ?? ""}
-            hint={c ? `اتستخدم ${c.used} مرة لحد دلوقتي. فاضي = من غير حد.` : "فاضي = من غير حد."}
+            hint={c ? `استُخدم ${c.used} مرة حتى الآن. فارغ = بلا حد.` : "فارغ = بلا حد."}
           />
-          <Check label="الكود شغال" name="isActive" defaultChecked={c?.isActive ?? true} />
+          <Check label="الكود مفعّل" name="isActive" defaultChecked={c?.isActive ?? true} />
         </Section>
       </CatalogForm>
       {c && <DeleteButton action={deleteCoupon.bind(null, c.code)} backTo={back} what="الكود" />}

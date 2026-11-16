@@ -46,9 +46,9 @@ export async function markCustomerRead(token: string) {
 export async function sendStoreMessage(orderId: string, body: string): Promise<ChatResult> {
   await requireAdmin();
   const text = body.trim().slice(0, MAX_MESSAGE);
-  if (!text) return { ok: false, error: "اكتبي الرسالة" };
+  if (!text) return { ok: false, error: "اكتب الرسالة" };
   const ok = await append(orderId, "store", text, { storeReadAt: new Date().toISOString() });
-  if (!ok) return { ok: false, error: "الرسالة ماتبعتتش" };
+  if (!ok) return { ok: false, error: "لم تُرسل الرسالة" };
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
 }

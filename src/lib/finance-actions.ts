@@ -17,12 +17,12 @@ export async function addExpenseAction(f: FormData): Promise<FinanceResult> {
   const amount = num(f, "amount");
   const spentOn = str(f, "spentOn") || new Date().toISOString().slice(0, 10);
   const category = str(f, "category", 40) || "تاني";
-  if (!(amount > 0)) return { ok: false, error: "اكتبي المبلغ" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(spentOn)) return { ok: false, error: "التاريخ مش مظبوط" };
+  if (!(amount > 0)) return { ok: false, error: "أدخل المبلغ" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(spentOn)) return { ok: false, error: "التاريخ غير صحيح" };
   try {
     await addExpense({ spentOn, category, amount: Math.round(amount * 100) / 100, note: str(f, "note", 300) });
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
@@ -33,7 +33,7 @@ export async function deleteExpenseAction(id: string): Promise<FinanceResult> {
   try {
     await deleteExpense(id);
   } catch (e) {
-    return { ok: false, error: `ماتمسحش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحذف: ${e instanceof Error ? e.message : ""}` };
   }
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
@@ -64,7 +64,7 @@ export async function saveCostsAction(f: FormData): Promise<FinanceResult> {
     });
     await updateZones(changes);
   } catch (e) {
-    return { ok: false, error: `ماتحفظش: ${e instanceof Error ? e.message : ""}` };
+    return { ok: false, error: `تعذّر الحفظ: ${e instanceof Error ? e.message : ""}` };
   }
   if (changes.length) updateTag("catalog");
   revalidatePath("/[lang]/admin", "layout");
@@ -72,7 +72,7 @@ export async function saveCostsAction(f: FormData): Promise<FinanceResult> {
 }
 
 const refundKinds: Record<OrderRefund["kind"], string> = {
-  refund: "فلوس رجعت للعميل",
+  refund: "مبلغ مُسترد للعميل",
   compensation: "تعويض",
   return: "مرتجع",
 };
@@ -83,12 +83,12 @@ export async function addRefundAction(orderId: string, f: FormData): Promise<Fin
   const amount = num(f, "amount");
   const kind = (str(f, "kind") as OrderRefund["kind"]) || "refund";
   const reason = str(f, "reason", 300);
-  if (!(amount > 0)) return { ok: false, error: "اكتبي المبلغ" };
-  if (!refundKinds[kind]) return { ok: false, error: "اختاري النوع" };
-  if (!reason) return { ok: false, error: "اكتبي السبب" };
+  if (!(amount > 0)) return { ok: false, error: "أدخل المبلغ" };
+  if (!refundKinds[kind]) return { ok: false, error: "اختر النوع" };
+  if (!reason) return { ok: false, error: "اكتب السبب" };
   const db = repo();
   const order = await db.getById(orderId);
-  if (!order) return { ok: false, error: "الأوردر مش موجود" };
+  if (!order) return { ok: false, error: "الطلب غير موجود" };
   const refund: OrderRefund = { at: new Date().toISOString(), kind, amount: Math.round(amount), reason };
   await db.update(orderId, { refunds: [...(order.refunds ?? []), refund] }, { note: `${refundKinds[kind]} ${refund.amount} ج.م: ${reason}`, by: "admin" });
   revalidatePath("/[lang]/admin", "layout");

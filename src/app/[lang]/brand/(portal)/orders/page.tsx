@@ -17,14 +17,14 @@ export default async function BrandOrders() {
       <div>
         <h1 className="text-3xl text-brand">الطلبات</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          بتشوف منتجاتك بس في كل طلب. أي طلب بيوصلك لازم يتجهز ويتسلّم للمتجر قبل ميعاد التوصيل، وبعدها دوس «سلّمت للمتجر». عشان كده خلّي العدد اللي عندك في «منتجاتي» مظبوط أول بأول، وأول ما يخلص المنتج بيتقفل «خلص» لوحده.
+          تظهر لك منتجاتك فقط في كل طلب. كل طلب يصلك يجب تجهيزه وتسليمه للمتجر قبل موعد التوصيل، ثم اضغط «سلّمت للمتجر». لذلك حدّث الكمية المتوفرة لديك في «منتجاتي» أولاً بأول، وعند نفاد المنتج يُغلق تلقائياً بحالة «نفد».
         </p>
       </div>
       <section className="space-y-3">
-        <h2 className="text-2xl text-ink">في الشغل ({open.length})</h2>
+        <h2 className="text-2xl text-ink">قيد التنفيذ ({open.length})</h2>
         {open.length === 0 ? (
           <Box>
-            <p className="text-center text-muted">مفيش طلبات في الشغل دلوقتي.</p>
+            <p className="text-center text-muted">لا توجد طلبات قيد التنفيذ الآن.</p>
           </Box>
         ) : (
           open.map((o) => <BrandOrderCard key={o.id} o={o} />)
@@ -32,7 +32,7 @@ export default async function BrandOrders() {
       </section>
       {done.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-2xl text-ink">طلبات خلصت</h2>
+          <h2 className="text-2xl text-ink">طلبات منتهية</h2>
           {done.map((o) => (
             <BrandOrderCard key={o.id} o={o} />
           ))}

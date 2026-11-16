@@ -8,7 +8,7 @@ import { loadCatalogData } from "@/lib/db/catalog-store";
 
 export const instant = false;
 
-export const metadata = { title: "كيت" };
+export const metadata = { title: "طقم" };
 
 /** كيت ثابت بسعر للفرد: كيتات الورش، وبوكسات العروسة والإشبينات */
 export default async function AdminKit({ params }: PageProps<"/[lang]/admin/catalog/kits/[id]">) {
@@ -22,8 +22,8 @@ export default async function AdminKit({ params }: PageProps<"/[lang]/admin/cata
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <Link href={back} className="text-sm text-muted hover:text-brand">← الكيتات</Link>
-        <h1 className="text-3xl text-brand">{k ? k.name : "كيت جديد"}</h1>
+        <Link href={back} className="text-sm text-muted hover:text-brand">← الأطقم</Link>
+        <h1 className="text-3xl text-brand">{k ? k.name : "طقم جديد"}</h1>
       </div>
       <CatalogForm action={saveKit.bind(null, k?.id ?? null)} backTo={back}>
         <Section title="النوع">
@@ -33,20 +33,20 @@ export default async function AdminKit({ params }: PageProps<"/[lang]/admin/cata
               name="category"
               defaultValue={k?.category ?? "workshop"}
               options={[
-                { value: "workshop", label: "ورشة مع الصحاب" },
-                { value: "bridal", label: "العروسة والإشبينات" },
+                { value: "workshop", label: "ورشة مع الأصدقاء" },
+                { value: "bridal", label: "العروس ووصيفاتها" },
               ]}
             />
             <Select
-              label="لمين (للعروسة بس)"
+              label="لمن (للعروس فقط)"
               name="role"
               defaultValue={k?.role ?? ""}
               options={[
                 { value: "", label: "—" },
-                { value: "bride", label: "العروسة" },
-                { value: "bridesmaid", label: "الإشبينات" },
-                { value: "mother", label: "أم العروسة" },
-                { value: "flower-girl", label: "الفلاور جيرل" },
+                { value: "bride", label: "العروس" },
+                { value: "bridesmaid", label: "الوصيفات" },
+                { value: "mother", label: "أم العروس" },
+                { value: "flower-girl", label: "حاملة الورد" },
               ]}
             />
           </Row>
@@ -54,18 +54,18 @@ export default async function AdminKit({ params }: PageProps<"/[lang]/admin/cata
 
         <Section title="الأساسي">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={k?.name} required />
-            <Field label="الاسم بالإنجليزي" name="nameEn" defaultValue={k?.en?.name} dir="ltr" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={k?.name} required />
+            <Field label="الاسم بالإنجليزية" name="nameEn" defaultValue={k?.en?.name} dir="ltr" />
           </Row>
           <Row>
-            <Field label="جملة قصيرة بالعربي" name="tagline" defaultValue={k?.tagline} placeholder="كل واحدة ترسم فرشتها على ذوقها" />
-            <Field label="جملة قصيرة بالإنجليزي" name="taglineEn" defaultValue={k?.en?.tagline} dir="ltr" />
+            <Field label="جملة قصيرة بالعربية" name="tagline" defaultValue={k?.tagline} placeholder="كل واحدة ترسم فرشاتها على ذوقها" />
+            <Field label="جملة قصيرة بالإنجليزية" name="taglineEn" defaultValue={k?.en?.tagline} dir="ltr" />
           </Row>
           <Row>
-            <TextArea label="الوصف بالعربي" name="description" defaultValue={k?.description} />
-            <TextArea label="الوصف بالإنجليزي" name="descriptionEn" defaultValue={k?.en?.description} dir="ltr" />
+            <TextArea label="الوصف بالعربية" name="description" defaultValue={k?.description} />
+            <TextArea label="الوصف بالإنجليزية" name="descriptionEn" defaultValue={k?.en?.description} dir="ltr" />
           </Row>
-          <Field label="الرابط (slug)" name="slug" defaultValue={k?.slug} dir="ltr" hint="لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
+          <Field label="الرابط (slug)" name="slug" defaultValue={k?.slug} dir="ltr" hint="إن تركته فارغاً يُنشأ من الاسم الإنجليزي." />
         </Section>
 
         <Section title="السعر والعدد">
@@ -74,19 +74,19 @@ export default async function AdminKit({ params }: PageProps<"/[lang]/admin/cata
             <Field label="مدة التجهيز (أيام)" name="prepDays" type="number" defaultValue={k?.prepDays ?? 3} />
           </Row>
           <Row>
-            <Field label="أقل عدد" name="minPeople" type="number" defaultValue={k?.minPeople ?? 3} hint="لبوكس شخص واحد (زي بوكس العروسة) خلي الأقل والأكبر 1" />
+            <Field label="أقل عدد" name="minPeople" type="number" defaultValue={k?.minPeople ?? 3} hint="لصندوق شخص واحد (مثل صندوق العروس) اجعل الأقل والأكبر 1" />
             <Field label="أكبر عدد" name="maxPeople" type="number" defaultValue={k?.maxPeople ?? 25} />
           </Row>
           <Row>
-            <Field label="مدة الورشة بالعربي" name="duration" defaultValue={k?.duration} placeholder="ساعة تقريباً" />
-            <Field label="مدة الورشة بالإنجليزي" name="durationEn" defaultValue={k?.en?.duration} dir="ltr" />
+            <Field label="مدة الورشة بالعربية" name="duration" defaultValue={k?.duration} placeholder="ساعة تقريباً" />
+            <Field label="مدة الورشة بالإنجليزية" name="durationEn" defaultValue={k?.en?.duration} dir="ltr" />
           </Row>
         </Section>
 
-        <Section title="المحتويات (كل حاجة في سطر)">
+        <Section title="المحتويات (كل عنصر في سطر)">
           <Row>
-            <TextArea label="بالعربي" name="contents" rows={7} defaultValue={k?.contents.join("\n")} />
-            <TextArea label="بالإنجليزي" name="contentsEn" rows={7} dir="ltr" defaultValue={k?.en?.contents?.join("\n")} />
+            <TextArea label="بالعربية" name="contents" rows={7} defaultValue={k?.contents.join("\n")} />
+            <TextArea label="بالإنجليزية" name="contentsEn" rows={7} dir="ltr" defaultValue={k?.en?.contents?.join("\n")} />
           </Row>
         </Section>
 
@@ -95,7 +95,7 @@ export default async function AdminKit({ params }: PageProps<"/[lang]/admin/cata
           <Check label="متاح للبيع" name="isAvailable" defaultChecked={k?.isAvailable ?? true} />
         </Section>
       </CatalogForm>
-      {k && <DeleteButton action={deleteKit.bind(null, k.id)} backTo={back} what="الكيت" />}
+      {k && <DeleteButton action={deleteKit.bind(null, k.id)} backTo={back} what="الطقم" />}
     </div>
   );
 }

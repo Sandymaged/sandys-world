@@ -17,12 +17,12 @@ import { allCombos, comboKey, comboStock, describeChoices, usesCombos } from "./
 export type PeriodId = "this-month" | "last-month" | "7d" | "30d" | "year" | "all";
 
 export const periods: { id: PeriodId; label: string }[] = [
-  { id: "this-month", label: "الشهر ده" },
-  { id: "last-month", label: "الشهر اللي فات" },
+  { id: "this-month", label: "هذا الشهر" },
+  { id: "last-month", label: "الشهر الماضي" },
   { id: "7d", label: "آخر ٧ أيام" },
-  { id: "30d", label: "آخر ٣٠ يوم" },
-  { id: "year", label: "السنة دي" },
-  { id: "all", label: "من الأول" },
+  { id: "30d", label: "آخر ٣٠ يوماً" },
+  { id: "year", label: "هذه السنة" },
+  { id: "all", label: "منذ البداية" },
 ];
 
 const addDays = (date: string, n: number) => {
@@ -285,7 +285,7 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
     income.commission += m.commission;
     const zoneId = o.gifts[0]?.recipient.zoneId ?? "";
     bump(zones, zoneId, i.zoneNames.get(zoneId) ?? o.gifts[0]?.recipient.zoneName ?? "—", 1);
-    bump(sources, o.source || "مش معروف", o.source || "مش معروف", 1);
+    bump(sources, o.source || "غير معروف", o.source || "غير معروف", 1);
     for (const g of o.gifts) {
       if (g.kind === "package" || g.kind === "kit") bump(packages, g.refId, g.title, 1);
       for (const it of g.items) {
@@ -319,8 +319,8 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
   const cancelled = inPeriod.filter((o) => o.status === "cancelled");
   const reasons = new Map<string, Ranked>();
   for (const o of cancelled) {
-    const note = [...o.history].reverse().find((h) => h.status === "cancelled")?.note ?? "من غير سبب";
-    const reason = /الدفع متأكدش/.test(note) ? "ما دفعش في المهلة" : note;
+    const note = [...o.history].reverse().find((h) => h.status === "cancelled")?.note ?? "بدون سبب";
+    const reason = /الدفع متأكدش|لم يُؤكَّد الدفع/.test(note) ? "لم يدفع في المهلة" : note;
     bump(reasons, reason, reason, 1);
   }
 
@@ -368,7 +368,7 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
     losses: {
       cancelledCount: cancelled.length,
       cancelledValue: cancelled.reduce((s, o) => s + o.totals.total, 0),
-      expiredCount: cancelled.filter((o) => o.history.some((h) => /الدفع متأكدش/.test(h.note ?? ""))).length,
+      expiredCount: cancelled.filter((o) => o.history.some((h) => /الدفع متأكدش|لم يُؤكَّد الدفع/.test(h.note ?? ""))).length,
       discounts: sold.reduce((s, o) => s + o.totals.discount, 0),
       refundsByKind,
       cancelReasons: top(reasons, 6),

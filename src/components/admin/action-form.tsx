@@ -9,7 +9,7 @@ type Result = { ok: true } | { ok: false; error: string };
 export function ActionForm({
   action,
   submitLabel,
-  doneLabel = "اتحفظ ✓",
+  doneLabel = "تم الحفظ ✓",
   resetOnSuccess = false,
   className = "space-y-4",
   children,

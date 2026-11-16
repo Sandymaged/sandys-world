@@ -31,7 +31,7 @@ export async function submitPaymentProof(token: string, locale: string, form: Fo
   await db.update(
     order.id,
     { paymentStatus: "awaiting_confirmation", transferReference: reference.slice(0, 64), proofFile: saved, paymentRejectionReason: null },
-    { note: "العميل رفع صورة التحويل" },
+    { note: "رفع العميل صورة التحويل" },
   );
   return { ok: true };
 }

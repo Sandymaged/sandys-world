@@ -11,6 +11,7 @@ import { Breadcrumbs } from "@/components/product-info";
 import { StickyNote } from "@/components/scrapbook";
 import { Link } from "@/i18n/client";
 import { getT } from "@/i18n/server";
+import { WrapNote } from "@/components/wrap-note";
 import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 
 export async function generateStaticParams() {
@@ -89,6 +90,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
 
       <section id="products" className="container-x scroll-mt-40 py-14">
         <SectionHeading title={t("منتجات {brand}", { brand: brand.name })} subtitle={t("تتبعت لوحدها أو تحطها في بوكس")} />
+        <WrapNote className="mb-6" />
         <Grid>
           {products.map((p) => (
             <ProductCard key={p.id} product={p} />

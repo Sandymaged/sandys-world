@@ -32,60 +32,60 @@ export default async function AdminProduct({ params }: PageProps<"/[lang]/admin/
       <CatalogForm action={save} backTo={back}>
         {p?.reviewStatus === "pending" && (
           <section className="space-y-3 bg-butter-soft p-5">
-            <h2 className="text-xl text-butter">البراند ضاف المنتج ده ومستني موافقتك</h2>
-            <p className="text-sm leading-6 text-butter">راجعي الصورة والسعر والوصف، وعلّمي الموافقة واحفظي. المنتج هيظهر على الموقع لو «متاح للبيع» متعلّم.</p>
-            <Check label="موافقة: اعرضي المنتج على الموقع" name="approve" defaultChecked={false} />
+            <h2 className="text-xl text-butter">أضافت العلامة التجارية هذا المنتج وهو بانتظار موافقتك</h2>
+            <p className="text-sm leading-6 text-butter">راجع الصورة والسعر والوصف، وحدد الموافقة ثم احفظ. سيظهر المنتج على الموقع إن كان «متاح للبيع» محدداً.</p>
+            <Check label="موافقة: عرض المنتج على الموقع" name="approve" defaultChecked={false} />
           </section>
         )}
         <Section title="الأساسي">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={p?.name} required />
-            <Field label="الاسم بالإنجليزي" name="nameEn" defaultValue={p?.en?.name} dir="ltr" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={p?.name} required />
+            <Field label="الاسم بالإنجليزية" name="nameEn" defaultValue={p?.en?.name} dir="ltr" />
           </Row>
           <Row>
-            <TextArea label="الوصف بالعربي" name="description" defaultValue={p?.description} />
-            <TextArea label="الوصف بالإنجليزي" name="descriptionEn" defaultValue={p?.en?.description} dir="ltr" />
+            <TextArea label="الوصف بالعربية" name="description" defaultValue={p?.description} />
+            <TextArea label="الوصف بالإنجليزية" name="descriptionEn" defaultValue={p?.en?.description} dir="ltr" />
           </Row>
           <PriceCostBrand price={p?.price} cost={p?.cost} partnerId={p?.partnerId} partners={d.partners.map((b) => ({ id: b.id, name: b.name }))} prepDays={p?.prepDays ?? 0} />
           <Row>
-            <Field label="التصنيف بالعربي" name="category" defaultValue={p?.category} placeholder="مجات، شموع، ورد…" />
-            <Field label="التصنيف بالإنجليزي" name="categoryEn" defaultValue={p?.en?.category} dir="ltr" />
+            <Field label="التصنيف بالعربية" name="category" defaultValue={p?.category} placeholder="مجات، شموع، ورد…" />
+            <Field label="التصنيف بالإنجليزية" name="categoryEn" defaultValue={p?.en?.category} dir="ltr" />
           </Row>
-          <Field label="الرابط (slug)" name="slug" defaultValue={p?.slug} dir="ltr" hint="بالإنجليزي من غير مسافات. لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
+          <Field label="الرابط (slug)" name="slug" defaultValue={p?.slug} dir="ltr" hint="بالإنجليزية دون مسافات. إن تركته فارغاً يُنشأ من الاسم الإنجليزي." />
         </Section>
 
         <Section title="الصور">
           <ProductImagesField current={p?.images ?? []} />
         </Section>
 
-        <Section title="مناسب لإيه ولمين (للتصفح ومساعد الهدايا)">
+        <Section title="لأي مناسبة ولمن (للتصفح ومساعد الهدايا)">
           <ChecksGroup label="المناسبات" name="occasions" options={opts.occasions} selected={p?.occasions ?? []} />
-          <ChecksGroup label="لمين" name="recipients" options={opts.recipients} selected={p?.recipients ?? []} />
-          <Field label="الاهتمامات" name="interests" defaultValue={p?.interests.join("، ")} hint="مفصولة بفاصلة: قهوة، ديكور، قراية" />
+          <ChecksGroup label="لمن" name="recipients" options={opts.recipients} selected={p?.recipients ?? []} />
+          <Field label="الاهتمامات" name="interests" defaultValue={p?.interests.join("، ")} hint="مفصولة بفاصلة: قهوة، ديكور، قراءة" />
         </Section>
 
-        <Section title="الألوان والمقاسات والريحة">
+        <Section title="الألوان والمقاسات والروائح">
           <OptionsEditor initial={p?.options ?? []} />
         </Section>
 
         <Section title="الإعدادات">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Check label="متاح للبيع (لو اتشال، المنتج وكل باكدج فيه بيختفوا)" name="isAvailable" defaultChecked={p ? p.reviewStatus === "pending" || p.isAvailable : true} />
-            <Check label="ينفع يتحط في بوكس" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
-            <Check label="إضافة على الباكدجات (ورد، بالونة…)" name="isAddon" defaultChecked={p?.isAddon ?? false} />
+            <Check label="متاح للبيع (إن أُلغي، يختفي المنتج وكل باقة تضمه)" name="isAvailable" defaultChecked={p ? p.reviewStatus === "pending" || p.isAvailable : true} />
+            <Check label="يمكن وضعه في صندوق" name="boxEligible" defaultChecked={p?.boxEligible ?? true} />
+            <Check label="إضافة على الباقات (ورد، بالون…)" name="isAddon" defaultChecked={p?.isAddon ?? false} />
           </div>
           <CustomizationFields
             defaultChecked={p?.isCustomizable ?? false}
             defaultMax={p?.customizationMaxChars ?? null}
             defaultKind={p ? (opts.productCustomization[p.id] ?? "text") : "text"}
-            hint="زي مج بالاسم، أو برواز بصورة. العميل بيكتب الكلام أو بيرفع الصورة في صفحة الدفع، وبنقوله ده وهو بيضيف المنتج للسلة. عدد الحروف على قد المساحة اللي على المنتج: مثلاً 15 للمج، وأكتر للكوشن."
+            hint="مثل مج بالاسم، أو برواز بصورة. يكتب العميل النص أو يرفع الصورة في صفحة الدفع، ونخبره بذلك عند إضافة المنتج إلى السلة. عدد الأحرف حسب المساحة المتاحة على المنتج: مثلاً 15 للمج، وأكثر للوسادة."
           />
           <Row>
             <StockField
               label="العدد في المخزن"
               defaultValue={p?.stock}
               hasOptions={Boolean(p?.options?.length)}
-              hint="اختياري. سيبيه فاضي لو مش عايزة تعدّي. لو كتبتيه بيقل لوحده مع كل طلب، وأول ما يخلص المنتج بيبان «خلص»."
+              hint="اختياري. اتركه فارغاً إن لم ترد العدّ. إن كتبته يقلّ تلقائياً مع كل طلب، وعند نفاده يظهر المنتج «نفد»."
             />
           </Row>
         </Section>

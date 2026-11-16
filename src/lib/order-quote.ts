@@ -153,7 +153,7 @@ export function quoteOrder(
       if (g.boxSizeId) {
         const allowed = sf.settings.packageBoxes?.[pkg.id] ?? [];
         const box = sf.boxSizes.find((b) => b.id === g.boxSizeId);
-        if (!box || !allowed.includes(box.id)) errors.push(t("{tag}: البوكس ده مبقاش متاح للباكدج", { tag }));
+        if (!box || !allowed.includes(box.id)) errors.push(t("{tag}: هذا الصندوق لم يعد متاحاً للباقة", { tag }));
         else basePrice += box.price;
       }
       const custom = new Map(g.lines.map((l) => [l.productId, l]));

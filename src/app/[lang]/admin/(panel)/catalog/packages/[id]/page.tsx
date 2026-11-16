@@ -10,7 +10,7 @@ import { loadStoreConfig } from "@/lib/store-config";
 
 export const instant = false;
 
-export const metadata = { title: "باكدج" };
+export const metadata = { title: "باقة" };
 
 /** إنشاء باكدج باختيار منتجاته، والنظام بيحسب التكلفة ويقترح سعر ويعرض الهامش (FR-111/112/113) */
 export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/catalog/packages/[id]">) {
@@ -25,18 +25,18 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <Link href={back} className="text-sm text-muted hover:text-brand">← الباكدجات</Link>
-        <h1 className="text-3xl text-brand">{pk ? pk.name : "باكدج جديد"}</h1>
+        <Link href={back} className="text-sm text-muted hover:text-brand">← الباقات</Link>
+        <h1 className="text-3xl text-brand">{pk ? pk.name : "باقة جديدة"}</h1>
       </div>
       <CatalogForm action={savePackage.bind(null, pk?.id ?? null)} backTo={back}>
         <Section title="الأساسي">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={pk?.name} required />
-            <Field label="الاسم بالإنجليزي" name="nameEn" defaultValue={pk?.en?.name} dir="ltr" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={pk?.name} required />
+            <Field label="الاسم بالإنجليزية" name="nameEn" defaultValue={pk?.en?.name} dir="ltr" />
           </Row>
           <Row>
-            <TextArea label="الوصف بالعربي" name="description" defaultValue={pk?.description} />
-            <TextArea label="الوصف بالإنجليزي" name="descriptionEn" defaultValue={pk?.en?.description} dir="ltr" />
+            <TextArea label="الوصف بالعربية" name="description" defaultValue={pk?.description} />
+            <TextArea label="الوصف بالإنجليزية" name="descriptionEn" defaultValue={pk?.en?.description} dir="ltr" />
           </Row>
           <Row>
             <Select
@@ -49,9 +49,9 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
                 { value: "fakher", label: "فاخر" },
               ]}
             />
-            <Select label="الموسم (بيظهر ويختفي مع الموسم)" name="seasonId" defaultValue={pk?.seasonId ?? ""} options={opts.seasons} />
+            <Select label="الموسم (تظهر وتختفي مع الموسم)" name="seasonId" defaultValue={pk?.seasonId ?? ""} options={opts.seasons} />
           </Row>
-          <Field label="الرابط (slug)" name="slug" defaultValue={pk?.slug} dir="ltr" hint="لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
+          <Field label="الرابط (slug)" name="slug" defaultValue={pk?.slug} dir="ltr" hint="إن تركته فارغاً يُنشأ من الاسم الإنجليزي." />
         </Section>
 
         <Section title="المحتويات والسعر">
@@ -67,14 +67,14 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
           />
         </Section>
 
-        <Section title="البوكس (اختياري للعميل)">
+        <Section title="الصندوق (اختياري للعميل)">
           {boxes.length === 0 ? (
-            <p className="text-sm text-muted">مفيش مقاسات بوكس مفتوحة. ضيفيها من «البوكسات والتغليف».</p>
+            <p className="text-sm text-muted">لا توجد مقاسات صناديق مفعّلة. أضفها من «الصناديق والتغليف».</p>
           ) : (
             <>
-              <ChecksGroup label="مقاسات البوكس اللي تنفع للباكدج ده" name="boxSizeIds" options={boxes.map((b) => ({ value: b.id, label: `${b.name} (+${b.price} ج.م)` }))} selected={opts.packageBoxes[pk?.id ?? ""] ?? []} />
+              <ChecksGroup label="مقاسات الصندوق المناسبة لهذه الباقة" name="boxSizeIds" options={boxes.map((b) => ({ value: b.id, label: `${b.name} (+${b.price} ج.م)` }))} selected={opts.packageBoxes[pk?.id ?? ""] ?? []} />
               <p className="-mt-2 text-xs leading-5 text-muted">
-                العميل بيختار «من غير بوكس» أو مقاس من دول، وسعر البوكس بيتضاف على سعر الباكدج. لو ماعلّمتيش حاجة الباكدج بيتباع من غير بوكس.
+                يختار العميل «بدون صندوق» أو أحد هذه المقاسات، ويُضاف سعر الصندوق إلى سعر الباقة. إن لم تحدد أي مقاس، تُباع الباقة بدون صندوق.
               </p>
             </>
           )}
@@ -84,13 +84,13 @@ export default async function AdminPackage({ params }: PageProps<"/[lang]/admin/
           <ImageField current={pk?.images[0]} />
         </Section>
 
-        <Section title="مناسب لإيه ولمين">
+        <Section title="لأي مناسبة ولمن">
           <ChecksGroup label="المناسبات" name="occasions" options={opts.occasions} selected={pk?.occasions ?? []} />
-          <ChecksGroup label="لمين" name="recipients" options={opts.recipients} selected={pk?.recipients ?? []} />
+          <ChecksGroup label="لمن" name="recipients" options={opts.recipients} selected={pk?.recipients ?? []} />
           <Check label="متاح للبيع" name="isAvailable" defaultChecked={pk?.isAvailable ?? true} />
         </Section>
       </CatalogForm>
-      {pk && <DeleteButton action={deletePackage.bind(null, pk.id)} backTo={back} what="الباكدج" />}
+      {pk && <DeleteButton action={deletePackage.bind(null, pk.id)} backTo={back} what="الباقة" />}
     </div>
   );
 }

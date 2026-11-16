@@ -19,7 +19,7 @@ export default async function AdminProducts() {
         <Link href="/admin/catalog/products/new" className="btn-primary btn-sm ms-auto">+ منتج جديد</Link>
       </div>
       {d.products.length === 0 ? (
-        <Empty>لسه مفيش منتجات.</Empty>
+        <Empty>لا توجد منتجات بعد.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {[...d.products].sort((a, b) => Number(b.reviewStatus === "pending") - Number(a.reviewStatus === "pending")).map((p) => {
@@ -32,27 +32,27 @@ export default async function AdminProducts() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{p.name}</span>
                     <span className="block truncate text-xs text-muted">
-                      {p.partnerId ? brands.get(p.partnerId) ?? "براند اتمسح" : "من المتجر"} · {p.category || "من غير تصنيف"}
+                      {p.partnerId ? brands.get(p.partnerId) ?? "علامة تجارية محذوفة" : "من المتجر"} · {p.category || "بدون تصنيف"}
                     </span>
                   </span>
                   {/* منتج البراند مكسبك منه بالشرايح الشهرية (مش معروف لكل منتج)، فبنعرض التكلفة والهامش لمنتجات المتجر بس */}
                   <span className="hidden text-end text-xs text-muted sm:block">
                     {p.partnerId ? (
-                      "عمولة بالشرايح"
+                      "عمولة بالشرائح"
                     ) : p.cost > 0 ? (
                       <>
                         تكلفة <span className="tabular">{money(cost)}</span>
                         <span className="block">هامش <span className="tabular">{margin}%</span></span>
                       </>
                     ) : (
-                      <span className="font-semibold text-brand">التكلفة مش متكتبة</span>
+                      <span className="font-semibold text-brand">التكلفة غير مسجّلة</span>
                     )}
                   </span>
                   <span className="tabular w-20 text-end text-sm font-semibold">{money(p.price)}</span>
                   {p.reviewStatus === "pending" ? (
-                    <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs font-semibold text-butter">مستني موافقتك</span>
+                    <span className="rounded-full bg-butter-soft px-2 py-0.5 text-xs font-semibold text-butter">بانتظار موافقتك</span>
                   ) : (
-                    !p.isAvailable && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">خلص</span>
+                    !p.isAvailable && <span className="rounded-full bg-line px-2 py-0.5 text-xs text-muted">نفد</span>
                   )}
                 </Link>
               </li>

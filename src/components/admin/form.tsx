@@ -33,7 +33,7 @@ export function CatalogForm({
       {children}
       {error && <p className="rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
       <div className="sticky bottom-0 z-10 -mx-4 flex gap-2 border-t border-dashed border-line bg-[#fbf7f2]/95 px-4 py-3 backdrop-blur">
-        <button disabled={pending} className="btn-primary">{pending ? "بيتحفظ…" : "حفظ"}</button>
+        <button disabled={pending} className="btn-primary">{pending ? "جارٍ الحفظ…" : "حفظ"}</button>
         <button type="button" onClick={() => router.push(backTo)} className="btn-outline">إلغاء</button>
       </div>
     </form>
@@ -133,18 +133,18 @@ export function PriceCostBrand({
   return (
     <>
       <Row>
-        <Select label="البراند" name="partnerId" value={brand} onChange={setBrand} options={[{ value: "", label: "من المتجر نفسه" }, ...partners.map((b) => ({ value: b.id, label: b.name }))]} />
-        <Field label="مدة التجهيز (أيام)" name="prepDays" type="number" defaultValue={prepDays} hint="صفر يعني ينفع يوصل النهارده" />
+        <Select label="العلامة التجارية" name="partnerId" value={brand} onChange={setBrand} options={[{ value: "", label: "من المتجر نفسه" }, ...partners.map((b) => ({ value: b.id, label: b.name }))]} />
+        <Field label="مدة التجهيز (أيام)" name="prepDays" type="number" defaultValue={prepDays} hint="صفر يعني إمكانية التوصيل اليوم" />
       </Row>
       <Row>
         <Field label="السعر (ج.م)" name="price" type="number" defaultValue={price} required />
         {brand ? (
           <div className="rounded-2xl bg-bg p-3 text-sm leading-6 text-ink-2">
             <p className="font-semibold text-ink">التكلفة</p>
-            منتج براند: مش محتاجة تكتبي تكلفة، بتتحسب لوحدها من نصيب البراند (السعر ناقص عمولتك).
+            منتج علامة تجارية: لا حاجة لكتابة التكلفة، فهي تُحسب تلقائياً من نصيب العلامة التجارية (السعر ناقص عمولتك).
           </div>
         ) : (
-          <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={cost || ""} required placeholder="المنتج كلّفك كام؟" hint="اللي المنتج كلّفك (مش سعر البيع). مش بتظهر للعميل، والمكسب في التقارير بيتحسب منها." />
+          <Field label="التكلفة (ج.م)" name="cost" type="number" defaultValue={cost || ""} required placeholder="كم كلّفك المنتج؟" hint="ما كلّفك المنتج (وليس سعر البيع). لا تظهر للعميل، ويُحسب منها الربح في التقارير." />
         )}
       </Row>
     </>
@@ -166,11 +166,11 @@ export function StockField({ label, defaultValue, hasOptions: initial, hint }: {
     <div className={hasOptions ? "opacity-60" : ""}>
       <label className="label" htmlFor="stock">{label}</label>
       {hasOptions ? (
-        <input id="stock" disabled value="" placeholder="بيتكتب لكل لون أو مقاس فوق" className="field" readOnly />
+        <input id="stock" disabled value="" placeholder="يُكتب لكل لون أو مقاس بالأعلى" className="field" readOnly />
       ) : (
         <input id="stock" name="stock" type="number" min={0} defaultValue={defaultValue ?? ""} className="field tabular" />
       )}
-      <p className="mt-1 text-xs leading-5 text-muted">{hasOptions ? "المنتج ليه ألوان أو مقاسات، فالعدد بيتكتب لكل واحد في جدول الاختيارات فوق (أو يتساب فاضي)." : hint}</p>
+      <p className="mt-1 text-xs leading-5 text-muted">{hasOptions ? "للمنتج ألوان أو مقاسات، لذا يُكتب العدد لكل منها في جدول الخيارات بالأعلى (أو يُترك فارغاً)." : hint}</p>
     </div>
   );
 }
@@ -197,16 +197,16 @@ export function CustomizationFields({
     <div className="space-y-3 rounded-2xl border border-dashed border-line p-4">
       <label className="flex cursor-pointer items-center gap-2.5 text-sm">
         <input type="checkbox" name="isCustomizable" checked={on} onChange={(e) => setOn(e.target.checked)} className="size-5 accent-brand" />
-        المنتج بيتخصص للعميل (اسم أو صورة)
+        المنتج يُخصَّص للعميل (اسم أو صورة)
       </label>
       <fieldset disabled={!on} className={on ? "" : "opacity-50"}>
-        <legend className="label">العميل بيبعت إيه؟</legend>
+        <legend className="label">ماذا يرسل العميل؟</legend>
         <div className="flex flex-wrap gap-2">
           {(
             [
               ["text", "اسم أو جملة"],
               ["image", "صورة"],
-              ["both", "صورة وكلام"],
+              ["both", "صورة ونص"],
             ] as const
           ).map(([v, label]) => (
             <label key={v} className="cursor-pointer">
@@ -277,7 +277,7 @@ export function Select({
 }
 
 /** صورة: رفع ملف أو لينك، مع معاينة */
-export function ImageField({ current, uploadLabel = "ارفعي صورة" }: { current?: string | null; uploadLabel?: string }) {
+export function ImageField({ current, uploadLabel = "رفع صورة" }: { current?: string | null; uploadLabel?: string }) {
   const [preview, setPreview] = useState<string | null>(current ?? null);
   return (
     <div className="flex flex-wrap items-start gap-4">
@@ -286,7 +286,7 @@ export function ImageField({ current, uploadLabel = "ارفعي صورة" }: { c
           // eslint-disable-next-line @next/next/no-img-element -- معاينة قبل الحفظ
           <img src={preview} alt="" className="aspect-square w-full object-cover" />
         ) : (
-          <div className="grid aspect-square w-full place-items-center bg-surface text-xs text-muted">مفيش صورة</div>
+          <div className="grid aspect-square w-full place-items-center bg-surface text-xs text-muted">لا توجد صورة</div>
         )}
       </div>
       <div className="min-w-0 flex-1 space-y-3">
@@ -305,7 +305,7 @@ export function ImageField({ current, uploadLabel = "ارفعي صورة" }: { c
           />
         </div>
         <div>
-          <label className="label" htmlFor="imageUrl">أو لينك صورة</label>
+          <label className="label" htmlFor="imageUrl">أو رابط صورة</label>
           <input id="imageUrl" name="imageUrl" dir="ltr" defaultValue={current ?? ""} placeholder="https://..." className="field" onBlur={(e) => e.target.value && setPreview(e.target.value)} />
         </div>
       </div>
@@ -359,13 +359,13 @@ export function PackageItemsPicker({
     <div className="space-y-4">
       <input type="hidden" name="items" value={JSON.stringify(items)} />
       <div className="flex gap-2">
-        <select value={pick} onChange={(e) => setPick(e.target.value)} className="field" aria-label="اختاري منتج">
-          <option value="">اختاري منتج تضيفيه…</option>
+        <select value={pick} onChange={(e) => setPick(e.target.value)} className="field" aria-label="اختر منتجاً">
+          <option value="">اختر منتجاً لإضافته…</option>
           {products
             .filter((p) => !items.some((i) => i.productId === p.id))
             .map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} — {p.price} ج.م {p.available ? "" : "(مش متاح)"}
+                {p.name} — {p.price} ج.م {p.available ? "" : "(غير متاح)"}
               </option>
             ))}
         </select>
@@ -378,7 +378,7 @@ export function PackageItemsPicker({
           }}
           className="btn-outline btn-sm h-12 shrink-0"
         >
-          ضيفي
+          إضافة
         </button>
       </div>
 
@@ -388,9 +388,9 @@ export function PackageItemsPicker({
             const p = byId.get(i.productId);
             return (
               <li key={i.productId} className="flex items-center gap-3 px-3 py-2 text-sm">
-                <span className="min-w-0 flex-1 truncate">{p?.name ?? "منتج اتمسح"}</span>
+                <span className="min-w-0 flex-1 truncate">{p?.name ?? "منتج محذوف"}</span>
                 {p?.brand && <span className="rounded-full bg-lilac/10 px-2 py-0.5 text-[11px] text-lilac">{p.brand}</span>}
-                <span className="tabular text-xs text-muted">{p?.brand ? "للبراند" : "تكلفة"} {p?.cost ?? 0}</span>
+                <span className="tabular text-xs text-muted">{p?.brand ? "للعلامة التجارية" : "تكلفة"} {p?.cost ?? 0}</span>
                 <input
                   type="number"
                   min={1}
@@ -400,7 +400,7 @@ export function PackageItemsPicker({
                   aria-label="الكمية"
                 />
                 <button type="button" onClick={() => setItems((s) => s.filter((x) => x.productId !== i.productId))} className="text-xs text-brand underline">
-                  شيلي
+                  إزالة
                 </button>
               </li>
             );
@@ -414,7 +414,7 @@ export function PackageItemsPicker({
           <p className="tabular font-semibold">{cost} ج.م</p>
         </div>
         <div>
-          <p className="text-muted">لو اتباعوا لوحدهم</p>
+          <p className="text-muted">عند بيعها منفردة</p>
           <p className="tabular font-semibold">{retail} ج.م</p>
         </div>
         <div>
@@ -429,23 +429,23 @@ export function PackageItemsPicker({
         </div>
       </div>
       <div>
-        <label className="label" htmlFor="price">سعر الباكدج (شامل التغليف)</label>
+        <label className="label" htmlFor="price">سعر الباقة (شامل التغليف)</label>
         <input id="price" name="price" type="number" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} className="field tabular" required />
         {loss ? (
           <p className="mt-2 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">
-            بتخسري {cost - price} ج.م في كل باكدج: السعر أقل من التكلفة
-            {brandShare > 0 && <> (منها {brandShare} ج.م للبراندات، بياخدوا سعر منتجاتهم كامل حتى جوه الباكدج)</>}.
+            تخسر {cost - price} ج.م في كل باقة: السعر أقل من التكلفة
+            {brandShare > 0 && <> (منها {brandShare} ج.م للعلامات التجارية، إذ تحصل على سعر منتجاتها كاملاً حتى داخل الباقة)</>}.
           </p>
         ) : (
           low && (
             <p className="mt-2 rounded-xl bg-butter-soft p-3 text-sm text-butter">
-              الهامش أقل من {Math.round(minMargin * 100)}%. راجعي السعر أو المحتويات.
-              {brandShare > 0 && <> منتجات البراندات ({brandShare} ج.م) بتتحسب بسعرها كامل، لأن البراند بياخده كله.</>}
+              الهامش أقل من {Math.round(minMargin * 100)}%. راجع السعر أو المحتويات.
+              {brandShare > 0 && <> منتجات العلامات التجارية ({brandShare} ج.م) تُحسب بسعرها كاملاً، لأن العلامة التجارية تحصل عليه كله.</>}
             </p>
           )
         )}
         {!loss && !low && brandShare > 0 && price > 0 && (
-          <p className="mt-2 text-xs text-muted">من سعر الباكدج: {brandShare} ج.م للبراندات، والباقي {price - brandShare} ج.م ليكي (تغليف ومنتجاتك ومكسبك).</p>
+          <p className="mt-2 text-xs text-muted">من سعر الباقة: {brandShare} ج.م للعلامات التجارية، والباقي {price - brandShare} ج.م لك (التغليف ومنتجاتك وربحك).</p>
         )}
       </div>
     </div>

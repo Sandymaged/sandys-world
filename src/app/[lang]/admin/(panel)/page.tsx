@@ -36,14 +36,14 @@ export default async function AdminHome() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="مدفوعات مستنية تأكيدك" value={pending.length} href="/admin/payments" tone={pending.length ? "bg-[#fff1b8]" : undefined} />
-        <StatCard label="أوردرات جديدة" value={fresh.length} href="/admin/orders?status=new" />
-        <StatCard label="هدايا توصل النهارده" value={giftsOn(d0)} href="/admin/today" />
-        <StatCard label="هدايا توصل بكرة" value={giftsOn(tomorrow())} href="/admin/today" />
+        <StatCard label="مدفوعات بانتظار تأكيدك" value={pending.length} href="/admin/payments" tone={pending.length ? "bg-[#fff1b8]" : undefined} />
+        <StatCard label="طلبات جديدة" value={fresh.length} href="/admin/orders?status=new" />
+        <StatCard label="هدايا تصل اليوم" value={giftsOn(d0)} href="/admin/today" />
+        <StatCard label="هدايا تصل غداً" value={giftsOn(tomorrow())} href="/admin/today" />
       </div>
       {withMessages.length > 0 && (
         <section className="rounded-2xl border-2 border-brand bg-brand-soft/50 p-4">
-          <h2 className="font-heading text-xl text-brand">💬 رسايل جديدة من العملاء ({withMessages.length})</h2>
+          <h2 className="font-heading text-xl text-brand">💬 رسائل جديدة من العملاء ({withMessages.length})</h2>
           <div className="mt-3 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             {withMessages.slice(0, 6).map((o) => (
               <OrderRow key={o.id} o={o} />
@@ -53,12 +53,12 @@ export default async function AdminHome() {
       )}
       {late.length > 0 && (
         <section className="rounded-2xl border border-brand/40 bg-brand-soft/60 p-4 text-sm">
-          <p className="font-semibold text-brand-dark">⏰ براندات متأخرة في التسليم</p>
+          <p className="font-semibold text-brand-dark">⏰ علامات تجارية متأخرة في التسليم</p>
           <ul className="mt-2 space-y-1">
             {late.map((l) => (
               <li key={`${l.order.id}-${l.brand}`}>
                 <Link href={`/admin/orders/${l.order.id}`} className="hover:text-brand">
-                  <b>{l.brand}</b> · أوردر <span className="tabular">#{l.order.number}</span> · كان آخره {formatDay(l.handBy)}
+                  <b>{l.brand}</b> · طلب <span className="tabular">#{l.order.number}</span> · آخر موعد {formatDay(l.handBy)}
                 </Link>
               </li>
             ))}
@@ -67,15 +67,15 @@ export default async function AdminHome() {
       )}
       {toReview.length > 0 && (
         <Link href="/admin/catalog/products" className="block rounded-2xl border border-line bg-[#fffdf8] p-4 text-sm hover:bg-brand-soft/40">
-          🛍️ فيه <b className="tabular">{toReview.length}</b> منتج جديد من البراندات مستني موافقتك
+          🛍️ يوجد <b className="tabular">{toReview.length}</b> منتج جديد من العلامات التجارية بانتظار موافقتك
         </Link>
       )}
       <p className="text-sm text-ink-2">
-        مبيعات النهارده (المؤكدة): <b className="tabular text-brand">{money(todaySales)}</b>
+        مبيعات اليوم (المؤكدة): <b className="tabular text-brand">{money(todaySales)}</b>
       </p>
 
       <section>
-        <h2 className="mb-3 text-2xl text-brand">آخر الأوردرات</h2>
+        <h2 className="mb-3 text-2xl text-brand">أحدث الطلبات</h2>
         {all.length ? (
           <div className="shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             {all.slice(0, 8).map((o) => (
@@ -83,7 +83,7 @@ export default async function AdminHome() {
             ))}
           </div>
         ) : (
-          <Empty>لسه مفيش أوردرات. أول ما حد يطلب من الموقع هيظهر هنا.</Empty>
+          <Empty>لا توجد طلبات بعد. سيظهر هنا أي طلب جديد من الموقع.</Empty>
         )}
       </section>
     </div>

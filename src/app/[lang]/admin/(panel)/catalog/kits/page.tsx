@@ -6,26 +6,26 @@ import { loadCatalogData } from "@/lib/db/catalog-store";
 
 export const instant = false;
 
-export const metadata = { title: "الكيتات والعروسة" };
+export const metadata = { title: "الأطقم والعروس" };
 
 export default async function AdminKits() {
   await requireAdmin();
   const d = await loadCatalogData();
   const groups = [
-    { title: "ورشة مع الصحاب", list: d.kits.filter((k) => k.category === "workshop") },
-    { title: "العروسة والإشبينات", list: d.kits.filter((k) => k.category === "bridal") },
+    { title: "ورشة مع الأصدقاء", list: d.kits.filter((k) => k.category === "workshop") },
+    { title: "العروس ووصيفاتها", list: d.kits.filter((k) => k.category === "bridal") },
   ];
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl text-brand">الكيتات والعروسة</h1>
-        <Link href="/admin/catalog/kits/new" className="btn-primary btn-sm ms-auto">+ كيت جديد</Link>
+        <h1 className="text-3xl text-brand">الأطقم والعروس</h1>
+        <Link href="/admin/catalog/kits/new" className="btn-primary btn-sm ms-auto">+ طقم جديد</Link>
       </div>
       {groups.map((g) => (
         <section key={g.title}>
           <h2 className="mb-2 text-2xl text-brand">{g.title}</h2>
           {g.list.length === 0 ? (
-            <Empty>لسه مفيش.</Empty>
+            <Empty>لا يوجد شيء بعد.</Empty>
           ) : (
             <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
               {g.list.map((k) => (

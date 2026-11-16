@@ -41,7 +41,7 @@ export async function MaintenanceScreen({ m }: { m: SiteSettings["maintenance"] 
         <p className="mx-auto mt-4 max-w-md text-lg leading-8 whitespace-pre-line text-ink-2">{message}</p>
         <div className="mx-auto mt-10 flex max-w-xs items-center gap-3 text-candy" aria-hidden>
           <span className="h-px flex-1 bg-line" />
-          <span className="font-script text-xl">{en ? "see you soon" : "نشوفكم قريب"}</span>
+          <span className="font-script text-xl">{en ? "see you soon" : "نراكم قريباً"}</span>
           <span className="h-px flex-1 bg-line" />
         </div>
       </div>

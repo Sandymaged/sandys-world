@@ -4,7 +4,7 @@ import { Bow } from "@/components/decor";
 import { Tape } from "@/components/scrapbook";
 import { DEFAULT_USERNAME, DEV_PASSWORD, usingDevPassword } from "@/lib/admin-auth";
 
-export const metadata: Metadata = { title: "دخول لوحة التحكم", robots: { index: false } };
+export const metadata: Metadata = { title: "تسجيل الدخول إلى لوحة التحكم", robots: { index: false } };
 
 export default function AdminLoginPage() {
   return (
@@ -14,13 +14,13 @@ export default function AdminLoginPage() {
         <Tape tone="butter" className="-top-3 right-8 rotate-6" />
         <Bow className="mx-auto w-20 text-brand" />
         <h1 className="mt-2 text-4xl text-brand">لوحة التحكم</h1>
-        <p className="mt-1 font-script text-xl text-candy">أهلاً يا صاحبة المتجر</p>
+        <p className="mt-1 font-script text-xl text-candy">أهلاً بصاحبة المتجر</p>
         <div className="mt-6 text-start">
           <AdminLoginForm />
         </div>
         {usingDevPassword() && (
           <p className="mt-5 rounded-xl bg-butter-soft p-3 text-xs leading-5 text-butter">
-            وضع التطوير: اسم المستخدم <b dir="ltr">{DEFAULT_USERNAME}</b> وكلمة السر <b className="tabular" dir="ltr">{DEV_PASSWORD}</b>. قبل ما الموقع يفتح لازم تتحط كلمة سر في متغير ADMIN_PASSWORD.
+            وضع التطوير: اسم المستخدم <b dir="ltr">{DEFAULT_USERNAME}</b> وكلمة المرور <b className="tabular" dir="ltr">{DEV_PASSWORD}</b>. قبل إطلاق الموقع يجب تعيين كلمة مرور في المتغير ADMIN_PASSWORD.
           </p>
         )}
       </div>

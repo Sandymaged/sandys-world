@@ -30,9 +30,9 @@ export function OrderRow({ o }: { o: OrderRecord }) {
           {[
             o.gifts.length === 1 ? `لـ ${o.gifts[0].recipient.name} · ${o.gifts[0].recipient.zoneName}` : o.gifts.length > 1 ? `${o.gifts.length} هدايا` : "",
             (o.giftCards ?? []).length === 1
-              ? `🎁 كارت هدية${o.giftCards![0].asGift && o.giftCards![0].toName ? ` لـ ${o.giftCards![0].toName}` : ""}`
+              ? `🎁 بطاقة هدية${o.giftCards![0].asGift && o.giftCards![0].toName ? ` لـ ${o.giftCards![0].toName}` : ""}`
               : (o.giftCards ?? []).length > 1
-                ? `🎁 ${o.giftCards!.length} كروت هدايا`
+                ? `🎁 ${o.giftCards!.length} بطاقات هدايا`
                 : "",
           ]
             .filter(Boolean)

@@ -224,15 +224,15 @@ interface Theme {
 const themes: Theme[] = [
   {
     id: "food",
-    label: { ar: "الأكل", en: "food" },
-    title: { ar: "بوكس الأكيل", en: "The foodie box" },
+    label: { ar: "الطعام", en: "food" },
+    title: { ar: "صندوق محبي الطعام", en: "The foodie box" },
     user: /اكل|بياكل|بتاكل|اكيل|اكيله|اكال|فود|foodie|food|snack|سناك|akl|a2l|akel|طعام|طبخ|cook/,
     product: /اكل|مكسرات|شوكولا|حلو|كيك|بسكو|سناك|عسل/,
   },
   {
     id: "sweets",
     label: { ar: "الحلويات", en: "sweets" },
-    title: { ar: "بوكس الحلو", en: "Sweet tooth box" },
+    title: { ar: "صندوق الحلويات", en: "Sweet tooth box" },
     user: /حلويات|الحلو(?![ء-ي])|شوكولا|شيكولا|chocolate|choco|sweet|candy|dessert|7elw|7alawiyat|shokola/,
     product: /شوكولا|حلويات|حلو(?![ء-ي])|كيك|بسكو|كاندي/,
   },
@@ -245,57 +245,57 @@ const themes: Theme[] = [
   },
   {
     id: "relax",
-    label: { ar: "الشموع والريحة الحلوة", en: "candles and cozy scents" },
-    title: { ar: "بوكس الراحة", en: "Cozy calm box" },
+    label: { ar: "الشموع والروائح الطيبة", en: "candles and cozy scents" },
+    title: { ar: "صندوق الاسترخاء", en: "Cozy calm box" },
     user: /شمع|شموع|ريح|معطر|بخور|استرخ|هدوء|ريلاكس|candle|scent|relax|cozy|spa\b|sham3|shomo3/,
     product: /شمع|شموع|استرخا|عطر|معطر|بخور|صابون|اعشاب|candle|musk|مسك/,
   },
   {
     id: "care",
     label: { ar: "العناية بالنفس", en: "self-care" },
-    title: { ar: "بوكس الدلع", en: "Pamper box" },
+    title: { ar: "صندوق الدلال", en: "Pamper box" },
     user: /عنايه|بشره|ميكب|ميك اب|سكين|skin|makeup|beauty|self ?care|pamper/,
     product: /عنايه|صابون|استرخا|بشره/,
   },
   {
     id: "flowers",
     label: { ar: "الورد", en: "flowers" },
-    title: { ar: "ورد وحاجات حلوة", en: "Flowers and treats" },
+    title: { ar: "ورد ولمسات جميلة", en: "Flowers and treats" },
     user: /ورد|زهور|flowers?|roses?|\bward\b/,
     product: /ورد|زهور/,
   },
   {
     id: "reading",
-    label: { ar: "القراية والكتابة", en: "reading and writing" },
-    title: { ar: "بوكس القراية", en: "Book lover box" },
+    label: { ar: "القراءة والكتابة", en: "reading and writing" },
+    title: { ar: "صندوق القراءة", en: "Book lover box" },
     user: /قراي|قراءه|كتب|كتاب|بيقرا|بتقرا|كتابه|بيكتب|بتكتب|اجند|مذكر|journal|read|book|writ|notebook|planner|ketab/,
     product: /كتابه|قراءه|اجنده|ادوات مكتب|نوت|journal/,
   },
   {
     id: "home",
-    label: { ar: "ديكور البيت", en: "home decor" },
-    title: { ar: "حاجات للبيت", en: "Home touches" },
+    label: { ar: "ديكور المنزل", en: "home decor" },
+    title: { ar: "لمسات للمنزل", en: "Home touches" },
     user: /ديكور|للبيت|البيت|اوضه|اوضتها|اوضته|decor|home|room/,
     product: /ديكور|كوشن|برواز|زينه|شمع|شموع/,
   },
   {
     id: "memories",
     label: { ar: "الصور والذكريات", en: "photos and memories" },
-    title: { ar: "بوكس الذكريات", en: "Memory box" },
+    title: { ar: "صندوق الذكريات", en: "Memory box" },
     user: /صور|ذكري|ذكريات|memor|photo|picture/,
     product: /ذكريات|برواز|صوره/,
   },
   {
     id: "handmade",
-    label: { ar: "الهاند ميد", en: "handmade things" },
-    title: { ar: "هاند ميد من أسيوط", en: "Handmade picks" },
+    label: { ar: "المشغولات اليدوية", en: "handmade things" },
+    title: { ar: "مشغولات يدوية من أسيوط", en: "Handmade picks" },
     user: /هاند ?ميد|يدوي|كروشيه|handmade|crochet|craft/,
     product: /هاند ميد|كروشيه|خشب|يدوي|محفور/,
   },
   {
     id: "cute",
-    label: { ar: "الحاجات الكيوت", en: "cute things" },
-    title: { ar: "بوكس كيوت", en: "Cute box" },
+    label: { ar: "الأشياء اللطيفة", en: "cute things" },
+    title: { ar: "صندوق لطيف", en: "Cute box" },
     user: /كيوت|دبدوب|دباديب|العاب|cute|teddy|plush|toy|kawaii/,
     product: /دبدوب|العاب|بالون|كروشيه/,
   },
@@ -339,15 +339,16 @@ export function understand(text: string): Understood {
 // ───────────── الكلام اللي بيرد بيه ─────────────
 
 const forWho: Record<RecipientTag, { ar: string; en: string }> = {
-  mom: { ar: "لماما", en: "for mom" },
-  dad: { ar: "لبابا", en: "for dad" },
-  him: { ar: "ليه", en: "for him" },
-  her: { ar: "ليها", en: "for her" },
+  mom: { ar: "للأم", en: "for mom" },
+  dad: { ar: "للأب", en: "for dad" },
+  him: { ar: "له", en: "for him" },
+  her: { ar: "لها", en: "for her" },
   kid: { ar: "لطفل", en: "for a little one" },
-  colleague: { ar: "لزميل الشغل", en: "for a colleague" },
+  colleague: { ar: "لزميل العمل", en: "for a colleague" },
 };
 // «بيحب» للولد و«بتحب» للبنت
-const loves = (r: RecipientTag | null) => (r === "her" || r === "mom" ? "بتحب" : "بيحب");
+const loves = (r: RecipientTag | null) => (r === "her" || r === "mom" ? "تحب" : "يحب");
+const because = (r: RecipientTag | null) => (r === "her" || r === "mom" ? "لأنها" : "لأنه");
 
 function joinList(items: string[], locale: Locale) {
   if (items.length <= 1) return items.join("");
@@ -367,7 +368,7 @@ function summary(u: Understood, sf: Storefront, locale: Locale) {
     const parts = ["a gift", u.recipient ? forWho[u.recipient].en : "", occ ? `for ${occ}` : "", likes ? `for someone who loves ${likes}` : ""];
     return `Got it: ${parts.filter(Boolean).join(" ")}.`;
   }
-  const parts = ["هدية", u.recipient ? forWho[u.recipient].ar : "", occ ? `في ${occ}` : "", likes ? `${loves(u.recipient)} ${likes}` : ""];
+  const parts = ["هدية", u.recipient ? forWho[u.recipient].ar : "", occ ? `في ${occ}` : "", likes ? `${u.recipient ? "" : "لشخص "}${loves(u.recipient)} ${likes}` : ""];
   return `فهمت: ${parts.filter(Boolean).join(" ")}.`;
 }
 
@@ -438,8 +439,8 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
   const nothingYet = u.budget == null && !u.recipient && !u.occasion && u.likes.length === 0 && !searched;
   const quick = {
     budget: en ? ["Around 500", "Around 800", "Around 1200"] : ["في حدود 500", "في حدود 800", "في حدود 1200"],
-    after: en ? ["Something cheaper", "Other ideas", "With their name on it"] : ["عايز أرخص شوية", "اقتراحات تانية", "حاجة يتكتب عليها الاسم"],
-    start: en ? ["For mom", "For my friend", "For a colleague"] : ["هدية لماما", "لصاحبتي", "لزميل في الشغل"],
+    after: en ? ["Something cheaper", "Other ideas", "With their name on it"] : ["أريد خيارات أرخص", "اقتراحات مختلفة", "هدية يُكتب عليها الاسم"],
+    start: en ? ["For mom", "For my friend", "For a colleague"] : ["هدية لأمي", "لصاحبتي", "لزميل في العمل"],
   };
 
   if (nothingYet) {
@@ -449,7 +450,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       quickReplies: quick.start,
       reply: en
         ? "Hi, I'm giftful! I look through all our gifts: ready packages, single gifts, or a box I put together for you. Tell me who it's for, what they love, and roughly your budget — e.g. “my brother loves food, 600”."
-        : "أهلاً، أنا giftful! بدوّر في كل الهدايا اللي عندنا: باكدجات جاهزة، هدايا لوحدها، أو بوكس أركّبهولك. قولّي الهدية لمين، وبيحب إيه، وميزانيتك تقريباً كام. مثلاً: «أخويا بيحب الأكل، بـ 600».",
+        : "أهلاً، أنا giftful! أبحث في كل هدايانا: باقات جاهزة، أو هدايا مفردة، أو صندوق أنسّقه لك. أخبرني لمن الهدية، وماذا يحب، وكم ميزانيتك تقريباً. مثلاً: «أخي يحب الطعام، في حدود 600».",
     };
   }
   if (u.budget == null) {
@@ -459,7 +460,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       quickReplies: quick.budget,
       reply: en
         ? `${summary(u, sf, locale)} What's your budget, roughly? (e.g. 500 or 800)`
-        : `${summary(u, sf, locale)} ميزانيتك تقريباً كام؟ (مثلاً 500 أو 800)`,
+        : `${summary(u, sf, locale)} كم ميزانيتك تقريباً؟ (مثلاً 500 أو 800)`,
     };
   }
 
@@ -499,7 +500,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       title: en ? theme!.title.en : theme!.title.ar,
       reason: en
         ? `Because they love ${liked}: ${joinList(ids.map(name), locale)}.`
-        : `علشان ${loves(u.recipient)} ${liked}: ${joinList(ids.map(name), locale)}.`,
+        : `${because(u.recipient)} ${loves(u.recipient)} ${liked}: ${joinList(ids.map(name), locale)}.`,
     });
   }
   // ٢) هدية بالاسم (لو فيه منتج بيتكتب عليه)
@@ -512,7 +513,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       title: en ? "With their name on it" : "هدية بالاسم",
       reason: en
         ? `Their name on the ${personal.name} makes it feel made just for them${rest.length ? `, together with ${joinList(rest, locale)}` : ""}.`
-        : `الاسم مكتوب على ${personal.name}، فبتبقى هدية شخصية أكتر${rest.length ? `، ومعاها ${joinList(rest, locale)}` : ""}.`,
+        : `الاسم مكتوب على ${personal.name}، فتصبح الهدية أكثر خصوصية${rest.length ? `، ومعها ${joinList(rest, locale)}` : ""}.`,
     });
   }
   // ٣) خليط: حاجة من اللي بيحبه + حاجات تانية مختلفة عن اللي فات
@@ -523,8 +524,8 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
     const ids = fill(sf, map, [anchor.id], fresh.length ? fresh : ranked, budget);
     plans.push({
       ids,
-      title: en ? "A little of everything" : "مزيج حلو",
-      reason: en ? `A bit of everything: ${joinList(ids.map(name), locale)}.` : `شوية من كل حاجة: ${joinList(ids.map(name), locale)}.`,
+      title: en ? "A little of everything" : "مزيج متنوع",
+      reason: en ? `A bit of everything: ${joinList(ids.map(name), locale)}.` : `قليل من كل شيء: ${joinList(ids.map(name), locale)}.`,
     });
   }
 
@@ -533,10 +534,10 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
     const ids = fill(sf, map, [ranked[0].id], ranked, budget);
     plans.unshift({
       ids,
-      title: en ? "Our pick" : "اختيارنا ليك",
+      title: en ? "Our pick" : "اختيارنا لك",
       reason: en
         ? `Picked for the occasion and who it's for, within ${egpText(budget, locale)}.`
-        : `مختارين على المناسبة واللي هيستلمها، وفي حدود ${egpText(budget, locale)}.`,
+        : `مختارة بما يناسب المناسبة والمستلم، وفي حدود ${egpText(budget, locale)}.`,
     });
   }
 
@@ -567,7 +568,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
         pkg,
         budget,
         pkg.name,
-        en ? `A ready-made package: ${joinList(pkg.products.map((x) => x.name), locale)}.` : `باكدج جاهز ومتظبط: ${joinList(pkg.products.map((x) => x.name), locale)}.`,
+        en ? `A ready-made package: ${joinList(pkg.products.map((x) => x.name), locale)}.` : `باقة جاهزة ومنسّقة: ${joinList(pkg.products.map((x) => x.name), locale)}.`,
       )
     : null;
 
@@ -581,7 +582,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
         single,
         budget,
         en ? "One special gift" : "هدية واحدة مميزة",
-        en ? `${single.name} on its own makes a lovely gift${single.isCustomizable ? ", and it can carry their name" : ""}.` : `${single.name} لوحدها هدية حلوة${single.isCustomizable ? "، وممكن يتكتب عليها الاسم" : ""}.`,
+        en ? `${single.name} on its own makes a lovely gift${single.isCustomizable ? ", and it can carry their name" : ""}.` : `${single.name} وحدها هدية جميلة${single.isCustomizable ? "، ويمكن كتابة الاسم عليها" : ""}.`,
       )
     : null;
 
@@ -592,25 +593,25 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
   if (!suggestions.length) {
     reply = en
       ? "I couldn't find a gift within that budget. Try a slightly higher budget."
-      : "ملقيتش هدية تدخل في الميزانية دي. جرّب ميزانية أعلى شوية.";
+      : "لم أجد هدية ضمن هذه الميزانية. جرّب ميزانية أعلى قليلاً.";
   } else {
     const lastSaid = norm(history.filter((m) => m.role === "user").at(-1)?.text ?? "");
-    const ack = cheaperRe.test(lastSaid) ? (en ? "Sure, cheaper ones. " : "ماشي، دي حاجات أوفر. ") : different ? (en ? "Here are some new ones. " : "دي اقتراحات جديدة. ") : "";
+    const ack = cheaperRe.test(lastSaid) ? (en ? "Sure, cheaper ones. " : "بالتأكيد، إليك خيارات أوفر. ") : different ? (en ? "Here are some new ones. " : "إليك اقتراحات جديدة. ") : "";
     const head = ack + summary(u, sf, locale);
     const missing =
       theme && !matched.length
         ? en
           ? ` I couldn't find ${liked} items within this budget, so here are close picks.`
-          : ` ملقيتش حاجات عن ${liked} في الميزانية دي، فدي اقتراحات قريبة.`
+          : ` لم أجد منتجات من ${liked} ضمن هذه الميزانية، فإليك اقتراحات قريبة.`
         : "";
     const n = suggestions.length;
     const count = en
       ? n === 1 ? "an idea" : `${n} ideas`
-      : n === 1 ? "ده اقتراح" : n === 2 ? "دول اقتراحين" : `دي ${n} اقتراحات`;
+      : n === 1 ? "إليك اقتراحاً" : n === 2 ? "إليك اقتراحين" : `إليك ${n} اقتراحات`;
     const body = en
       ? ` Here's ${count} within ${egpText(budget, locale)}. Prices are estimates; the final total is confirmed in the bag.`
-      : ` ${count} في حدود ${egpText(budget, locale)}. الأسعار مبدئية، والنهائي بيتأكد في السلة.`;
-    const hint = !theme ? (en ? " Tell me what they love and I'll tailor it more." : ` لو قولتلي ${loves(u.recipient)} إيه هظبطها أكتر.`) : "";
+      : ` ${count} في حدود ${egpText(budget, locale)}. الأسعار تقديرية، ويُؤكَّد السعر النهائي في السلة.`;
+    const hint = !theme ? (en ? " Tell me what they love and I'll tailor it more." : ` أخبرني بما ${loves(u.recipient)} لأضبط الاقتراحات أكثر.`) : "";
     reply = head + missing + body + hint;
   }
   const quickReplies = suggestions.length ? quick.after : en ? [`Around ${budget + 300}`] : [`في حدود ${budget + 300}`];

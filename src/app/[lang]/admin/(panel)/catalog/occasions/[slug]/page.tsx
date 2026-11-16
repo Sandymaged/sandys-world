@@ -27,20 +27,20 @@ export default async function AdminOccasion({ params }: PageProps<"/[lang]/admin
       <CatalogForm action={saveOccasion.bind(null, o?.slug ?? null)} backTo={back}>
         <Section title="الأساسي">
           <Row>
-            <Field label="الاسم بالعربي" name="name" defaultValue={o?.name} required placeholder="عيد ميلاد" />
-            <Field label="الاسم بالإنجليزي" name="nameEn" defaultValue={o?.en?.name} dir="ltr" placeholder="Birthday" />
+            <Field label="الاسم بالعربية" name="name" defaultValue={o?.name} required placeholder="عيد ميلاد" />
+            <Field label="الاسم بالإنجليزية" name="nameEn" defaultValue={o?.en?.name} dir="ltr" placeholder="Birthday" />
           </Row>
           <Row>
             {o ? (
               <div>
                 <p className="label">الرابط</p>
                 <p className="field flex items-center bg-surface text-muted" dir="ltr">/occasions/{o.slug}</p>
-                <p className="mt-1 text-xs text-muted">الرابط مش بيتغير بعد ما المناسبة تتعمل.</p>
+                <p className="mt-1 text-xs text-muted">لا يتغير الرابط بعد إنشاء المناسبة.</p>
               </div>
             ) : (
-              <Field label="الرابط (slug)" name="slug" dir="ltr" placeholder="birthday" hint="لو سبتيه فاضي بيتعمل من الاسم الإنجليزي." />
+              <Field label="الرابط (slug)" name="slug" dir="ltr" placeholder="birthday" hint="إن تركته فارغاً يُنشأ من الاسم الإنجليزي." />
             )}
-            <Field label="الترتيب" name="sort" type="number" defaultValue={o?.sort ?? all.length + 1} hint="الأصغر بيظهر الأول." />
+            <Field label="الترتيب" name="sort" type="number" defaultValue={o?.sort ?? all.length + 1} hint="الأصغر يظهر أولاً." />
           </Row>
         </Section>
         <Section title="الصورة">

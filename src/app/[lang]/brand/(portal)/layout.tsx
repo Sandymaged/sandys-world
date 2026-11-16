@@ -6,7 +6,7 @@ import { requireBrand } from "@/lib/brand-auth";
 /** صفحات البوابة شخصية وبتتعمل وقت الطلب */
 export const instant = false;
 
-export const metadata: Metadata = { title: { default: "بوابة البراندات", template: "%s | بوابة البراندات" }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: "بوابة العلامات التجارية", template: "%s | بوابة العلامات التجارية" }, robots: { index: false } };
 
 async function Nav() {
   const s = await requireBrand();

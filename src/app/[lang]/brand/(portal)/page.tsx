@@ -22,35 +22,35 @@ export default async function BrandHome() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl text-brand">أهلاً {s.partner.name} 👋</h1>
-        <p className="mt-1 text-ink-2">ده ملخص شغلك مع المتجر.</p>
+        <p className="mt-1 text-ink-2">هذا ملخص عملك مع المتجر.</p>
       </div>
 
       {s.mustChangePassword && (
         <Box className="border-butter/40 bg-butter-soft">
           <p className="text-butter">
-            إنت داخل بكلمة السر اللي المتجر بعتهالك.{" "}
-            <Link href="/brand/account" className="font-semibold underline underline-offset-4">غيّرها دلوقتي</Link> عشان حسابك يبقى بتاعك بس.
+            أنت تستخدم كلمة المرور التي أرسلها لك المتجر.{" "}
+            <Link href="/brand/account" className="font-semibold underline underline-offset-4">غيّرها الآن</Link> ليبقى حسابك خاصاً بك وحدك.
           </p>
         </Box>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="طلبات لازم تسلّمها" value={toHand.length} tone="bg-blush" />
-        <Stat label="مستحق ليك دلوقتي" value={money(st.balance)} hint="طلبات اتسلمت وعدّت مدة الاسترجاع، بعد التحويلات" />
-        <Stat label="هتستحق قريب" value={money(st.holding + st.pending)} hint="في مدة الاسترجاع أو لسه في الشغل" />
-        <Stat label="منتجاتك" value={mine.length} hint={[pendingReview && `${pendingReview} مستني موافقة`, soldOut && `${soldOut} خلص`].filter(Boolean).join(" · ") || undefined} />
+        <Stat label="طلبات عليك تسليمها" value={toHand.length} tone="bg-blush" />
+        <Stat label="مستحق لك الآن" value={money(st.balance)} hint="طلبات مسلّمة انتهت مدة استرجاعها، بعد خصم التحويلات" />
+        <Stat label="مستحقات قريبة" value={money(st.holding + st.pending)} hint="في مدة الاسترجاع أو قيد التنفيذ" />
+        <Stat label="منتجاتك" value={mine.length} hint={[pendingReview && `${pendingReview} بانتظار الموافقة`, soldOut && `${soldOut} نفد`].filter(Boolean).join(" · ") || undefined} />
       </div>
 
       <MonthTierCard p={st.progress} />
 
       <section className="space-y-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl text-ink">محتاج يتسلّم للمتجر</h2>
+          <h2 className="text-2xl text-ink">بانتظار التسليم للمتجر</h2>
           <Link href="/brand/orders" className="ms-auto text-sm text-brand hover:underline">كل الطلبات ←</Link>
         </div>
         {toHand.length === 0 ? (
           <Box>
-            <p className="text-center text-muted">مفيش طلبات مستنياك دلوقتي ✨</p>
+            <p className="text-center text-muted">لا توجد طلبات بانتظارك الآن ✨</p>
           </Box>
         ) : (
           toHand.slice(0, 6).map((o) => <BrandOrderCard key={o.id} o={o} />)

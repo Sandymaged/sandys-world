@@ -43,8 +43,8 @@ export interface OptionChoice {
 export const optionKinds: { id: OptionKind; label: string; example: string }[] = [
   { id: "color", label: "اللون", example: "أحمر، بيج، وردي" },
   { id: "size", label: "المقاس", example: "صغير، وسط، كبير" },
-  { id: "scent", label: "الريحة", example: "فانيليا، لافندر، ورد" },
-  { id: "other", label: "اختيار تاني", example: "الشكل، الخامة…" },
+  { id: "scent", label: "الرائحة", example: "فانيليا، لافندر، ورد" },
+  { id: "other", label: "خيار آخر", example: "الشكل، الخامة…" },
 ];
 
 export const MAX_OPTIONS = 3;

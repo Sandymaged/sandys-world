@@ -16,10 +16,10 @@ export default async function AdminBrands() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-3xl text-brand">البراندات المحلية</h1>
-        <Link href="/admin/catalog/brands/new" className="btn-primary btn-sm ms-auto">+ براند جديد</Link>
+        <Link href="/admin/catalog/brands/new" className="btn-primary btn-sm ms-auto">+ علامة تجارية جديدة</Link>
       </div>
       {d.partners.length === 0 ? (
-        <Empty>لسه مفيش براندات.</Empty>
+        <Empty>لا توجد علامات تجارية بعد.</Empty>
       ) : (
         <ul className="divide-y divide-dashed divide-line bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
           {d.partners.map((b) => {
@@ -33,7 +33,7 @@ export default async function AdminBrands() {
                     <span className="block truncate text-xs text-muted">{b.city} · {b.tagline}</span>
                   </span>
                   <span className="tabular text-xs text-muted">{count} منتجات</span>
-                  <span className="w-24 text-end text-xs text-muted">عمولة بالشرايح</span>
+                  <span className="w-24 text-end text-xs text-muted">عمولة بالشرائح</span>
                 </Link>
               </li>
             );

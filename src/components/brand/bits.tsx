@@ -6,7 +6,7 @@ import { OrderActions } from "./portal-ui";
 
 /* قطع صغيرة بتتكرر في صفحات البوابة */
 
-export const periodName = { morning: "الصبح", afternoon: "الضهر", evening: "بالليل" } as const;
+export const periodName = { morning: "صباحاً", afternoon: "بعد الظهر", evening: "مساءً" } as const;
 
 export const shortDate = (iso: string) =>
   new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Cairo" });
@@ -32,7 +32,7 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="tabular font-heading text-2xl text-brand">#{o.number}</span>
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone[o.status]}`}>{statusLabel[o.status]}</span>
-        {o.open && o.handedAt && <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">سلّمته للمتجر</span>}
+        {o.open && o.handedAt && <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">سُلّم للمتجر</span>}
         {o.late && <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-semibold text-white">متأخر في التسليم</span>}
         <span className="ms-auto text-sm text-ink-2">
           التوصيل للعميل: <b>{shortDate(o.deliveryDate)}</b> · {periodName[o.deliveryPeriod]}
@@ -41,11 +41,11 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
       {o.open && !o.handedAt && o.handBy && (o.status === "preparing" || o.status === "ready") && (
         <p className={`mt-2 rounded-lg px-3 py-1.5 text-sm ${o.late ? "bg-brand-soft text-brand-dark" : "bg-butter-soft text-butter"}`}>
           {o.late ? (
-            <>كان المفروض يتسلّم للمتجر يوم <b>{shortDate(o.handBy)}</b>. سلّمه في أسرع وقت وكلّم المتجر.</>
+            <>كان يجب تسليمه للمتجر يوم <b>{shortDate(o.handBy)}</b>. سلّمه في أسرع وقت وتواصل مع المتجر.</>
           ) : o.handBy === o.deliveryDate ? (
-            <>سلّمه للمتجر يوم <b>{shortDate(o.handBy)}</b> الصبح بدري (يوم التوصيل).</>
+            <>سلّمه للمتجر يوم <b>{shortDate(o.handBy)}</b> في الصباح الباكر (يوم التوصيل).</>
           ) : (
-            <>سلّمه للمتجر لحد يوم <b>{shortDate(o.handBy)}</b> (قبل التوصيل بيوم).</>
+            <>سلّمه للمتجر حتى يوم <b>{shortDate(o.handBy)}</b> (قبل التوصيل بيوم).</>
           )}
         </p>
       )}
@@ -59,7 +59,7 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
               {l.optionsText && <span className="block text-sm text-ink-2">{l.optionsText}</span>}
               {l.customization && (
                 <span className="mt-1 block rounded-lg bg-butter-soft px-2 py-1 text-sm text-butter">
-                  يتكتب عليه: <b dir="auto">{l.customization}</b>
+                  يُكتب عليه: <b dir="auto">{l.customization}</b>
                 </span>
               )}
               <span className="block text-xs text-muted">ضمن: {l.giftTitle}</span>
@@ -86,25 +86,25 @@ const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 /** سطر قصير: البراند فين من حد الشهر وشرايح العمولة */
 export function tierLine(p: MonthProgress) {
-  if (p.freeLeft > 0) return `الشهر ده باع ${money(p.sales)} من ${money(p.threshold)} ببلاش (فاضل ${money(p.freeLeft)} من غير عمولة)`;
-  return `الشهر ده باع ${money(p.sales)} · عمولة ${pct(p.rate)} على الجزء ده${p.nextAt ? ` لحد ${money(p.nextAt)}، وبعدها ${pct(p.nextRate ?? 0)}` : ""}`;
+  if (p.freeLeft > 0) return `مبيعات هذا الشهر ${money(p.sales)} من ${money(p.threshold)} مجاناً (متبقٍ ${money(p.freeLeft)} بدون عمولة)`;
+  return `مبيعات هذا الشهر ${money(p.sales)} · عمولة ${pct(p.rate)} على هذا الجزء${p.nextAt ? ` حتى ${money(p.nextAt)}، ثم ${pct(p.nextRate ?? 0)}` : ""}`;
 }
 
 /** كارت الشهر: الحد اللي ببلاش، والشرايح، والبراند فين منها */
 export function MonthTierCard({ p }: { p: MonthProgress }) {
   const t = p.threshold;
   const tiers = [
-    { label: `لحد ${money(t)}`, rate: "0%" },
-    { label: `من ${money(t)} لـ ${money(2 * t)}`, rate: "10%" },
-    { label: `من ${money(2 * t)} لـ ${money(4 * t)}`, rate: "15%" },
-    { label: `فوق ${money(4 * t)}`, rate: "20%" },
+    { label: `حتى ${money(t)}`, rate: "0%" },
+    { label: `من ${money(t)} إلى ${money(2 * t)}`, rate: "10%" },
+    { label: `من ${money(2 * t)} إلى ${money(4 * t)}`, rate: "15%" },
+    { label: `أكثر من ${money(4 * t)}`, rate: "20%" },
   ];
   const fill = t > 0 ? Math.min(100, (p.sales / (4 * t)) * 100) : 0;
   return (
     <Box>
       <div className="flex flex-wrap items-baseline gap-x-3">
-        <h2 className="text-xl text-ink">عمولة الشهر ده</h2>
-        <span className="text-sm text-muted">بتبدأ من الأول كل شهر</span>
+        <h2 className="text-xl text-ink">عمولة هذا الشهر</h2>
+        <span className="text-sm text-muted">تبدأ من جديد كل شهر</span>
       </div>
       <p className="mt-1 text-sm leading-6 text-ink-2">{tierLine(p)}.</p>
       <div className="mt-3 h-3 overflow-hidden rounded-full bg-surface" aria-hidden>
@@ -119,7 +119,7 @@ export function MonthTierCard({ p }: { p: MonthProgress }) {
         ))}
       </ul>
       <p className="mt-3 text-xs leading-5 text-muted">
-        الحد = متوسط سعر منتجاتك × {FREE_PIECES} (يعني حوالي أول {FREE_PIECES} قطع في الشهر من غير عمولة). كل نسبة بتتحسب على الجزء اللي جوه شريحتها بس، والعمولة بتتثبت لما الطلب يتسلم للعميل.
+        الحد = متوسط سعر منتجاتك × {FREE_PIECES} (أي نحو أول {FREE_PIECES} قطع في الشهر بدون عمولة). تُحسب كل نسبة على الجزء الواقع داخل شريحتها فقط، وتُثبَّت العمولة عند تسليم الطلب للعميل.
       </p>
     </Box>
   );

@@ -15,7 +15,7 @@ export function DeleteButton({ action, backTo, what, confirmText }: { action: ()
         type="button"
         disabled={pending}
         onClick={() => {
-          if (!window.confirm(confirmText ?? `متأكدة إنك عايزة تمسحي ${what}؟ مفيش رجوع.`)) return;
+          if (!window.confirm(confirmText ?? `هل تريد حذف ${what}؟ لا يمكن التراجع.`)) return;
           start(async () => {
             const r = await action();
             if (r.ok) router.push(backTo);
@@ -24,7 +24,7 @@ export function DeleteButton({ action, backTo, what, confirmText }: { action: ()
         }}
         className="text-sm text-brand underline underline-offset-4"
       >
-        {pending ? "بيتمسح…" : `مسح ${what}`}
+        {pending ? "جارٍ الحذف…" : `حذف ${what}`}
       </button>
       {error && <p className="mt-2 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{error}</p>}
     </div>
