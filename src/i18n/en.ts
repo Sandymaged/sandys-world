@@ -502,8 +502,7 @@ export const en: Record<string, string> = {
   "حدثت مشكلة أثناء تسجيل الطلب. حاول مرة أخرى بعد قليل، أو تواصل معنا على واتساب.": "Something went wrong while placing your order. Please try again shortly, or message us on WhatsApp.",
   // ── لو مفيش صندوق: التغليف الأساسي
   "لا تريد صندوقاً؟": "Don't want a box?",
-  "نغلّف هديتك بتغليفنا الأساسي (ورق وشريطة تناسب المناسبة) مقابل {price}.": "We wrap your gift in our standard wrapping (paper and ribbon to suit the occasion) for {price}.",
-  "نغلّف هديتك بتغليفنا الأساسي مجاناً: ورق وشريطة تناسب المناسبة.": "We wrap your gift in our standard wrapping for free: paper and ribbon to suit the occasion.",
+  "نغلّف هديتك بتغليفنا الأساسي: ورق وشريطة تناسب المناسبة.": "We wrap your gift in our standard wrapping: paper and ribbon to suit the occasion.",
   "أو صمّم صندوقك بنفسك": "or build your own box",
   // ── فكرتنا: إنت بعيد وإحنا نوصّلها
   "فكرتنا ببساطة": "The idea, simply",

@@ -24,6 +24,8 @@ export default async function ShopPage({ searchParams }: PageProps<"/[lang]/shop
     <>
       <PageHeader kicker={t("دوّري براحتك")} title={t("كل الهدايا")} subtitle={t("حسب المناسبة، أو لمين، أو على قد ميزانيتك.")} />
       <div className="container-x py-10">
+        {/* تحت عنوان الصفحة على طول: لو مفيش صندوق بنغلّف الهدية في التغليف الأساسي */}
+        <WrapNote className="mb-8" />
         <Suspense fallback={<p className="text-muted">{t("بنحمّل الهدايا…")}</p>}>
           <Results searchParams={searchParams} />
         </Suspense>
@@ -126,7 +128,6 @@ async function Results({ searchParams }: { searchParams: Promise<Params> }) {
       {products.length > 0 && (
         <section>
           <SectionHeading title={t("منتجات")} subtitle={t("تتبعت لوحدها أو تحطها في بوكس")} />
-          <WrapNote className="mb-6" />
           <Grid>
             {products.map((p) => (
               <ProductCard key={p.id} product={p} />
