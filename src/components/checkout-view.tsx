@@ -122,7 +122,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
     start(async () => {
       const r = await submitOrder(
         // الطلب للعميل نفسه: مفيش كارت ولا «اخفي السعر» ولا «مفاجأة»
-        { gifts: withDelivery(gifts, sender.isRecipient ? { ...delivery, cardMessage: "", hidePrice: false, surprise: false } : delivery), giftCards: cards.map(({ id: _id, ...c }) => c), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
+        { gifts: withDelivery(gifts, sender.isRecipient ? { ...delivery, cardMessage: "", hidePrice: false, hideSender: false, surprise: false } : delivery), giftCards: cards.map(({ id: _id, ...c }) => c), sender, couponCode: coupon ? couponCode : "", paymentMethod: payMethod, giftCardCode: gcCard?.code ?? "", source },
         t.locale,
       );
       if (!r.ok) {
@@ -250,6 +250,9 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
             <span className="text-muted">
               {formatDay(delivery.date, t)} · {delivery.period && periodLabel(delivery.period, settings, t)}
             </span>
+            {!sender.isRecipient && (
+              <span className="mt-1 block text-xs font-semibold text-brand">{delivery.hideSender ? t("من غير اسمك: مش هيعرف مين اللي بعتها") : t("هيعرف إن الهدية منك")}</span>
+            )}
           </p>
           <ul className="divide-y divide-line">
             {gifts.map((g, i) => (

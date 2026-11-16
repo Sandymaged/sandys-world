@@ -55,6 +55,7 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
               ))}
             </ul>
             {g.people && <p className="mt-2">العدد: <b className="tabular">{g.people}</b>{g.names && <span className="block whitespace-pre-line">الأسماء على الكروت:{"\n"}{g.names}</span>}</p>}
+            {g.hideSender && <p className="mt-3 font-bold">⚠ من غير اسم الباعت: متكتبش اسمه على الكارت ولا تقوله للمستلم</p>}
             <p className="mt-3">{g.hidePrice ? "⚠ متحطش أي سعر في الهدية" : ""}</p>
             <p>التوصيل: <b>{formatDay(g.deliveryDate)} · {periodLabel(g.deliveryPeriod, settings)}</b></p>
           </section>
@@ -69,6 +70,7 @@ export default async function PrintOrder({ params }: PageProps<"/[lang]/admin/or
             {g.recipient.locationUrl && <p dir="ltr" className="break-all">{g.recipient.locationUrl}</p>}
             <p className="mt-2">الفترة: <b>{formatDay(g.deliveryDate)} · {periodLabel(g.deliveryPeriod, settings)}</b></p>
             {g.surprise && <p className="font-bold">⚠ مفاجأة: متكلمش المستلم غير وإنت قدام الباب</p>}
+            {g.hideSender && <p className="font-bold">⚠ متقولش للمستلم مين اللي باعت الهدية</p>}
             {g.wantsDeliveryPhoto && <p>📷 صوّر الهدية مع المستلم وقت التسليم</p>}
             <p className="mt-2 text-base font-bold">{cod ? `تحصيل كاش: ${money(order.totals.total)}` : "مدفوع، متحصّلش حاجة"}</p>
           </section>

@@ -46,6 +46,7 @@ export default async function AdminToday() {
                             لـ {g.recipient.name} · {g.recipient.zoneName}
                             {g.items.some((it) => it.customization || it.customImage) && " · فيه تخصيص"}
                             {g.surprise && " · مفاجأة"}
+                            {g.hideSender && " · من غير اسم الباعت"}
                           </span>
                         </span>
                         {o.status === "awaiting_payment" && <span className="text-xs font-semibold text-butter">الدفع لسه</span>}

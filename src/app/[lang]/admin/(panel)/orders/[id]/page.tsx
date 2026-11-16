@@ -156,6 +156,7 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
                 <div className="space-y-1">
                   {g.cardMessage && <p className="font-script text-lg leading-7 text-lilac">«{g.cardMessage}»</p>}
                   <p className="flex flex-wrap gap-1.5 text-xs">
+                    {g.hideSender && <span className="rounded-full bg-brand px-2 py-0.5 font-semibold text-white">من غير اسم الباعت: متكتبش اسمه ولا تقوله للمستلم</span>}
                     {g.hidePrice && <span className="rounded-full bg-surface px-2 py-0.5">متكتبش السعر</span>}
                     {g.surprise && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">مفاجأة: متكلمش المستلم</span>}
                     {g.wantsDeliveryPhoto && <span className="rounded-full bg-success-soft px-2 py-0.5 text-success">عايز صورة التسليم</span>}

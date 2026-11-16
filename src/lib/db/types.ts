@@ -53,6 +53,8 @@ export interface GiftRecord {
   packaging: number;
   cardMessage: string;
   hidePrice: boolean;
+  /** من غير اسم الباعت: متكتبوش اسمه على الكارت ولا تقولوه للمستلم */
+  hideSender?: boolean;
   surprise: boolean;
   wantsDeliveryPhoto: boolean;
   people: number | null;

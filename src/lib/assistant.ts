@@ -82,6 +82,7 @@ function systemPrompt(sf: Storefront, products: Product[], packages: PackageView
     brands: sf.brands.map((b) => b.name),
     group_kits: sf.kits.map((k) => ({ name: k.name, price_per_person: k.pricePerPerson, kind: k.category })),
     card_message: `every gift can have a written card message (up to ${s.maxCardMessage} characters) and can hide the price`,
+    sending: "customers can order from anywhere (another city, abroad, busy) and giftful prepares and delivers the gift for them. In the cart they choose whether their name shows on the gift or it arrives without the recipient knowing who sent it",
     today: `${cairoNow().date} (Cairo)`,
     current_season: sf.activeSeason ? { name: sf.activeSeason.name, date: sf.activeSeason.occasionDate } : null,
   };

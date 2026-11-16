@@ -117,6 +117,13 @@ export function Hero({
           <p className="mt-3 max-w-xl text-lg leading-8 text-ink-2">
             {t("اختار هدية جاهزة أو اعمل بوكس على ذوقك من منتجات براندات أسيوط. إحنا بنغلّفها ونكتب كارتك، وبنوصّلها لحد باب اللي بتحبه في اليوم والفترة اللي تختارها.")}
           </p>
+          {/* فكرة الموقع في سطر: تبعت من بعيد، وباسمك أو من غير اسمك */}
+          <p className="animate-fade-up mt-4 inline-flex max-w-xl -rotate-1 flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl border border-dashed border-brand/40 bg-brand-soft px-4 py-2 text-[15px] leading-7 text-brand-dark">
+            <Icon name="gift" className="size-5 shrink-0" />
+            <span>
+              {t("إنت بعيد؟ إحنا نوصّلها عنك.")} <b>{t("وتختار: اسمك يظهر عليها، أو توصل من غير ما يعرف مين بعتها.")}</b>
+            </span>
+          </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href={seasonHref} className="btn-primary">
               {t("اختار هديتك")}

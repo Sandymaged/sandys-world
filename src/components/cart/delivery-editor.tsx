@@ -234,6 +234,33 @@ export function DeliveryEditor({
 
       {!forMe && (
       <>
+      {/* اسمك على الهدية ولا لأ */}
+      <div className="space-y-2">
+        <p className="label">{t("اسمك يظهر على الهدية؟")}</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(
+            [
+              [false, "أيوه، اكتبوا إنها مني", "المستلم هيعرف إن الهدية منك"],
+              [true, "لأ، من غير اسمي", "توصل من غير ما يعرف مين اللي بعتها"],
+            ] as const
+          ).map(([v, title, sub]) => {
+            const on = Boolean(delivery.hideSender) === v;
+            return (
+              <button
+                key={String(v)}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setDelivery({ hideSender: v })}
+                className={`rounded-2xl border-2 px-4 py-3 text-start transition-colors ${on ? "border-brand bg-brand-soft" : "border-line bg-bg hover:border-brand/40"}`}
+              >
+                <span className={`block text-sm font-semibold ${on ? "text-brand" : "text-ink"}`}>{t(title)}</span>
+                <span className="block text-xs text-muted">{t(sub)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="space-y-2">
         <label className="label" htmlFor="cm">
           {t("رسالة الكارت")} <span className="font-normal text-muted">{gifts.length > 1 ? t("(كارت واحد للطلب كله، اختياري)") : t("(اختياري)")}</span>
@@ -248,6 +275,7 @@ export function DeliveryEditor({
           onChange={(e) => setDelivery({ cardMessage: e.target.value })}
         />
         <p className="tabular text-left text-xs text-muted">{(delivery.cardMessage ?? "").length}/{settings.maxCardMessage}</p>
+        {delivery.hideSender && <p className="text-xs text-muted">{t("الكارت هيتكتب من غير اسمك، فماتكتبش اسمك في الرسالة.")}</p>}
       </div>
 
       <div className="space-y-2 text-sm">

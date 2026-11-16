@@ -12,6 +12,7 @@ import { Icon } from "@/components/icons";
 import { NoteBoard } from "@/components/note-board";
 import { Pill, Polaroid, Quote, ScrapTitle } from "@/components/scrapbook";
 import { ScrollRow } from "@/components/scroll-row";
+import { SendForYou } from "@/components/send-for-you";
 import { Link } from "@/i18n/client";
 import { getT } from "@/i18n/server";
 import { getLocalizedStorefront } from "@/lib/catalog";
@@ -37,7 +38,7 @@ const notes = [
 
 const steps = [
   ["اختار الهدية", "باكدج جاهز، أو بوكس على ذوقك، أو اكتب الاسم على المنتج."],
-  ["حدد المستلم والميعاد", "لكل هدية عنوان ويوم وفترة توصيل، ورسالة كارت."],
+  ["حدد المستلم والميعاد", "العنوان ويوم وفترة التوصيل، ورسالة الكارت، واسمك يظهر عليها ولا لأ."],
   ["ادفع", "إنستاباي من أي مكان، أو كاش لو إنت المستلم."],
   ["استلم الصور", "صورة الهدية قبل ما تخرج، وصورة وهي بتتسلم، على واتساب."],
 ];
@@ -97,6 +98,9 @@ export default async function HomePage() {
         seasonHref={season?.occasionSlug ? `/occasions/${season.occasionSlug}` : "/shop"}
         deadline={season?.readyDeadline ?? null}
       />
+
+      {/* فكرة الموقع: تطلب من أي مكان وإحنا نوصّلها عنك */}
+      <SendForYou />
 
       <FeaturePills />
 

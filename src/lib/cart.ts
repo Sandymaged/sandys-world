@@ -54,6 +54,8 @@ export interface CartGift {
   delivery: { date: string; period: DeliveryPeriod | "" };
   cardMessage: string;
   hidePrice: boolean;
+  /** الهدية توصل من غير اسم الباعت (المستلم مايعرفش مين بعتها) */
+  hideSender?: boolean;
   surprise: boolean;
   wantsDeliveryPhoto: boolean;
   /** اختيار التغليف (id من إعدادات المتجر) */
@@ -71,6 +73,8 @@ export interface OrderDelivery {
   date: string;
   period: DeliveryPeriod | "";
   hidePrice: boolean;
+  /** «متكتبوش اسمي»: الهدية توصل من غير ما المستلم يعرف مين بعتها */
+  hideSender?: boolean;
   surprise: boolean;
   wantsDeliveryPhoto: boolean;
   /** رسالة الكارت: واحدة للطلب كله (بتتحط في كارت واحد مع الهدايا) */
@@ -94,6 +98,7 @@ export const emptyDelivery = (): OrderDelivery => ({
   date: "",
   period: "",
   hidePrice: true,
+  hideSender: false,
   surprise: false,
   wantsDeliveryPhoto: true,
   cardMessage: "",
@@ -108,6 +113,7 @@ export const withDelivery = (gifts: CartGift[], d: OrderDelivery): CartGift[] =>
     recipient: { ...d.recipient },
     delivery: { date: d.date, period: d.period },
     hidePrice: d.hidePrice,
+    hideSender: Boolean(d.hideSender),
     surprise: d.surprise,
     wantsDeliveryPhoto: d.wantsDeliveryPhoto,
   }));
