@@ -3,15 +3,17 @@ import type { CatalogData } from "./db/catalog-store";
 import type { OrderRecord } from "./db/types";
 import { cairoNow } from "./delivery";
 import { instapayFee, type Expense, type FinanceSettings } from "./finance";
+import { itemUnitPrice } from "./commission";
 import { cardsTotal } from "./gift-card";
 import { allCombos, comboKey, comboStock, describeChoices, usesCombos } from "./options";
 
 /*
  * التقارير (بحساب الفلوس اللي دخلت فعلاً):
- * - الطلب بيتحسب لما يتدفع (إنستاباي اتأكد) أو كاش ولسه ما اتلغاش
+ * - الطلب بيتحسب لما يتدفع (إنستاباي اتأكد) أو كاش واتسلم للعميل (الفلوس اتحصّلت)
  * - التكلفة: نصيب البراند (السعر ناقص العمولة) أو تكلفة منتجات المتجر نفسه
  * - وبعدين التوصيل الفعلي، والتغليف، وعمولة إنستاباي، والمرتجعات، والمصاريف
- * ملحوظة: التكاليف بتتحسب بأسعار الكتالوج الحالية (العمولة والتكلفة دلوقتي).
+ * ملحوظة: نصيب البراند بيتحسب بسعر القطعة وقت الشراء (catalogPrice، ولو الطلب اتسلم بالمبلغ اللي اتثبت وقتها)؛
+ * الطلبات القديمة اللي مفيهاش catalogPrice بس بتاخد سعر الكتالوج الحالي. تكلفة منتجات المتجر نفسه لسه بالتكلفة الحالية.
  */
 
 export type PeriodId = "this-month" | "last-month" | "7d" | "30d" | "year" | "all";
@@ -56,8 +58,12 @@ const dayOf = (iso: string) => cairoNow(new Date(iso)).date;
 const digits = (s: string) => s.replace(/\D/g, "").slice(-10);
 const inRange = (d: string, from: string, to: string) => d >= from && d <= to;
 
-/** الطلب ده بيتحسب في المبيعات؟ */
-export const counted = (o: OrderRecord) => o.status !== "cancelled" && (o.paymentStatus === "confirmed" || o.paymentMethod === "cod");
+/**
+ * الطلب ده بيتحسب في المبيعات (فلوسه دخلت فعلاً)؟ الدفع اتأكد، أو كاش عند الاستلام واتسلم (الفلوس اتحصّلت).
+ * الكاش اللي لسه ماتسلمش مش مبيعات مؤكدة.
+ */
+export const counted = (o: OrderRecord) =>
+  o.status !== "cancelled" && (o.paymentStatus === "confirmed" || (o.paymentMethod === "cod" && o.status === "delivered"));
 
 export interface Ranked {
   key: string;
@@ -121,8 +127,8 @@ function money(o: OrderRecord, catalog: CatalogData, f: FinanceSettings) {
   for (const g of o.gifts) {
     for (const it of g.items) {
       const p = products.get(it.productId);
-      // سعر المنتج: سعره في الطلب، ولو جوه باكدج (سعره صفر) سعره في الكتالوج
-      const price = (it.unitPrice > 0 ? it.unitPrice : (p?.price ?? 0)) * it.quantity;
+      // سعر المنتج: سعره في الطلب، ولو جوه باكدج (سعره صفر) سعره في الكتالوج وقت الشراء
+      const price = itemUnitPrice(it, p?.price) * it.quantity;
       const partner = it.partnerId ? partners.get(it.partnerId) : undefined;
       if (partner) {
         const b = brands.get(partner.id) ?? { gross: 0, legacy: 0 };
@@ -136,8 +142,10 @@ function money(o: OrderRecord, catalog: CatalogData, f: FinanceSettings) {
   for (const [pid, b] of brands) {
     const settled = o.brandStatus?.[pid]?.settled;
     const c = settled ? settled.commission : o.status === "delivered" ? b.legacy : 0;
+    // بعد التسليم المبلغ اللي اتثبت هو المرجع (مش أسعار الكتالوج الحالية)
+    const gross = settled && o.status === "delivered" ? settled.gross : b.gross;
     commission += c;
-    goods += b.gross - c;
+    goods += gross - c;
   }
   const zoneId = o.gifts[0]?.recipient.zoneId;
   // كل محاولة توصيل تانية في يوم تاني مشوار جديد على المندوب
@@ -289,7 +297,7 @@ export function buildReport(i: Inputs, from: string, to: string, prevFrom: strin
     for (const g of o.gifts) {
       if (g.kind === "package" || g.kind === "kit") bump(packages, g.refId, g.title, 1);
       for (const it of g.items) {
-        const price = (it.unitPrice > 0 ? it.unitPrice : (i.catalog.products.find((p) => p.id === it.productId)?.price ?? 0)) * it.quantity;
+        const price = itemUnitPrice(it, i.catalog.products.find((p) => p.id === it.productId)?.price) * it.quantity;
         bump(products, it.productId, it.name, it.quantity, undefined);
         if (it.partnerId && partners.get(it.partnerId)) bump(brands, it.partnerId, partners.get(it.partnerId)!.name, price);
       }

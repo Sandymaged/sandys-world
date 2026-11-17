@@ -9,7 +9,7 @@ import { customLines, deliveryProblems, giftProblems, giftTotals, hasCustomizati
 import { CheckoutCustomizations } from "./checkout-custom";
 import { periodLabel } from "@/lib/delivery";
 import { egp, formatDay } from "@/lib/format";
-import { couponDiscount, type CouponRule } from "@/lib/pricing";
+import { couponBreakdown, type CouponRule } from "@/lib/pricing";
 import type { StoreSettings } from "@/lib/settings";
 import type { Zone } from "@/lib/types";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -68,7 +68,9 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
   const packaging = totals.reduce((s, t) => s + t.packaging, 0);
   const deliveryFee = zone?.fee ?? 0;
   const cardsSum = cards.reduce((s, c) => s + c.amount, 0);
-  const discount = coupon ? couponDiscount(items + packaging, coupon) : 0;
+  // نفس حساب السيرفر (order-quote): الباقات الجاهزة = سعر الباقة + الصندوق
+  const packagesTotal = gifts.reduce((s, g) => s + (g.kind === "package" ? g.basePrice : 0), 0);
+  const { discount, capped: discountCapped } = coupon ? couponBreakdown(items + packaging, coupon, packagesTotal) : { discount: 0, capped: false };
   const beforeCard = items + packaging + deliveryFee - discount;
   const gcApplied = gcCard ? Math.min(gcCard.balance, beforeCard) : 0;
   const total = beforeCard - gcApplied + cardsSum;
@@ -288,6 +290,7 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
           </div>
           {couponMsg && <p className="mt-1 text-xs text-brand">{couponMsg}</p>}
           {coupon && <p className="mt-1 text-xs text-success">{t("تم تطبيق الكود")}</p>}
+          {discountCapped && discount === 0 && coupon?.packageCap != null && <p className="mt-1 text-xs text-muted">{t("الخصم على الباقات بحد أقصى {price}", { price: egp(coupon.packageCap, t) })}</p>}
           {cards.length > 0 && <p className="mt-1 text-xs text-muted">{t("الخصم على الهدايا بس، مش على كارت الهدية.")}</p>}
         </div>
         )}
@@ -320,7 +323,15 @@ export function CheckoutView({ zones, settings }: { zones: Zone[]; settings: Sto
           {packaging > 0 && <div className="flex justify-between"><dt className="text-muted">{t("تغليف وتنسيق")}</dt><dd className="tabular">{egp(packaging, t)}</dd></div>}
           {cardsSum > 0 && <div className="flex justify-between"><dt className="text-muted">{cards.length > 1 ? t("كروت الهدايا") : t("كارت الهدية")}</dt><dd className="tabular">{egp(cardsSum, t)}</dd></div>}
           {hasGifts && <div className="flex justify-between"><dt className="text-muted">{t("التوصيل")}</dt><dd className="tabular">{egp(deliveryFee, t)}</dd></div>}
-          {discount > 0 && <div className="flex justify-between text-success"><dt>{t("الخصم")}</dt><dd className="tabular">− {egp(discount, t)}</dd></div>}
+          {discount > 0 && (
+            <div className="flex justify-between gap-3 text-success">
+              <dt>
+                {t("الخصم")}
+                {discountCapped && coupon?.packageCap != null && <span className="block text-xs text-muted">{t("الخصم على الباقات بحد أقصى {price}", { price: egp(coupon.packageCap, t) })}</span>}
+              </dt>
+              <dd className="tabular">− {egp(discount, t)}</dd>
+            </div>
+          )}
           {gcApplied > 0 && <div className="flex justify-between text-success"><dt>{t("كارت هدية")}</dt><dd className="tabular">− {egp(gcApplied, t)}</dd></div>}
           <div className="flex justify-between border-t border-line pt-2 text-lg font-bold">
             <dt>{t("الإجمالي")}</dt>

@@ -8,7 +8,7 @@ import { GiftCardSendButtons, PaymentPanel, RedeliveryPanel, StatusButtons } fro
 import { StatusBadge, money } from "@/components/admin/ui";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { requireAdmin } from "@/lib/admin-auth";
-import { paymentLabel, waLink, waMessages } from "@/lib/admin-format";
+import { deliveryGuards, paymentHint, paymentLabel, waLink, waMessages } from "@/lib/admin-format";
 import { getStorefront } from "@/lib/catalog";
 import { repo } from "@/lib/db";
 import { addDays, cairoNow, periodLabel } from "@/lib/delivery";
@@ -40,6 +40,8 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
   const catalog = await loadCatalogData();
   // كل براند منتجاته في الطلب ده: سلّم ولا لأ
   const brands = catalog.partners.map((p) => ({ p, bo: brandOrderOf(order, p.id, catalog) })).filter((x) => x.bo);
+  // تنبيهات التسليم بدري / براند لسه ماسلّمش (بتتأكد في السيرفر كمان)
+  const guards = deliveryGuards(order, cairoNow().date);
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const orderUrl = `${origin}${order.locale === "en" ? "/en" : ""}/order/${order.token}`;
@@ -69,6 +71,10 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
         <Link href="/admin/orders" className="text-sm text-muted hover:text-brand">← الطلبات</Link>
         <h1 className="tabular text-4xl text-brand">#{order.number}</h1>
         <StatusBadge status={order.status} />
+        {(() => {
+          const hint = paymentHint(order);
+          return hint && <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${hint.tone}`}>{hint.label}</span>;
+        })()}
         <span className="text-sm text-muted">أُنشئ {when(order.createdAt)}</span>
         <Link href={`/admin/orders/${order.id}/print`} className="btn-outline btn-sm ms-auto">طباعة البطاقات والأوراق</Link>
       </div>
@@ -204,7 +210,12 @@ export default async function AdminOrder({ params }: PageProps<"/[lang]/admin/or
           )}
           <section className="bg-[#fffdf8] p-5 shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]">
             <h2 className="text-xl text-brand">الحالة</h2>
-            <StatusButtons id={order.id} status={order.status} />
+            <StatusButtons
+              id={order.id}
+              status={order.status}
+              earlyDateLabel={guards.earlyDate ? formatDay(guards.earlyDate) : null}
+              unhandedBrands={guards.unhanded.map((pid) => catalog.partners.find((p) => p.id === pid)?.name ?? pid)}
+            />
           </section>
           <RedeliveryPanel
             id={order.id}

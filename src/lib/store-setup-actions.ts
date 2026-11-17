@@ -5,6 +5,7 @@ import { requireAdmin } from "./admin-auth";
 import { bool, en, image, num, slugify, str, type SaveResult } from "./catalog-form";
 import { cairoISO, listOccasions, listSeasons, setupOnSupabase } from "./store-setup";
 import { adminClient } from "./supabase/admin";
+import { saveCouponCap } from "./coupon-caps";
 import type { ZoneKind } from "./types";
 
 const NEED_DB = "يتطلب التعديل هنا ربط Supabase";
@@ -230,6 +231,9 @@ export async function saveCoupon(code: string | null, f: FormData): Promise<Save
   if (expires && !DAY.test(expires)) return { ok: false, error: "تاريخ الانتهاء غير صحيح" };
   const maxUses = str(f, "maxUses") ? num(f, "maxUses") : null;
   if (maxUses != null && !(maxUses >= 1)) return { ok: false, error: "يجب أن يكون عدد المرات 1 أو أكثر، أو اتركه فارغاً" };
+  // أقصى خصم على الباقات الجاهزة: فارغ = بلا حد
+  const packageCap = str(f, "packageCap") ? num(f, "packageCap") : null;
+  if (packageCap != null && !(packageCap >= 0)) return { ok: false, error: "يجب أن يكون أقصى خصم على الباقات رقماً (صفر أو أكثر)، أو اتركه فارغاً" };
 
   const db = adminClient();
   if (!code) {
@@ -245,12 +249,16 @@ export async function saveCoupon(code: string | null, f: FormData): Promise<Save
     max_uses: maxUses == null ? null : Math.round(maxUses),
     is_active: bool(f, "isActive"),
   });
-  return error ? dbError(error, "") : done(c);
+  if (error) return dbError(error, "");
+  const capErr = await saveCouponCap(c, packageCap == null ? null : Math.round(packageCap));
+  return capErr ? { ok: false, error: `حُفظ الكود لكن تعذّر حفظ أقصى خصم على الباقات: ${capErr}` } : done(c);
 }
 
 export async function deleteCoupon(code: string): Promise<SaveResult> {
   await requireAdmin();
   if (!setupOnSupabase()) return { ok: false, error: NEED_DB };
   const { error } = await adminClient().from("coupons").delete().eq("code", code);
-  return error ? dbError(error, "هذا الكود استُخدم في طلبات، أوقفه بدلاً من حذفه") : done(code);
+  if (error) return dbError(error, "هذا الكود استُخدم في طلبات، أوقفه بدلاً من حذفه");
+  await saveCouponCap(code, null);
+  return done(code);
 }

@@ -36,6 +36,7 @@ export default async function AdminCoupons() {
                     <span className="tabular block text-xs text-muted">
                       {c.kind === "percent" ? `${c.value}٪` : egp(c.value)} خصم
                       {c.minOrder > 0 && ` · على طلب ${egp(c.minOrder)} أو أكثر`}
+                      {c.packageCap != null && ` · على الباقات بحد أقصى ${egp(c.packageCap)}`}
                       {c.expiresAt && ` · حتى ${cairoDay(c.expiresAt)}`}
                     </span>
                   </span>

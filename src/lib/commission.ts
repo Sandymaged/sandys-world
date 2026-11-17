@@ -38,6 +38,16 @@ export function commissionFor(before: number, amount: number, threshold: number)
   return r2(c);
 }
 
+/**
+ * سعر القطعة اللي بيتحسب بيه نصيب البراند: سعرها في الطلب، ولو جوه باكدج (سعرها صفر)
+ * سعرها في الكتالوج وقت الشراء (catalogPrice). الطلبات القديمة اللي مفيهاش catalogPrice بس هي اللي بتاخد السعر الحالي.
+ */
+export function itemUnitPrice(it: { unitPrice: number; catalogPrice?: number }, currentPrice: number | undefined): number {
+  if (it.unitPrice > 0) return it.unitPrice;
+  if (typeof it.catalogPrice === "number") return it.catalogPrice;
+  return currentPrice ?? 0;
+}
+
 /** الشهر (YYYY-MM) بتوقيت القاهرة */
 export const cairoMonth = (d: Date | string = new Date()) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" }).slice(0, 7);
 

@@ -73,6 +73,14 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
     ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ar-EG-u-nu-latn", { weekday: "long", hour: "numeric", minute: "2-digit", timeZone: "Africa/Cairo" }).format(new Date(order.paymentDueAt))
     : null;
   const current = rank[order.status];
+  // الخطوة الأولى بتقول الحقيقة: «تم التأكيد» بس بعد ما الدفع يتأكد (أو المتجر يقبل طلب الدفع عند الاستلام)
+  const codPending = order.status === "new" && order.paymentStatus === "cod";
+  const firstStep =
+    order.status === "awaiting_payment"
+      ? { label: order.paymentStatus === "awaiting_confirmation" ? "تم استلام صورة التحويل، جارٍ التأكيد" : "بانتظار الدفع", done: false }
+      : codPending
+        ? { label: "بانتظار تأكيد المتجر", done: false }
+        : { label: "اتأكد", done: current >= 0 };
   const cards = order.giftCards ?? [];
   const cardsSum = cards.reduce((x, c) => x + c.amount, 0);
   // طلب كروت هدايا بس (من غير هدايا بتتوصل)
@@ -183,14 +191,19 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
               <h2 className="text-2xl text-ink">{t("حالة الطلب")}</h2>
               <ol className="mt-5 grid grid-cols-5 gap-1 text-center">
                 {steps.map((s, i) => {
-                  const done = current >= i;
+                  const done = i === 0 ? firstStep.done : current >= i;
+                  // الخطوة الأولى لسه مستنية (الدفع أو تأكيد المتجر): بتبان بساعة بدل الصح
+                  const waiting = i === 0 && !firstStep.done;
+                  const label = i === 0 ? firstStep.label : s.label;
                   return (
                     <li key={s.status} className="relative">
-                      {i > 0 && <span className={`absolute top-4 h-0.5 w-full -translate-x-1/2 rtl:translate-x-1/2 ${current >= i ? "bg-brand" : "bg-line"}`} style={{ insetInlineStart: 0 }} />}
-                      <span className={`relative mx-auto grid size-8 place-items-center rounded-full border-2 ${done ? "border-brand bg-brand text-white" : "border-line bg-bg text-muted"}`}>
-                        {done ? <Icon name="check" className="size-4" /> : <span className="tabular text-xs">{i + 1}</span>}
+                      {i > 0 && <span className={`absolute top-4 h-0.5 w-full -translate-x-1/2 rtl:translate-x-1/2 ${done ? "bg-brand" : "bg-line"}`} style={{ insetInlineStart: 0 }} />}
+                      <span
+                        className={`relative mx-auto grid size-8 place-items-center rounded-full border-2 ${done ? "border-brand bg-brand text-white" : waiting ? "border-butter bg-butter-soft text-butter" : "border-line bg-bg text-muted"}`}
+                      >
+                        {done ? <Icon name="check" className="size-4" /> : waiting ? <Icon name="clock" className="size-4" /> : <span className="tabular text-xs">{i + 1}</span>}
                       </span>
-                      <span className={`mt-1.5 block text-[11px] leading-4 ${done ? "font-semibold text-brand" : "text-muted"}`}>{t(s.label)}</span>
+                      <span className={`mt-1.5 block text-[11px] leading-4 ${done ? "font-semibold text-brand" : waiting ? "font-semibold text-butter" : "text-muted"}`}>{t(label)}</span>
                     </li>
                   );
                 })}
@@ -202,6 +215,8 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                     : t("الطلب محجوز ومستني الدفع.")}
                 </p>
               )}
+              {codPending && <p className="mt-4 rounded-xl bg-butter-soft p-3 text-sm text-butter">{t("استلمنا طلبك، وسنتواصل معك لتأكيده قبل أن نبدأ التجهيز.")}</p>}
+              {order.status === "awaiting_design_approval" && <p className="mt-4 rounded-xl bg-lilac-soft p-3 text-sm text-lilac">{t("سنرسل لك التصميم لتوافق عليه قبل أن نبدأ التجهيز.")}</p>}
             </section>
           )}
 
@@ -299,7 +314,17 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
           {order.gifts.map((g) => (
             <div key={g.id} className={`card p-4 pt-5`}>
               <p className="font-heading text-xl text-brand">{g.title}</p>
-              <p className="text-xs text-muted">{g.items.map((it) => `${it.name}${it.optionsText ? ` (${it.optionsText})` : ""}${it.quantity > 1 ? ` × ${it.quantity}` : ""}`).join(" · ")}</p>
+              <ul className="mt-1 space-y-1 text-xs text-muted">
+                {g.items.map((it, j) => (
+                  <li key={`${it.productId}-${j}`}>
+                    {`${it.name}${it.optionsText ? ` (${it.optionsText})` : ""}${it.quantity > 1 ? ` × ${it.quantity}` : ""}`}
+                    {/* اللي العميل طلب يتكتب، عشان يطمن إنه وصلنا */}
+                    {it.customization && <span className="mt-0.5 block w-fit rounded bg-butter-soft px-2 py-0.5 font-semibold text-butter">{t("يُكتب عليه: {text}", { text: `«${it.customization}»` })}</span>}
+                    {/* الصورة نفسها خاصة، فبنقول بس إنها وصلت من غير لينك */}
+                    {it.customImage && <span className="mt-0.5 block w-fit rounded bg-success-soft px-2 py-0.5 font-semibold text-success">{t("استلمنا الصورة التي أرسلتها للطباعة ✓")}</span>}
+                  </li>
+                ))}
+              </ul>
               <p className="mt-2 text-sm">
                 {t("لـ {name}", { name: g.recipient.name })} · {g.recipient.zoneName}
               </p>

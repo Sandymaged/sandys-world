@@ -1,5 +1,6 @@
 import "server-only";
 import * as seed from "./seed-data";
+import { capFor, loadCouponCaps } from "./coupon-caps";
 import { DEFAULT_SETTINGS, type StoreSettings } from "./settings";
 import { adminClient } from "./supabase/admin";
 import type { Occasion, Season, Zone } from "./types";
@@ -23,6 +24,8 @@ export interface AdminCoupon {
   maxUses: number | null;
   used: number;
   isActive: boolean;
+  /** أقصى خصم على الباقات الجاهزة (ج.م)، من غيره بلا حد */
+  packageCap?: number;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- صفوف قاعدة البيانات */
@@ -74,9 +77,10 @@ export async function listZones(): Promise<AdminZone[]> {
 
 export async function listCoupons(): Promise<AdminCoupon[]> {
   if (!setupOnSupabase()) return seed.coupons.map((c) => ({ ...c, used: 0, isActive: true }));
-  const { data, error } = await adminClient().from("coupons").select("*").order("code");
+  const [{ data, error }, caps] = await Promise.all([adminClient().from("coupons").select("*").order("code"), loadCouponCaps()]);
   if (error) throw new Error(error.message);
   return (data ?? []).map((r: any) => ({
+    packageCap: capFor(caps, r.code),
     code: r.code,
     kind: r.kind,
     value: Number(r.value),

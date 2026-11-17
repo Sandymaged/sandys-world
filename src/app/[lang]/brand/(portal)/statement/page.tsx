@@ -19,7 +19,7 @@ export default async function BrandStatementPage() {
       <div>
         <h1 className="text-3xl text-brand">حسابي مع المتجر</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          نصيبك = سعر منتجاتك مطروحاً منه عمولة المتجر، والعمولة حسب الشرائح أدناه. يُستحق المبلغ بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام، ويحوّله المتجر بشكل دوري.
+          نصيبك = سعر منتجاتك مطروحاً منه عمولة المتجر، والعمولة حسب الشرائح أدناه. يُستحق المبلغ بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام. يحوّل المتجر مستحقاتك كل أسبوع، عن الطلبات التي سُلّمت في الأسبوع السابق وانتهت مدة استرجاعها.
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export default async function BrandStatementPage() {
                 {rows.map((o) => (
                   <tr key={o.id}>
                     <td className="tabular py-2 font-semibold">#{o.number}</td>
-                    <td className="py-2">{o.status === "delivered" ? (isDue(o) ? "مستحق ✓" : `يستحق ${shortDate(o.dueAt!)}`) : statusLabel[o.status]}</td>
+                    <td className="py-2">{o.status === "delivered" ? (isDue(o) ? "مستحق ✓" : `يستحق ${shortDate(o.dueAt!)}`) : o.upcoming ? "طلب قادم" : statusLabel[o.status]}</td>
                     <td className="py-2 text-ink-2">{shortDate(o.deliveredAt ?? o.deliveryDate)}</td>
                     <td className="tabular py-2 text-end">{money(o.gross)}</td>
                     <td className="tabular py-2 text-end font-semibold text-brand">{money(o.net)}</td>

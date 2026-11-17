@@ -31,7 +31,11 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
     <Box className={o.open ? "" : "opacity-75"}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="tabular font-heading text-2xl text-brand">#{o.number}</span>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone[o.status]}`}>{statusLabel[o.status]}</span>
+        {o.upcoming ? (
+          <span className="rounded-full bg-butter-soft px-2.5 py-0.5 text-xs font-semibold text-butter">طلب قادم: لم يبدأ التجهيز بعد</span>
+        ) : (
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone[o.status]}`}>{statusLabel[o.status]}</span>
+        )}
         {o.open && o.handedAt && <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">سُلّم للمتجر</span>}
         {o.late && <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-semibold text-white">متأخر في التسليم</span>}
         <span className="ms-auto text-sm text-ink-2">
@@ -47,6 +51,11 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
           ) : (
             <>سلّمه للمتجر حتى يوم <b>{shortDate(o.handBy)}</b> (قبل التوصيل بيوم).</>
           )}
+        </p>
+      )}
+      {o.upcoming && (
+        <p className="mt-2 rounded-lg bg-surface px-3 py-1.5 text-sm text-ink-2">
+          تأكّد هذا الطلب وسيبدأ تجهيزه قريباً. جهّز منتجاتك من الآن، وستتمكن من الضغط على «سلّمت للمتجر» بعد أن يبدأ التجهيز.
         </p>
       )}
 
@@ -73,7 +82,7 @@ export function BrandOrderCard({ o }: { o: BrandOrder }) {
       </ul>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-line pt-4">
-        {o.open ? <OrderActions orderId={o.id} handed={Boolean(o.handedAt)} /> : <span />}
+        {o.open && !o.upcoming ? <OrderActions orderId={o.id} handed={Boolean(o.handedAt)} /> : <span />}
         <p className="text-sm text-ink-2">
           نصيبك{o.estimated && " (تقريباً)"}: <b className="tabular text-brand">{money(o.net)}</b>
         </p>

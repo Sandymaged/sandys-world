@@ -29,8 +29,10 @@ export default async function AdminHome() {
       return bo?.late ? [{ order: o, brand: p.name, handBy: bo.handBy }] : [];
     }),
   );
+  // المؤكدة = الدفع اتأكد (إنستاباي أو كارت هدية)، أو كاش عند الاستلام واتسلم فعلاً (الفلوس اتحصّلت)
+  const confirmedSale = (o: (typeof all)[number]) => o.paymentStatus === "confirmed" || (o.paymentMethod === "cod" && o.status === "delivered");
   const todaySales = active
-    .filter((o) => cairoNow(new Date(o.createdAt)).date === d0 && o.status !== "awaiting_payment")
+    .filter((o) => cairoNow(new Date(o.createdAt)).date === d0 && confirmedSale(o))
     .reduce((s, o) => s + o.totals.total, 0);
 
   return (

@@ -18,16 +18,31 @@ export interface CouponRule {
   kind: "percent" | "amount";
   value: number;
   minOrder: number;
+  /** أقصى خصم على جزء الباقات الجاهزة (ج.م). من غيره = بلا حد */
+  packageCap?: number;
 }
 
-/** قيمة الخصم على إجمالي الهدايا (من غير التوصيل) */
-export function couponDiscount(giftsTotal: number, coupon: CouponRule): number {
-  if (giftsTotal < coupon.minOrder) return 0;
+/**
+ * الخصم على إجمالي الهدايا (من غير التوصيل ولا كروت الهدايا).
+ * packagesTotal = سعر الباقات الجاهزة جوه الإجمالي (الباقة + الصندوق لو اتختار).
+ * الخصم بيتقسم على الباقات والباقي بالنسبة، ونصيب الباقات مايزيدش عن packageCap.
+ */
+export function couponBreakdown(giftsTotal: number, coupon: CouponRule, packagesTotal = 0): { discount: number; capped: boolean } {
+  if (giftsTotal <= 0 || giftsTotal < coupon.minOrder) return { discount: 0, capped: false };
   const raw =
     coupon.kind === "percent"
       ? Math.round((giftsTotal * coupon.value) / 100)
       : coupon.value;
-  return Math.min(raw, giftsTotal);
+  const full = Math.min(raw, giftsTotal);
+  const cap = coupon.packageCap;
+  if (cap == null || !(cap >= 0) || packagesTotal <= 0) return { discount: full, capped: false };
+  const pkgPart = Math.round((full * Math.min(packagesTotal, giftsTotal)) / giftsTotal);
+  if (pkgPart <= cap) return { discount: full, capped: false };
+  return { discount: full - pkgPart + cap, capped: true };
+}
+
+export function couponDiscount(giftsTotal: number, coupon: CouponRule, packagesTotal = 0): number {
+  return couponBreakdown(giftsTotal, coupon, packagesTotal).discount;
 }
 
 /** سعر كيتات الورشة: سعر الفرد × العدد، ناقص خصم الكمية */

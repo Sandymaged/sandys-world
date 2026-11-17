@@ -13,7 +13,8 @@ export const metadata = { title: "الرئيسية" };
 export default async function BrandHome() {
   const s = await requireBrand();
   const [st, catalog] = await Promise.all([brandStatement(s.partnerId), loadCatalogData()]);
-  const toHand = st.orders.filter((o) => o.open && !o.handedAt);
+  const toHand = st.orders.filter((o) => o.open && !o.handedAt && !o.upcoming);
+  const upcoming = st.orders.filter((o) => o.open && o.upcoming);
   const mine = catalog.products.filter((p) => p.partnerId === s.partnerId);
   const pendingReview = mine.filter((p) => p.reviewStatus === "pending").length;
   const soldOut = mine.filter((p) => p.reviewStatus !== "pending" && (!p.isAvailable || p.stock === 0)).length;
@@ -36,7 +37,7 @@ export default async function BrandHome() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="طلبات عليك تسليمها" value={toHand.length} tone="bg-blush" />
-        <Stat label="مستحق لك الآن" value={money(st.balance)} hint="طلبات مسلّمة انتهت مدة استرجاعها، بعد خصم التحويلات" />
+        <Stat label="مستحق لك الآن" value={money(st.balance)} hint="طلبات مسلّمة انتهت مدة استرجاعها، بعد خصم التحويلات. يحوّل المتجر مستحقاتك كل أسبوع." />
         <Stat label="مستحقات قريبة" value={money(st.holding + st.pending)} hint="في مدة الاسترجاع أو قيد التنفيذ" />
         <Stat label="منتجاتك" value={mine.length} hint={[pendingReview && `${pendingReview} بانتظار الموافقة`, soldOut && `${soldOut} نفد`].filter(Boolean).join(" · ") || undefined} />
       </div>
@@ -56,6 +57,16 @@ export default async function BrandHome() {
           toHand.slice(0, 6).map((o) => <BrandOrderCard key={o.id} o={o} />)
         )}
       </section>
+
+      {upcoming.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-2xl text-ink">طلبات قادمة ({upcoming.length})</h2>
+          <p className="text-sm leading-6 text-ink-2">طلبات تأكّدت ولم يبدأ تجهيزها بعد. جهّز منتجاتها من الآن.</p>
+          {upcoming.slice(0, 6).map((o) => (
+            <BrandOrderCard key={o.id} o={o} />
+          ))}
+        </section>
+      )}
     </div>
   );
 }

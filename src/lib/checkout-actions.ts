@@ -6,6 +6,7 @@ import { translator } from "@/i18n/t";
 import { getStorefront, localizeStorefront } from "@/lib/catalog";
 import { quoteOrder, type OrderInput } from "@/lib/order-quote";
 import type { CouponRule } from "@/lib/pricing";
+import { capFor, loadCouponCaps } from "@/lib/coupon-caps";
 import { coupons as seedCoupons } from "@/lib/seed-data";
 import { repo } from "@/lib/db";
 import type { GiftRecord } from "@/lib/db/types";
@@ -41,7 +42,9 @@ async function findCoupon(code: string): Promise<CouponRule | string> {
   if (!row) return "الكود ده مش موجود";
   if (row.expiresAt && Date.parse(row.expiresAt) < Date.now()) return "الكود ده انتهى";
   if (row.maxUses != null && row.used >= row.maxUses) return "الكود ده خلص";
-  return { kind: row.kind, value: row.value, minOrder: row.minOrder };
+  // أقصى خصم على الباقات الجاهزة (settings.couponPackageCaps، ومن غيره بلا حد)
+  const packageCap = capFor(await loadCouponCaps(), c);
+  return { kind: row.kind, value: row.value, minOrder: row.minOrder, ...(packageCap != null ? { packageCap } : {}) };
 }
 
 export async function checkCoupon(code: string, giftsTotal: number, locale: string) {
@@ -158,6 +161,8 @@ export async function submitOrder(input: OrderInput & { giftCardCode?: string },
           name: p?.name ?? it.productId,
           quantity: it.quantity,
           unitPrice: it.unitPrice,
+          // سعر المنتج في الكتالوج وقت الشراء: حساب البراند والتقارير بيعتمد عليه، فتغيير السعر بعدين ميغيّرش الطلبات القديمة
+          catalogPrice: p?.price ?? 0,
           isAddon: it.isAddon,
           customization: it.customization,
           customImage: it.customImage,

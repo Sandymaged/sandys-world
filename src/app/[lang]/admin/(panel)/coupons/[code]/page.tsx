@@ -43,6 +43,14 @@ export default async function AdminCoupon({ params }: PageProps<"/[lang]/admin/c
             <Field label="آخر يوم للكود" name="expiresAt" type="date" defaultValue={cairoDay(c?.expiresAt)} hint="فارغ = بلا تاريخ انتهاء." />
           </Row>
           <Field
+            label="أقصى خصم على الباقات (ج.م)"
+            name="packageCap"
+            type="number"
+            defaultValue={c?.packageCap ?? ""}
+            placeholder="30"
+            hint="اتركه فارغاً لخصم بلا حد. يُطبّق على الباقات الجاهزة فقط."
+          />
+          <Field
             label="أقصى عدد مرات استخدام"
             name="maxUses"
             type="number"

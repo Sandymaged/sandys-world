@@ -50,6 +50,36 @@ export const nextStatus: Partial<Record<OrderStatus, OrderStatus[]>> = {
   // المحاولة التانية بتتسجل من «محاولة توصيل تانية» (نفس اليوم ببلاش، ويوم تاني برسوم)
 };
 
+/**
+ * «بانتظار الدفع» نوعين: لسه مادفعش، ولا رفع صورة التحويل ومستني مراجعتك.
+ * بيرجع شارة بدل شارة الحالة لو فيه حاجة محتاجة انتباه، وإلا null.
+ */
+export function paymentHint(o: Pick<OrderRecord, "status" | "paymentStatus">): { label: string; tone: string } | null {
+  if (o.status !== "awaiting_payment") return null;
+  if (o.paymentStatus === "awaiting_confirmation") return { label: "صورة التحويل وصلت، راجعها", tone: "bg-brand text-white ring-2 ring-brand/30" };
+  if (o.paymentStatus === "rejected") return { label: "رُفض التحويل، بانتظار صورة جديدة", tone: "bg-butter-soft text-butter" };
+  return null;
+}
+
+/** طلب رفع صورة تحويل ومستني تأكيدك */
+export const proofWaiting = (o: Pick<OrderRecord, "status" | "paymentStatus">) => o.status === "awaiting_payment" && o.paymentStatus === "awaiting_confirmation";
+
+/**
+ * تنبيهات قبل «تم التسليم» / «خرج للتوصيل»:
+ * - earlyDate: أقرب يوم توصيل لسه ماجاش (اليوم بتوقيت القاهرة قبله)
+ * - unhanded: البراندات اللي ليها منتجات في الطلب ولسه ماضغطتش «سلّمت للمتجر» (brandStatus[partnerId].handedAt)
+ */
+export function deliveryGuards(o: Pick<OrderRecord, "gifts" | "brandStatus">, today: string): { earlyDate: string | null; unhanded: string[] } {
+  const earlyDate =
+    o.gifts
+      .map((g) => g.deliveryDate)
+      .filter((d) => d && today < d)
+      .sort()[0] ?? null;
+  const partners = [...new Set(o.gifts.flatMap((g) => g.items).map((it) => it.partnerId).filter((p): p is string => Boolean(p)))];
+  const unhanded = partners.filter((p) => !o.brandStatus?.[p]?.handedAt);
+  return { earlyDate, unhanded };
+}
+
 /** 01xxxxxxxxx → 201xxxxxxxxx لواتساب */
 export function waNumber(phone: string) {
   const d = phone.replace(/\D/g, "");

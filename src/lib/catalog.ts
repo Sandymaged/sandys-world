@@ -70,7 +70,8 @@ async function loadFromSupabase(): Promise<Catalog> {
   }
   const overrides = Object.fromEntries(
     // "site" إعدادات شكل الموقع (site-settings.ts)، مش من إعدادات المتجر
-    (settings.data ?? []).filter((s: any) => s.key !== "site").map((s: any) => [s.key, s.value]),
+    // "couponPackageCaps" حدود خصم الأكواد على الباقات: بتتقري على السيرفر بس (coupon-caps.ts)، مش بتتبعت للمتصفح
+    (settings.data ?? []).filter((s: any) => s.key !== "site" && s.key !== "couponPackageCaps").map((s: any) => [s.key, s.value]),
   );
   return {
     products: (products.data ?? []).map(

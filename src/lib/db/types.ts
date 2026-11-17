@@ -21,6 +21,8 @@ export interface GiftItemRecord {
   name: string;
   quantity: number;
   unitPrice: number; // السعر وقت الطلب
+  /** سعر المنتج في الكتالوج وقت الطلب (للمنتجات جوه الباكدج اللي unitPrice بتاعها صفر). الطلبات القديمة مفيهاش */
+  catalogPrice?: number;
   isAddon: boolean;
   customization: string | null;
   /** صورة العميل للمنتج المخصص (اسم الملف في التخزين الخاص، بتتشاف من /admin/files) */

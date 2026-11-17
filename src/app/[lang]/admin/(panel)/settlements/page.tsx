@@ -21,7 +21,13 @@ export default async function AdminSettlements() {
   await requireAdmin();
   const rows = (await allStatements()).filter((r) => r.s.orders.length || r.s.payouts.length);
   const toPay = rows.filter((r) => r.s.balance > 0).sort((a, b) => b.s.balance - a.s.balance);
-  const settled = rows.filter((r) => r.s.balance <= 0);
+  const later = (r: (typeof rows)[number]) => r.s.holding + r.s.pending;
+  // لها فلوس لسه (في مدة الاسترجاع أو طلبات قيد التنفيذ) بس مش مطلوب تحويلها النهارده
+  const owed = rows.filter((r) => r.s.balance <= 0 && later(r) > 0).sort((a, b) => later(b) - later(a));
+  // «مسوّاة» = مفيش عليها ولا ليها أي حاجة
+  const settled = rows.filter((r) => r.s.balance === 0 && later(r) <= 0);
+  // اتحوّل لها أكتر من مستحقها ومفيش طلبات جاية تغطي الفرق
+  const overpaid = rows.filter((r) => r.s.balance < 0 && later(r) <= 0);
   const total = toPay.reduce((s, r) => s + r.s.balance, 0);
   const soon = rows.reduce((s, r) => s + r.s.holding + r.s.pending, 0);
   const card = "bg-[#fffdf8] shadow-[0_12px_22px_-16px_rgb(60_20_25/0.5)]";
@@ -31,7 +37,7 @@ export default async function AdminSettlements() {
       <div>
         <h1 className="text-3xl text-brand">حسابات البراندات</h1>
         <p className="mt-1 text-sm leading-6 text-ink-2">
-          نصيب العلامة التجارية = سعر منتجاتها ناقص عمولتك. العمولة بالشرائح كل شهر: أول (متوسط أسعارها × {FREE_PIECES}) مجاناً، وبعدها 10% ثم 15% ثم 20%. يُستحق النصيب بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام. حوّل للعلامة التجارية واضغط «✓ تم التحويل» بجانبها، ويُصفّى الحساب تلقائياً.
+          نصيب العلامة التجارية = سعر منتجاتها ناقص عمولتك. العمولة بالشرائح كل شهر: أول (متوسط أسعارها × {FREE_PIECES}) مجاناً، وبعدها 10% ثم 15% ثم 20%. يُستحق النصيب بعد تسليم الطلب للعميل بـ {HOLD_DAYS} أيام. التحويل للعلامات التجارية أسبوعي: حوّل لكل علامة مستحقاتها مرة كل أسبوع واضغط «✓ تم التحويل» بجانبها، ويُصفّى الحساب تلقائياً.
         </p>
       </div>
 
@@ -49,7 +55,7 @@ export default async function AdminSettlements() {
       <section className="space-y-3">
         <h2 className="text-2xl text-ink">بحاجة إلى تحويل ({toPay.length})</h2>
         {toPay.length === 0 ? (
-          <Empty>حسابات كل العلامات التجارية مسوّاة ✓</Empty>
+          <Empty>لا يوجد مبلغ مطلوب تحويله الآن ✓</Empty>
         ) : (
           <ul className={`divide-y divide-dashed divide-line ${card}`}>
             {toPay.map((r) => (
@@ -71,16 +77,46 @@ export default async function AdminSettlements() {
         )}
       </section>
 
+      {owed.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-2xl text-ink">لها مستحقات لم يحن تحويلها بعد ({owed.length})</h2>
+          <p className="text-sm text-ink-2">طلبات في مدة الاسترجاع أو قيد التنفيذ. تنتقل إلى «بحاجة إلى تحويل» عند استحقاقها.</p>
+          <ul className={`divide-y divide-dashed divide-line ${card}`}>
+            {owed.map((r) => (
+              <li key={r.partnerId} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3 text-sm">
+                <Link href={`/admin/settlements/${r.partnerId}`} className="min-w-40 flex-1 font-semibold hover:text-brand">{r.name}</Link>
+                <span className="text-muted">حُوِّل لها {money(r.s.paid)}{r.s.lastPaidAt && <> · آخر مرة {day(r.s.lastPaidAt)}</>}</span>
+                {r.s.balance < 0 && <span className="text-success">مدفوع مقدماً {money(-r.s.balance)}</span>}
+                <span className="tabular font-heading text-xl text-brand">يُستحق لاحقاً {money(later(r))}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {overpaid.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-2xl text-ink">حُوِّل لها أكثر من مستحقها ({overpaid.length})</h2>
+          <ul className={`divide-y divide-dashed divide-line ${card}`}>
+            {overpaid.map((r) => (
+              <li key={r.partnerId} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3 text-sm">
+                <Link href={`/admin/settlements/${r.partnerId}`} className="min-w-40 flex-1 font-semibold hover:text-brand">{r.name}</Link>
+                <span className="text-muted">حُوِّل لها {money(r.s.paid)}{r.s.lastPaidAt && <> · آخر مرة {day(r.s.lastPaidAt)}</>}</span>
+                <span className="text-success">مدفوع زيادة {money(-r.s.balance)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {settled.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-2xl text-ink">حساباتها مسوّاة</h2>
+          <h2 className="text-2xl text-ink">حساباتها مسوّاة ({settled.length})</h2>
           <ul className={`divide-y divide-dashed divide-line ${card}`}>
             {settled.map((r) => (
               <li key={r.partnerId} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3 text-sm">
                 <Link href={`/admin/settlements/${r.partnerId}`} className="min-w-40 flex-1 font-semibold hover:text-brand">{r.name}</Link>
                 <span className="text-muted">حُوِّل لها {money(r.s.paid)}{r.s.lastPaidAt && <> · آخر مرة {day(r.s.lastPaidAt)}</>}</span>
-                {r.s.holding + r.s.pending > 0 && <span className="text-ink-2">يُستحق لاحقاً {money(r.s.holding + r.s.pending)}</span>}
-                {r.s.balance < 0 && <span className="text-success">مدفوع زيادة {money(-r.s.balance)}</span>}
               </li>
             ))}
           </ul>

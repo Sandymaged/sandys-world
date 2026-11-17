@@ -41,23 +41,81 @@ export function GiftCardSendButtons({ id, code, waHref, label, sentAt, sentLabel
   );
 }
 
-export function StatusButtons({ id, status }: { id: string; status: OrderStatus }) {
+/**
+ * أزرار تغيير الحالة.
+ * - من «بانتظار موافقة التصميم» للتجهيز: لازم تعلّم «العميل وافق على التصميم» الأول (وبيتسجل في السجل).
+ * - «تم التسليم» قبل يوم التوصيل أو قبل ما براند يسلّم منتجاته: تنبيه واضح وتأكيد صريح.
+ * - «خرج للتوصيل» وفيه براند لسه ماسلّمش: تنبيه بس.
+ */
+export function StatusButtons({
+  id,
+  status,
+  earlyDateLabel = null,
+  unhandedBrands = [],
+}: {
+  id: string;
+  status: OrderStatus;
+  /** يوم التوصيل (مكتوب) لو لسه ماجاش */
+  earlyDateLabel?: string | null;
+  /** أسماء البراندات اللي لسه ماضغطتش «سلّمت للمتجر» */
+  unhandedBrands?: string[];
+}) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const run = (s: OrderStatus, note?: string) =>
+  const [designOk, setDesignOk] = useState(false);
+  const run = (s: OrderStatus, note?: string, opts?: { designApproved?: boolean; force?: boolean }) =>
     start(async () => {
-      const r = await setOrderStatus(id, s, note);
+      const r = await setOrderStatus(id, s, note, opts);
       setError(r.ok ? null : r.error);
     });
   const next = nextStatus[status] ?? [];
   const canCancel = cancellable.includes(status);
+  const brandsLine = unhandedBrands.length ? `لم يؤكد التسليم للمتجر بعد: ${unhandedBrands.join("، ")}` : null;
+  const earlyLine = earlyDateLabel ? `موعد التوصيل ${earlyDateLabel}، ولم يأتِ بعد` : null;
+  const deliverWarnings = [earlyLine, brandsLine].filter((x): x is string => Boolean(x));
+  const onClick = (s: OrderStatus) => {
+    if (s === "delivered" && deliverWarnings.length) {
+      if (window.confirm(`تنبيه قبل «تم التسليم»:\n- ${deliverWarnings.join("\n- ")}\n\nهل سُلِّم الطلب فعلاً للمستلم؟`)) run(s, undefined, { force: true });
+      return;
+    }
+    if (s === "out_for_delivery" && brandsLine) {
+      if (window.confirm(`تنبيه: ${brandsLine}.\nهل تريد تعليم الطلب «خرج للتوصيل» على أي حال؟`)) run(s);
+      return;
+    }
+    run(s);
+  };
+  const showDeliverWarn = next.includes("delivered") && deliverWarnings.length > 0;
+  const showOutWarn = next.includes("out_for_delivery") && brandsLine;
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      {next.map((s) => (
-        <button key={s} disabled={pending} onClick={() => run(s)} className="btn-primary btn-sm">
-          ← {statusLabel[s]}
-        </button>
-      ))}
+      {(showDeliverWarn || showOutWarn) && (
+        <div className="w-full rounded-xl border border-butter bg-butter-soft p-3 text-sm text-butter">
+          <p className="font-semibold">⚠ تنبيه قبل {showDeliverWarn ? "«تم التسليم»" : "«خرج للتوصيل»"}</p>
+          <ul className="mt-1 list-inside list-disc">
+            {(showDeliverWarn ? deliverWarnings : [brandsLine!]).map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {status === "awaiting_design_approval" ? (
+        <div className="w-full space-y-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+            <input type="checkbox" checked={designOk} onChange={(e) => setDesignOk(e.target.checked)} className="size-4 accent-brand" />
+            العميل وافق على التصميم
+          </label>
+          <button disabled={pending || !designOk} onClick={() => run("preparing", undefined, { designApproved: true })} className="btn-primary btn-sm disabled:opacity-50">
+            العميل وافق على التصميم ← ابدأ التجهيز
+          </button>
+          {!designOk && <p className="text-xs text-muted">أرسل التصميم للعميل أولاً، ولا تبدأ التجهيز إلا بعد موافقته.</p>}
+        </div>
+      ) : (
+        next.map((s) => (
+          <button key={s} disabled={pending} onClick={() => onClick(s)} className="btn-primary btn-sm">
+            ← {statusLabel[s]}
+          </button>
+        ))
+      )}
       {status === "awaiting_payment" && <p className="text-sm text-muted">ينتقل فور تأكيد الدفع.</p>}
       {canCancel && (
         <button

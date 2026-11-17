@@ -3,7 +3,8 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { adminAccountInfo, checkLogin, endSession, requireAdmin, setAdminAccount, startSession } from "./admin-auth";
-import { cancellable } from "./admin-format";
+import { cancellable, deliveryGuards } from "./admin-format";
+import { loadCatalogData } from "./db/catalog-store";
 import { settleOnDelivery } from "./brand-portal";
 import { getStorefront } from "./catalog";
 import { repo, uniqueSlots } from "./db";
@@ -61,7 +62,12 @@ const allowed: OrderStatus[] = ["new", "awaiting_design_approval", "preparing", 
  * - «بيتجهز»: هنا المخزون بيتخصم (مش وقت الطلب)، ولو حاجة مش كفاية الحالة مش بتتغير.
  * - الإلغاء: بس قبل التجهيز، وبيفك فترات التوصيل ورصيد كارت الهدية (والمخزون لو كان اتخصم).
  */
-export async function setOrderStatus(id: string, status: OrderStatus, note?: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function setOrderStatus(
+  id: string,
+  status: OrderStatus,
+  note?: string,
+  opts: { designApproved?: boolean; force?: boolean } = {},
+): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireAdmin();
   if (!allowed.includes(status)) return { ok: false, error: "هذه الحالة غير مسموحة" };
   const db = repo();
@@ -69,6 +75,28 @@ export async function setOrderStatus(id: string, status: OrderStatus, note?: str
   if (!order) return { ok: false, error: "الطلب غير موجود" };
   if (order.status === status) return { ok: true };
   if (status === "cancelled" && !cancellable.includes(order.status)) return { ok: false, error: "بدأ التجهيز، لذا لا يمكن إلغاء الطلب" };
+
+  const notes: string[] = [];
+  // الخروج من «بانتظار موافقة التصميم» للتجهيز لازم يكون العميل وافق فعلاً، وبيتسجل في السجل
+  if (order.status === "awaiting_design_approval" && status === "preparing") {
+    if (!opts.designApproved) return { ok: false, error: "أكّد أولاً أن العميل وافق على التصميم قبل بدء التجهيز." };
+    notes.push("وافق العميل على التصميم");
+  }
+  // التسليم قبل يوم التوصيل، أو قبل ما كل براند يسلّم منتجاته للمتجر: مرفوض إلا بتأكيد صريح
+  if (status === "delivered") {
+    const g = deliveryGuards(order, cairoNow().date);
+    if (g.earlyDate || g.unhanded.length) {
+      const names = g.unhanded.length ? await partnerNames(g.unhanded) : [];
+      const problems = [
+        g.earlyDate ? `موعد التوصيل ${formatDay(g.earlyDate)} ولم يأتِ بعد` : "",
+        names.length ? `لم يؤكد التسليم للمتجر: ${names.join("، ")}` : "",
+      ].filter(Boolean);
+      if (!opts.force) return { ok: false, error: `لا يمكن تعليم الطلب «تم التسليم»: ${problems.join("، و")}. راجع ثم أكّد إن كنت متأكداً.` };
+      notes.push(`عُلِّم «تم التسليم» بتأكيد من المسؤول رغم: ${problems.join("، و")}`);
+    }
+  }
+  if (note) notes.push(note);
+  note = notes.length ? notes.join(" · ") : undefined;
 
   let patch: Partial<typeof order> = { status };
   if (status === "preparing" && order.stockTaken === false) {
@@ -93,6 +121,12 @@ export async function setOrderStatus(id: string, status: OrderStatus, note?: str
   }
   revalidatePath("/[lang]/admin", "layout");
   return { ok: true };
+}
+
+/** أسماء البراندات من الكتالوج (للرسايل والسجل) */
+async function partnerNames(ids: string[]) {
+  const catalog = await loadCatalogData();
+  return ids.map((id) => catalog.partners.find((p) => p.id === id)?.name ?? id);
 }
 
 /**

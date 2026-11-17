@@ -28,36 +28,34 @@ export default async function CostsPage() {
       <ActionForm action={saveCostsAction} submitLabel="حفظ التكاليف" className="space-y-5">
         <Section title="مناطق التوصيل">
           <p className="-mt-2 text-sm text-muted">«يدفع العميل» هي رسوم التوصيل التي تظهر في الموقع. «تكلفتك» هي ما تدفعه فعلاً لمندوب التوصيل أو شركة الشحن.</p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[36rem] text-sm">
-              <thead>
-                <tr className="text-xs text-muted">
-                  <th className="pb-2 text-start font-medium">المنطقة</th>
-                  <th className="pb-2 text-start font-medium">يدفع العميل (ج.م)</th>
-                  <th className="pb-2 text-start font-medium">تكلفتك (ج.م)</th>
-                  <th className="pb-2 text-start font-medium">مفعّلة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {zones.map((z) => (
-                  <tr key={z.id} className="border-t border-dashed border-line">
-                    <td className="py-2 pe-3">
-                      <p className="font-semibold">{z.name}</p>
-                      <p className="text-xs text-muted">{kindLabel[z.kind] ?? z.kind}</p>
-                    </td>
-                    <td className="py-2 pe-3">
-                      <input name={`zf_${z.id}`} defaultValue={z.fee} inputMode="numeric" className="field tabular h-10 w-28" aria-label={`رسوم ${z.name}`} />
-                    </td>
-                    <td className="py-2 pe-3">
-                      <input name={`zc_${z.id}`} defaultValue={f.zoneCosts[z.id] ?? ""} inputMode="numeric" placeholder="0" className="field tabular h-10 w-28" aria-label={`تكلفة ${z.name}`} />
-                    </td>
-                    <td className="py-2">
-                      <input type="checkbox" name={`za_${z.id}`} defaultChecked={z.isActive} className="size-5 accent-brand" aria-label={`${z.name} مفعّلة`} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* على الموبايل كل منطقة كارت («تكلفتك» أول خانة)، وعلى الشاشات الكبيرة صفوف زي الجدول، من غير سكرول بالعرض */}
+          <div className="text-sm">
+            <div className="hidden gap-3 pb-2 text-xs font-medium text-muted sm:grid sm:grid-cols-[minmax(0,1fr)_8rem_8rem_4rem]">
+              <span>المنطقة</span>
+              <span>تكلفتك (ج.م)</span>
+              <span>يدفع العميل (ج.م)</span>
+              <span>مفعّلة</span>
+            </div>
+            {zones.map((z) => (
+              <div key={z.id} className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-dashed border-line py-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_4rem] sm:items-center sm:py-2">
+                <div className="col-span-2 min-w-0 sm:col-span-1">
+                  <p className="font-semibold">{z.name}</p>
+                  <p className="text-xs text-muted">{kindLabel[z.kind] ?? z.kind}</p>
+                </div>
+                <label className="block min-w-0">
+                  <span className="mb-1 block text-xs font-semibold text-brand sm:hidden">تكلفتك (ج.م)</span>
+                  <input name={`zc_${z.id}`} defaultValue={f.zoneCosts[z.id] ?? ""} inputMode="numeric" placeholder="0" className="field tabular h-10 w-full" aria-label={`تكلفة ${z.name}`} />
+                </label>
+                <label className="block min-w-0">
+                  <span className="mb-1 block text-xs text-muted sm:hidden">يدفع العميل (ج.م)</span>
+                  <input name={`zf_${z.id}`} defaultValue={z.fee} inputMode="numeric" className="field tabular h-10 w-full" aria-label={`رسوم ${z.name}`} />
+                </label>
+                <label className="col-span-2 flex items-center gap-2 sm:col-span-1">
+                  <input type="checkbox" name={`za_${z.id}`} defaultChecked={z.isActive} className="size-5 accent-brand" aria-label={`${z.name} مفعّلة`} />
+                  <span className="text-xs text-muted sm:hidden">مفعّلة</span>
+                </label>
+              </div>
+            ))}
           </div>
         </Section>
 

@@ -5,7 +5,7 @@ import path from "node:path";
 import { loadCatalogData, type CatalogData } from "./db/catalog-store";
 import { repo } from "./db";
 import type { BrandOrderStatus, OrderRecord, OrderStatus } from "./db/types";
-import { cairoMonth, commissionFor, thresholdFrom, tierProgress } from "./commission";
+import { cairoMonth, commissionFor, itemUnitPrice, thresholdFrom, tierProgress } from "./commission";
 import { addDays, cairoNow } from "./delivery";
 import { adminClient } from "./supabase/admin";
 import type { DeliveryPeriod } from "./types";
@@ -61,6 +61,8 @@ export interface BrandOrder {
   handedAt: string | null;
   /** لسه في الشغل (مش متسلم للعميل ولا ملغي) */
   open: boolean;
+  /** طلب قادم: اتأكد بس لسه مابدأش يتجهز (جديد أو مستني موافقة التصميم) */
+  upcoming: boolean;
   /** آخر يوم يسلّم فيه للمتجر (handByOf)، ولو عدّى ومسلّمش يبقى متأخر */
   handBy: string;
   late: boolean;
@@ -79,11 +81,15 @@ export function handByOf(o: OrderRecord): string {
 }
 
 /**
- * الطلب يبان للبراند من أول «بيتجهز»: يعني الدفع اتأكد والعميل وافق على رسالة التأكيد،
- * ومن ساعتها مفيش إلغاء. فأي طلب البراند بيشوفه لازم يتجهز.
+ * الطلب يبان للبراند من أول ما يتأكد: الدفع اتأكد أو الدفع عند الاستلام (حتى لو مستني موافقة التصميم)،
+ * عشان يعرف إن فيه طلب جاي. اللي لسه مستني الدفع أو اتلغى مش بيبان.
+ * قبل «بيتجهز» الطلب «قادم» (upcoming): البراند بيشوفه بس لسه مايقدرش يعلّم إنه سلّمه.
  */
 const brandStatuses: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "delivery_failed", "delivered"];
-const visibleToBrand = (o: OrderRecord) => o.gifts.length > 0 && brandStatuses.includes(o.status);
+const upcomingStatuses: OrderStatus[] = ["new", "awaiting_design_approval"];
+const confirmed = (o: OrderRecord) => o.paymentStatus === "confirmed" || o.paymentMethod === "cod";
+const isUpcoming = (o: OrderRecord) => upcomingStatuses.includes(o.status) && confirmed(o);
+const visibleToBrand = (o: OrderRecord) => o.gifts.length > 0 && (brandStatuses.includes(o.status) || isUpcoming(o));
 
 export function brandOrderOf(o: OrderRecord, partnerId: string, catalog: CatalogData): BrandOrder | null {
   if (!visibleToBrand(o)) return null;
@@ -94,7 +100,8 @@ export function brandOrderOf(o: OrderRecord, partnerId: string, catalog: Catalog
   for (const g of o.gifts) {
     for (const it of g.items) {
       if (it.partnerId !== partnerId) continue;
-      const unit = it.unitPrice > 0 ? it.unitPrice : (products.get(it.productId)?.price ?? 0);
+      // سعره في الطلب، أو سعره في الكتالوج وقت الشراء (الطلبات القديمة بس بتاخد السعر الحالي)
+      const unit = itemUnitPrice(it, products.get(it.productId)?.price);
       const gross = unit * it.quantity;
       legacy += gross * (it.commissionRate ?? rate);
       lines.push({ productId: it.productId, name: it.name, quantity: it.quantity, optionsText: it.optionsText ?? null, customization: it.customization, giftTitle: g.title, unitPrice: unit, gross, net: gross });
@@ -102,6 +109,18 @@ export function brandOrderOf(o: OrderRecord, partnerId: string, catalog: Catalog
   }
   if (!lines.length) return null;
   const st = o.brandStatus?.[partnerId] ?? {};
+  // بعد التسليم المبلغ اللي اتثبت وقتها هو المرجع (لو أسعار الكتالوج اتغيرت بعدين، الطلب ميتغيرش)
+  if (st.settled && o.status === "delivered") {
+    const sum = lines.reduce((s, l) => s + l.gross, 0);
+    if (sum > 0 && Math.abs(sum - st.settled.gross) > 0.005) {
+      const k = st.settled.gross / sum;
+      for (const l of lines) {
+        l.gross = r2(l.gross * k);
+        l.unitPrice = r2(l.unitPrice * k);
+        l.net = l.gross;
+      }
+    }
+  }
   const delivered = [...o.history].reverse().find((h) => h.status === "delivered");
   const deliveredAt = o.status === "delivered" ? (delivered?.at ?? o.createdAt) : null;
   const bo: BrandOrder = {
@@ -114,13 +133,14 @@ export function brandOrderOf(o: OrderRecord, partnerId: string, catalog: Catalog
     deliveredAt,
     dueAt: deliveredAt ? new Date(Date.parse(deliveredAt) + HOLD_DAYS * 86_400_000).toISOString() : null,
     lines,
-    gross: r2(lines.reduce((s, l) => s + l.gross, 0)),
+    gross: st.settled && o.status === "delivered" && lines.some((l) => l.gross > 0) ? st.settled.gross : r2(lines.reduce((s, l) => s + l.gross, 0)),
     commission: 0,
     net: 0,
     estimated: !deliveredAt,
     month: st.settled?.month ?? (deliveredAt ? cairoMonth(deliveredAt) : null),
     handedAt: st.handedAt ?? null,
     open: o.status !== "delivered" && o.status !== "cancelled",
+    upcoming: isUpcoming(o),
     handBy: handByOf(o),
     late: false,
   };
@@ -241,6 +261,7 @@ export async function markHanded(orderId: string, partnerId: string, brandName: 
   const catalog = await loadCatalogData();
   const bo = o && brandOrderOf(o, partnerId, catalog);
   if (!bo || !bo.open) return { ok: false as const, error: "هذا الطلب غير متاح" };
+  if (bo.upcoming && handed) return { ok: false as const, error: "لم يبدأ تجهيز هذا الطلب بعد، ويمكنك تسليمه بعد أن يبدأ التجهيز" };
   await patchBrandStatus(orderId, partnerId, (s) => ({ ...s, handedAt: handed ? new Date().toISOString() : null }), handed ? `${brandName} سلّم المنتجات للمتجر` : `${brandName} ألغى «سلّمت»`);
   return { ok: true as const };
 }

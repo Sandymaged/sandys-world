@@ -238,7 +238,9 @@ export function quoteOrder(
   const packagingTotal = out.reduce((s, g) => s + g.packaging, 0);
   const deliveryTotal = out.reduce((s, g) => s + g.deliveryFee, 0);
   // الخصم على الهدايا بس، مش على كروت الهدايا
-  const discount = coupon ? couponDiscount(itemsTotal + packagingTotal, coupon) : 0;
+  // الباقات الجاهزة (سعر الباقة + الصندوق) ليها حد أقصى للخصم لو الكود محدد ليه حد
+  const packagesTotal = out.reduce((s, g) => s + (g.source.kind === "package" ? g.basePrice : 0), 0);
+  const discount = coupon ? couponDiscount(itemsTotal + packagingTotal, coupon, packagesTotal) : 0;
   const cardsTotal = cards.reduce((s, c) => s + c.amount, 0);
 
   // الكاش عند الاستلام: المرسل هو المستلم، ومفيش تخصيص، وجوه محافظة أسيوط (8.3)، ومفيش كروت هدايا (لازم تتدفع الأول)
