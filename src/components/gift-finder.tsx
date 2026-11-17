@@ -41,7 +41,8 @@ export function GiftFinder({ occasions }: { occasions: { slug: string; name: str
       value: price,
       set: setPrice,
     },
-  ];
+    // سؤال من غير اختيارات (زي المناسبة لو لسه متضافش مناسبات من اللوحة) مش بيظهر، والترقيم بيتظبط لوحده
+  ].filter((s) => s.options.length > 0);
 
   return (
     <div className="space-y-7">

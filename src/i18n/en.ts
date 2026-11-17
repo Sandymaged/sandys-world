@@ -539,6 +539,7 @@ export const en: Record<string, string> = {
   "هدايا مخصصة ومغلّفة بعناية، نوصّلها في اليوم والفترة التي تختارها.": "Personalised, carefully wrapped gifts, delivered on the day and time you choose.",
   // ── الرئيسية
   "هدايا مختارة": "Featured gifts",
+  "أجب عن أسئلة قصيرة، ونعرض لك الهدايا المناسبة فوراً.": "Answer a few quick questions and we'll show you gifts that fit.",
   "اختر الهدية": "Choose the gift",
   "باقة جاهزة، أو منتج واحد، أو صندوق تصمّمه بنفسك.": "A ready package, a single item, or a box you build yourself.",
   "حدّد المستلم والموعد": "Set the recipient and time",

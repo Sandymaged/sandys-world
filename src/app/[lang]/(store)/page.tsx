@@ -101,7 +101,7 @@ export default async function HomePage() {
           <div className="reveal">
             <Pill>{t("محتار تجيب إيه؟")}</Pill>
             <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("يلا نختار الهدية سوا")}</h2>
-            <p className="mt-3 text-lg leading-8 text-ink-2">{t("جاوب على ٣ أسئلة صغيرين، وهنوريك الهدايا اللي تناسبك على طول.")}</p>
+            <p className="mt-3 text-lg leading-8 text-ink-2">{t("أجب عن أسئلة قصيرة، ونعرض لك الهدايا المناسبة فوراً.")}</p>
           </div>
           <div className="reveal">
             <GiftFinder occasions={sf.occasions.map((o) => ({ slug: o.slug, name: o.name }))} />
