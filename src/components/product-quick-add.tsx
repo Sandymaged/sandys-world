@@ -14,14 +14,17 @@ const btn = "btn btn-sm w-full whitespace-nowrap border border-brand/30 bg-brand
  * لو ليه لون أو مقاس، بيودّي لصفحته يختار الأول (مايتضافش من غير اختيار).
  * الكلام قصير «أضف» عشان مايتكسرش على سطرين في كروت الموبايل.
  */
-export function ProductQuickAdd({ product }: { product: Product }) {
+// round: دايرة صغيرة فيها + بس (للأشكال اللي الزرار فيها فوق الصورة أو جنب السعر)
+const roundBtn = "grid size-10 shrink-0 place-items-center rounded-full bg-brand text-white shadow-md transition-transform hover:scale-105";
+
+export function ProductQuickAdd({ product, round = false }: { product: Product; round?: boolean }) {
   const t = useT();
   const addGift = useCart((s) => s.addGift);
   const [added, setAdded] = useState(false);
   if (product.options?.length) {
     return (
-      <Link href={`/products/${product.slug}`} className={btn}>
-        {t("اختر الخيارات")}
+      <Link href={`/products/${product.slug}`} className={round ? roundBtn : btn} aria-label={round ? t("اختر الخيارات") : undefined}>
+        {round ? <Icon name="sliders" className="size-4" /> : t("اختر الخيارات")}
       </Link>
     );
   }
@@ -56,10 +59,10 @@ export function ProductQuickAdd({ product }: { product: Product }) {
         setAdded(true);
         setTimeout(() => setAdded(false), 1800);
       }}
-      className={btn}
+      className={round ? roundBtn : btn}
     >
-      <Icon name={added ? "check" : "plus"} className="size-4" />
-      {added ? t("تمت الإضافة") : t("أضف")}
+      <Icon name={added ? "check" : "plus"} className={round ? "size-5" : "size-4"} />
+      {!round && (added ? t("تمت الإضافة") : t("أضف"))}
     </motion.button>
   );
 }

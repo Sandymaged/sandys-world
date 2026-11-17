@@ -33,7 +33,7 @@ export default async function HomePage() {
   const seasonPackages = season ? sf.packages.filter((p) => p.seasonId === season.id) : [];
   const featured = sf.packages.filter((p) => !p.seasonId);
   // هدايا مختارة: الباقات الجاهزة الأول، والمنتجات تكمّل لحد 8
-  const picks = [...featured.slice(0, 8).map((p) => ({ kind: "package" as const, p })), ...sf.products.filter((p) => !p.isAddon).slice(0, Math.max(0, 8 - featured.length)).map((p) => ({ kind: "product" as const, p }))];
+  const picks = [...featured.slice(0, 8).map((p) => ({ kind: "package" as const, p })), ...sf.products.slice(0, Math.max(0, 8 - featured.length)).map((p) => ({ kind: "product" as const, p }))];
   const photo = (slug: string) => sf.products.find((p) => p.slug === slug);
   // ستيكرز الهيرو: صور منتجات (الأول والرابع دواير وجنبهم ورقة صغيرة)
   const chips: Record<number, string> = { 0: "لماما", 3: "عيد ميلاد سعيد" };

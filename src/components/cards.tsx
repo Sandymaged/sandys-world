@@ -62,8 +62,93 @@ export async function PackageCard({ pkg, priority }: { pkg: PackageView; priorit
   );
 }
 
-export async function ProductCard({ product }: { product: Product }) {
+/** شكل كارت المنتج. الافتراضي polaroid (اختيار صاحبة المتجر): صورة بإطار أبيض مايلة، والسعر بخط الإيد جنب زرار +. الباقي متاح لو اتغير الرأي */
+export type ProductCardVariant = "classic" | "overlay" | "minimal" | "polaroid";
+
+export async function ProductCard({ product, variant = "polaroid" }: { product: Product; variant?: ProductCardVariant }) {
   const t = await getT();
+  const brandLine = product.brandSlug ? (
+    <Link href={`/brands/${product.brandSlug}`} className="line-clamp-1 text-[13px] text-ink-2 underline-offset-2 hover:text-brand hover:underline">
+      {t("من {brands}", { brands: product.brand ?? "" })}
+    </Link>
+  ) : null;
+  const nameTag = product.isCustomizable ? (
+    <span className="absolute top-2.5 start-2.5 rounded-full bg-paper/95 px-3 py-0.5 text-xs font-semibold text-brand">{t("بيتكتب عليه الاسم")}</span>
+  ) : null;
+
+  // الكلام فوق الصورة بتدرّج غامق، وزرار + دايرة في الركن: الصورة كبيرة والكارت قصير
+  if (variant === "overlay") {
+    return (
+      <Tilt className="group h-full">
+        <div className="relative h-full overflow-hidden rounded-[1.4rem] bg-ink shadow-[0_18px_30px_-20px_rgb(60_20_25/0.6)]">
+          <Link href={`/products/${product.slug}`} className="block">
+            <GiftArt image={product.images[0]} label={product.name} className="aspect-[4/5]" zoom />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+            {nameTag}
+            <div className="absolute inset-x-0 bottom-0 p-3.5 pe-16 text-white">
+              <h3 className="line-clamp-1 text-base font-semibold">{product.name}</h3>
+              {product.brand && <p className="line-clamp-1 text-[13px] text-white/80">{t("من {brands}", { brands: product.brand })}</p>}
+              <p className="tabular mt-0.5 font-heading text-xl">{egp(product.price, t)}</p>
+            </div>
+          </Link>
+          <div className="absolute end-3 bottom-3.5">
+            <ProductQuickAdd product={product} round />
+          </div>
+        </div>
+      </Tilt>
+    );
+  }
+
+  // من غير كارت: صورة مدورة على الخلفية مباشرة، والكلام تحتها، وزرار + صغير جنب السعر. هادي ونضيف
+  if (variant === "minimal") {
+    return (
+      <div className="group h-full">
+        <Link href={`/products/${product.slug}`} className="relative block overflow-hidden rounded-[1.4rem]">
+          <GiftArt image={product.images[0]} label={product.name} className="aspect-square transition-transform duration-500 group-hover:scale-[1.03]" />
+          {nameTag}
+        </Link>
+        <div className="mt-3 flex items-start justify-between gap-2 px-0.5">
+          <div className="min-w-0">
+            <Link href={`/products/${product.slug}`} className="line-clamp-1 text-base font-semibold hover:text-brand">
+              {product.name}
+            </Link>
+            {brandLine}
+            <p className="tabular mt-1 font-heading text-xl text-brand">{egp(product.price, t)}</p>
+          </div>
+          <ProductQuickAdd product={product} round />
+        </div>
+      </div>
+    );
+  }
+
+  // بولارويد: إطار أبيض تخين ومايل شوية زي صورة متعلقة، والسعر في ورقة بخط الإيد. شبه روح الموقع
+  if (variant === "polaroid") {
+    return (
+      <div className="group h-full">
+        <div className="h-full rotate-[-1.2deg] bg-white p-2.5 pb-3 shadow-[0_16px_28px_-18px_rgb(60_20_25/0.55)] transition-transform duration-300 group-even:rotate-[1.2deg] group-hover:rotate-0">
+          <Link href={`/products/${product.slug}`} className="relative block overflow-hidden">
+            <GiftArt image={product.images[0]} label={product.name} className="aspect-square" zoom />
+            {nameTag}
+          </Link>
+          {/* تحت الصورة: الاسم والبراند، وجنبهم السعر بخط الإيد وزرار + */}
+          {/* في الموبايل الكارت ضيق: الاسم في سطر لوحده، وتحته السعر والزرار. في الشاشات الأكبر جنب بعض */}
+          <div className="mt-3 flex flex-col gap-1.5 px-1 sm:flex-row sm:items-end sm:justify-between sm:gap-2">
+            <div className="min-w-0">
+              <Link href={`/products/${product.slug}`} className="line-clamp-1 font-heading text-lg leading-snug hover:text-brand">
+                {product.name}
+              </Link>
+              {brandLine}
+            </div>
+            <div className="flex shrink-0 items-center justify-between gap-2">
+              <span className="tabular -rotate-3 font-script text-xl leading-none whitespace-nowrap text-brand sm:text-2xl">{egp(product.price, t)}</span>
+              <ProductQuickAdd product={product} round />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Tilt className="group h-full">
       <div className="card flex h-full flex-col p-2.5">
