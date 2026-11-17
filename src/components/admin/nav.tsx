@@ -46,6 +46,7 @@ const groups: { title: string; items: { href: string; label: string; icon: IconN
   {
     title: "الموقع",
     items: [
+      { href: "/admin/ideas", label: "الأفكار", icon: "sparkle" },
       { href: "/admin/settings", label: "إعدادات الموقع", icon: "sliders" },
       { href: "/admin/users", label: "المستخدمون", icon: "users" },
       { href: "/admin/account", label: "حسابي", icon: "key" },
