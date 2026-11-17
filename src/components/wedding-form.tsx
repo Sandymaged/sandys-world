@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { useT } from "@/i18n/client";
 import { addDays, cairoNow } from "@/lib/delivery";
-import { egp } from "@/lib/format";
+import { dayCount, egp } from "@/lib/format";
 import { weddingDiscountRate } from "@/lib/pricing";
 import { useHydrated } from "@/lib/use-hydrated";
 import type { StoreSettings } from "@/lib/settings";
@@ -79,7 +79,7 @@ export function WeddingForm({ tiers }: { tiers: StoreSettings["weddingDiscounts"
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
           >
-            {t("الفرح بعد أقل من {n} يوم. هنحاول، بس بعض الحاجات المتخصصة ممكن متلحقش، وهنأكدلك على واتساب.", { n: WEDDING_MIN_DAYS })}
+            {t("موعد الزفاف بعد أقل من {days}. سنحاول، لكن قد لا تكون بعض القطع الخاصة جاهزة في الوقت، وسنؤكد لك على واتساب.", { days: dayCount(WEDDING_MIN_DAYS, t) })}
           </motion.p>
         )}
       </AnimatePresence>

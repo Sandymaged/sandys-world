@@ -8,6 +8,8 @@ import { filterCatalog, getLocalizedStorefront } from "@/lib/catalog";
 import { recipientLabels } from "@/lib/seed-data";
 import type { RecipientTag } from "@/lib/types";
 import { PageHeader } from "@/components/scrapbook";
+import { Icon } from "@/components/icons";
+import { Link } from "@/i18n/client";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -66,20 +68,16 @@ async function Results({ searchParams }: { searchParams: Promise<Params> }) {
 
   return (
     <>
-      <form action="/shop" className="mb-5 flex gap-2">
-        {occasion && <input type="hidden" name="occasion" value={occasion} />}
-        {recipient && <input type="hidden" name="for" value={recipient} />}
-        {band && <input type="hidden" name="price" value={band.id} />}
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder={t("دوّر على مج، ورد، شوكولاتة…")}
-          className="field"
-          type="search"
-          enterKeyHint="search"
-        />
-        <button className="btn-dark shrink-0">{t("بحث")}</button>
-      </form>
+      {/* البحث من خانة الهيدر بس (كانت فيه خانتين فوق بعض). لو فيه بحث: سطر بيقول بندوّر على إيه، وزرار يشيله */}
+      {q && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 text-[15px]">
+          <span>{t("نتائج البحث عن «{q}»", { q })}</span>
+          <Link href={href({ q: undefined })} className="chip border-line bg-white text-ink-2 hover:border-brand hover:text-brand">
+            <Icon name="close" className="size-3.5" />
+            {t("إلغاء البحث")}
+          </Link>
+        </div>
+      )}
 
       <div className="mb-8 space-y-3">
         <div className="scroll-x">

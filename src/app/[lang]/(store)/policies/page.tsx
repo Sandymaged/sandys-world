@@ -3,6 +3,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
 import { Icon, type IconName } from "@/components/icons";
 import { getStorefront } from "@/lib/catalog";
+import { coverageText } from "@/lib/delivery";
 import { periodLabel } from "@/lib/delivery";
 import { GIFT_CARD_VALID_DAYS } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
@@ -21,6 +22,8 @@ type Section = { id: string; title: string; items: React.ReactNode[] };
 export default async function PoliciesPage() {
   const [locale, t, sf] = await Promise.all([getLocale(), getT(), getStorefront()]);
   const s = sf.settings;
+  // مناطق التوصيل من اللوحة (نفس اللي في السلة وصفحة المنتج)
+  const coverage = coverageText(sf.zones, t);
   const periods = s.periods.map((p) => periodLabel(p.id, s, t)).join(locale === "en" ? ", " : "، ");
   const cutoff = s.sameDayCutoffHour > 12 ? s.sameDayCutoffHour - 12 : s.sameDayCutoffHour;
   const en = locale === "en";
@@ -52,7 +55,7 @@ export default async function PoliciesPage() {
           id: "delivery",
           title: "Delivery",
           items: [
-            <>For now we deliver inside Assiut City only, with our own courier. The fee for your area shows in the cart before you pay.</>,
+            <>{coverage} The fee for your area shows in the cart before you pay.</>,
             <>You choose the day and time: {periods}.</>,
             <>Same-day delivery is available inside Assiut city for ready gifts if you order before {cutoff} PM. Gifts that need preparing show their preparation days at checkout.</>,
             <>If we can&apos;t deliver (the recipient isn&apos;t there, the phone is off, or the address is wrong), a second try on the same day is free. Another day comes with a new delivery fee.</>,
@@ -108,7 +111,7 @@ export default async function PoliciesPage() {
           id: "delivery",
           title: "التوصيل",
           items: [
-            <>نوصّل حالياً داخل مدينة أسيوط فقط، عبر مندوب توصيل خاص. وتظهر رسوم التوصيل لمنطقتك في السلة قبل الدفع.</>,
+            <>{coverage} وتظهر رسوم التوصيل لمنطقتك في السلة قبل الدفع.</>,
             <>أنت من يختار اليوم والفترة: {periods}.</>,
             <>التوصيل في اليوم نفسه متاح داخل مدينة أسيوط للهدايا الجاهزة، إذا طلبت قبل الساعة {cutoff} ظهراً. أما الهدايا التي تحتاج إلى تجهيز، فيظهر لك عدد أيام تجهيزها أثناء الطلب.</>,
             <>إذا تعذّر التوصيل (المستلم غير موجود، أو الهاتف مغلق، أو العنوان خاطئ)، تكون المحاولة الثانية في اليوم نفسه مجاناً، وفي يوم آخر برسوم توصيل جديدة.</>,

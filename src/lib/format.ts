@@ -13,12 +13,22 @@ export const tierLabels: Record<PackageTier, string> = {
   fakher: "فاخر",
 };
 
+/**
+ * عدد الأيام بالعربي الصح: يوم واحد، يومين، 3 أيام، 30 يوماً (والإنجليزي: 1 day / 30 days).
+ * أي جملة فيها عدد أيام تاخد {days} من هنا بدل «{n} يوم».
+ */
+export function dayCount(n: number, t?: { locale?: string }) {
+  if (t?.locale === "en") return n === 1 ? "1 day" : `${n} days`;
+  if (n === 1) return "يوم واحد";
+  if (n === 2) return "يومين";
+  if (n >= 3 && n <= 10) return `${n} أيام`;
+  return `${n} يوماً`;
+}
+
 export function prepLabel(days: number, t?: T) {
   const tr = t ?? translator("ar");
   if (days === 0) return tr("جاهز للتوصيل النهارده");
-  if (days === 1) return tr("بيتجهز في يوم");
-  if (days === 2) return tr("بيتجهز في يومين");
-  return tr("بيتجهز في {n} أيام", { n: days });
+  return tr("يُجهَّز خلال {days}", { days: dayCount(days, tr) });
 }
 
 const fmts = {

@@ -15,8 +15,8 @@ export function QuickAdd({ pkg }: { pkg: PackageView }) {
   const addGift = useCart((s) => s.addGift);
   if (pkg.products.some((p) => p.options?.length)) {
     return (
-      <Link href={`/packages/${pkg.slug}`} className="btn btn-sm w-full border border-brand/30 bg-brand-soft text-brand hover:bg-brand hover:text-white">
-        {t("اختار اللون أو المقاس")}
+      <Link href={`/packages/${pkg.slug}`} className="btn btn-sm w-full whitespace-nowrap px-2 border border-brand/30 bg-brand-soft text-brand hover:bg-brand hover:text-white">
+        {t("اختر الخيارات")}
       </Link>
     );
   }
@@ -49,10 +49,10 @@ export function QuickAdd({ pkg }: { pkg: PackageView }) {
           prepDays: pkg.prepDays,
         })
       }
-      className="btn btn-sm w-full border border-brand/30 bg-brand-soft text-brand hover:bg-brand hover:text-white"
+      className="btn btn-sm w-full whitespace-nowrap px-2 border border-brand/30 bg-brand-soft text-brand hover:bg-brand hover:text-white"
     >
       <Icon name="plus" className="size-4" />
-      {t("ضيف للسلة")}
+      {t("أضف")}
     </motion.button>
   );
 }

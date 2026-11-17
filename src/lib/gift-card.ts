@@ -1,5 +1,6 @@
 // كارت الهدية: الأشكال والمبالغ والقواعد (مشتركة بين المتصفح والسيرفر)
 
+import { dayCount } from "./format";
 import { isValidPhone, nameError } from "./validate";
 
 export const giftCardDesigns = [
@@ -60,7 +61,7 @@ export const daysLeft = (expiresAt: string) => Math.max(0, Math.ceil((Date.parse
 /** «صالح لحد … (فاضل … يوم)» من تاريخ الكارت الحقيقي */
 export function validityText(t: Tr, expiresAt: string, date: string) {
   const n = daysLeft(expiresAt);
-  return n > 0 ? t("صالح لحد {date} (فاضل {n} يوم)", { date, n }) : t("الكارت خلص في {date}", { date });
+  return n > 0 ? t("صالحة حتى {date} (يتبقى {days})", { date, days: dayCount(n, t as { locale?: string }) }) : t("الكارت خلص في {date}", { date });
 }
 
 /**
@@ -80,7 +81,7 @@ export function giftCardShareText(
   ];
   if (c.asGift && c.message) lines.push("", `«${c.message}»`);
   lines.push("", t("افتح الكارت من هنا 👇"), c.link);
-  if (c.expires && c.expiresAt) lines.push("", t("⏳ الكارت صالح لحد {date} (فاضل {n} يوم). استخدمه قبلها!", { date: c.expires, n: daysLeft(c.expiresAt) }));
+  if (c.expires && c.expiresAt) lines.push("", t("⏳ البطاقة صالحة حتى {date} (يتبقى {days}). استخدمها قبل ذلك!", { date: c.expires, days: dayCount(daysLeft(c.expiresAt), t as { locale?: string }) }));
   lines.push("", t("اختار اللي يفرّحك من الموقع، وإحنا نغلّفهولك ونوصّلهولك 💝"));
   return lines.join("\n");
 }

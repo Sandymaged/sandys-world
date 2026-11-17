@@ -1,16 +1,11 @@
 import Image from "next/image";
-import { AssistantPromo } from "@/components/assistant-promo";
-import { BasketReveal } from "@/components/basket-reveal";
 import { BrandCard } from "@/components/brand-card";
-import { EnvelopeSteps } from "@/components/envelope-steps";
-import { PackageCard } from "@/components/cards";
+import { PackageCard, ProductCard } from "@/components/cards";
 import { GiftCardArt } from "@/components/gift-card-art";
 import { GiftFinder } from "@/components/gift-finder";
-import { FeaturePills } from "@/components/feature-pills";
 import { Hero } from "@/components/hero";
 import { Icon } from "@/components/icons";
-import { NoteBoard } from "@/components/note-board";
-import { Pill, Polaroid, Quote, ScrapTitle } from "@/components/scrapbook";
+import { Pill, Polaroid, Quote } from "@/components/scrapbook";
 import { ScrollRow } from "@/components/scroll-row";
 import { SendForYou } from "@/components/send-for-you";
 import { Link } from "@/i18n/client";
@@ -18,30 +13,12 @@ import { getT } from "@/i18n/server";
 import { getLocalizedStorefront } from "@/lib/catalog";
 import { getLocale } from "@/i18n/server";
 import { getSiteSettings, type QuoteSlot } from "@/lib/site-settings";
-import { egp } from "@/lib/format";
 import { STORE_NAME } from "@/lib/settings";
 
 /*
- * الصفحة الرئيسية زي صفحات دفتر: كل قسم صفحة مدورة لوحدها على ورق كريمي،
- * وبينهم اقتباسات عن الهدايا. وفيها تجربة صغيرة: نختار الهدية سوا.
+ * الصفحة الرئيسية: قصيرة ومن غير تكرار (كانت حوالي ١٦ شاشة موبايل، ونفس المميزات متكررة ٣ مرات).
+ * الترتيب: العنوان ← فكرتنا وخطوات التوصيل (مكان واحد) ← هدايا مختارة ← نختار الهدية سوا ← الموسم ← كارت الهدية والأقسام ← البراندات.
  */
-
-// اللي بيوصل مع كل هدية: ورق متثبت على اللوحة
-const notes = [
-  { title: "صورة قبل ما تخرج", body: "بنبعتلك صورة الهدية على واتساب قبل ما تتحرك." },
-  { title: "كارت برسالتك", body: "مكتوب بخط حلو ومتحط جوه الهدية." },
-  { title: "متغلفة بحب", body: "ورق وشرايط على ذوق المناسبة." },
-  { title: "في الميعاد اللي تختاره", body: "يوم وفترة توصيل لكل هدية." },
-  { title: "من براندات أسيوط", body: "كل حاجة معمولة بإيد ناس من بلدنا." },
-  { title: "تتابع طلبك", body: "وتعرف هو فين لحد ما يتسلم." },
-];
-
-const steps = [
-  ["اختار الهدية", "باكدج جاهز، أو بوكس على ذوقك، أو اكتب الاسم على المنتج."],
-  ["حدد المستلم والميعاد", "العنوان ويوم وفترة التوصيل، ورسالة الكارت، واسمك يظهر عليها ولا لأ."],
-  ["ادفع", "إنستاباي من أي مكان، أو كاش لو إنت المستلم."],
-  ["استلم الصور", "صورة الهدية قبل ما تخرج، وصورة وهي بتتسلم، على واتساب."],
-];
 
 export default async function HomePage() {
   const t = await getT();
@@ -55,8 +32,8 @@ export default async function HomePage() {
   const season = sf.activeSeason;
   const seasonPackages = season ? sf.packages.filter((p) => p.seasonId === season.id) : [];
   const featured = sf.packages.filter((p) => !p.seasonId);
-  // الباكدج اللي فيه أكتر حاجات: بنفرده كمثال على «إيه اللي جوه»
-  const spotlight = [...featured].sort((a, b) => b.products.length - a.products.length)[0];
+  // هدايا مختارة: الباقات الجاهزة الأول، والمنتجات تكمّل لحد 8
+  const picks = [...featured.slice(0, 8).map((p) => ({ kind: "package" as const, p })), ...sf.products.filter((p) => !p.isAddon).slice(0, Math.max(0, 8 - featured.length)).map((p) => ({ kind: "product" as const, p }))];
   const photo = (slug: string) => sf.products.find((p) => p.slug === slug);
   // ستيكرز الهيرو: صور منتجات (الأول والرابع دواير وجنبهم ورقة صغيرة)
   const chips: Record<number, string> = { 0: "لماما", 3: "عيد ميلاد سعيد" };
@@ -102,7 +79,21 @@ export default async function HomePage() {
       {/* فكرة الموقع: تطلب من أي مكان وإحنا نوصّلها عنك */}
       <SendForYou />
 
-      <FeaturePills />
+      {/* هدايا مختارة: صف بيتسحب، وكل كارت عليه زرار إضافة */}
+      {picks.length > 0 && (
+        <section className="container-x">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="text-4xl leading-tight sm:text-5xl">{t("هدايا مختارة")}</h2>
+            <Link href="/shop" className="flex items-center gap-0.5 text-[15px] font-medium text-ink-2 hover:text-brand">
+              {t("كل الهدايا")}
+              <Icon name="chevron" className="size-4" />
+            </Link>
+          </div>
+          <ScrollRow label={t("هدايا مختارة")}>
+            {picks.map((x, i) => (x.kind === "package" ? <PackageCard key={x.p.id} pkg={x.p} priority={i < 2} /> : <ProductCard key={x.p.id} product={x.p} />))}
+          </ScrollRow>
+        </section>
+      )}
 
       {/* نختار الهدية سوا: شريط أزرق بعرض الصفحة */}
       <section className="grain bg-blue-soft py-12 sm:py-16">
@@ -118,55 +109,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* مع كل هدية: لوحة الورق المتثبت على الورق نفسه */}
-      <section className="container-x">
-        <ScrapTitle kicker={t("مش بس هدية")} title={t("هتاخد إيه مع كل هدية؟")} className="mb-10" />
-        <NoteBoard notes={notes.map((n) => ({ title: t(n.title), body: t(n.body) }))} />
-      </section>
-
       {quote("red").text && (
         <Quote band tone="red" by={quote("red").sub || undefined}>
           {quote("red").text}
         </Quote>
-      )}
-
-      {/* إيه اللي جوه: باكدج واحد بالتفصيل */}
-      {spotlight && (
-        <section className="container-x">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
-            <div className="reveal order-2 lg:order-1">
-              <Pill tone="blue">{t("بصي من قريب")}</Pill>
-              <h2 className="mt-3 text-4xl leading-tight sm:text-5xl">{t("كل باكدج متجمع بإيد، من براندات محلية")}</h2>
-              <p className="mt-4 text-lg leading-8 text-ink-2">
-                {t("كل حاجة جوه الباكدج جاية من براند صغير من أسيوط، ومكتوب جنبها اسمه. بنغلفها ونكتب الكارت ونبعتلك صورتها قبل ما تخرج.")}
-              </p>
-              <ul className="reveal-stagger mt-6 grid gap-3 sm:grid-cols-2">
-                {spotlight.products.slice(0, 4).map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 text-[15px]">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-soft text-blue-deep">
-                      <Icon name="check" className="size-4" />
-                    </span>
-                    <span>
-                      <span className="font-semibold">{p.name}</span>
-                      {p.brand && <span className="block text-xs text-muted">{p.brand}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <Link href={`/packages/${spotlight.slug}`} className="btn-primary mt-8">
-                {t("شوف «{name}» بـ {price}", { name: spotlight.name, price: egp(spotlight.price, t) })}
-              </Link>
-            </div>
-            <div className="order-1 lg:order-2">
-              <BasketReveal
-                className="mx-auto max-w-md"
-                title={t("استني… إيه اللي جوه الباكدج؟")}
-                subtitle={spotlight.name}
-                items={spotlight.products.map((p) => ({ key: p.id, name: p.name, brand: p.brand, image: p.images[0], quantity: p.quantity }))}
-              />
-            </div>
-          </div>
-        </section>
       )}
 
       {/* الموسم: شريط أحمر غامق بعرض الصفحة، والهدايا صف بيتسحب */}
@@ -255,12 +201,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {quote("blue").text && (
-        <Quote band tone="blue" by={quote("blue").sub || undefined}>
-          {quote("blue").text}
-        </Quote>
-      )}
-
       {/* البراندات المحلية: شريط بعرض الصفحة، الكلام والدواير جنب بعض، وتحتهم صف البراندات */}
       {on.brands && (
         <section className="grain bg-blue-soft py-12 sm:py-16">
@@ -280,29 +220,17 @@ export default async function HomePage() {
             <div className="mt-10">
               {/* شبكة بدل صف بيتسحب: البراندات لسه قليلة، والصف كان بيسيب فاضي كبير */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {sf.brands.slice(0, 6).map((b) => (
-                  <BrandCard key={b.id} brand={b} />
+                {/* في الموبايل أول 3 بس عشان الصفحة متطولش */}
+                {sf.brands.slice(0, 6).map((b, i) => (
+                  <div key={b.id} className={i >= 3 ? "hidden sm:block" : ""}>
+                    <BrandCard brand={b} />
+                  </div>
                 ))}
               </div>
             </div>
           </div>
         </section>
       )}
-
-      {/* مساعد الهدايا */}
-      <section className="container-x">
-        <AssistantPromo />
-      </section>
-
-      {/* إزاي بتوصل: على الورق، بخط فاصل فوق وتحت */}
-      <section className="border-y border-dashed border-line py-12 sm:py-16">
-        <div className="container-x">
-          <ScrapTitle kicker={t("بسيطة خالص")} title={t("إزاي بتوصل الهدية")} kickerTone="blue" />
-          <div className="mt-12">
-            <EnvelopeSteps steps={steps.map(([title, body]) => ({ title: t(title), body: t(body) }))} />
-          </div>
-        </div>
-      </section>
 
     </div>
   );

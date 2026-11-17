@@ -1,5 +1,7 @@
 import { getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
+import { getStorefront } from "@/lib/catalog";
+import { coverageText } from "@/lib/delivery";
 import { Icon } from "./icons";
 
 export async function Breadcrumbs({ items }: { items: { href?: string; label: string }[] }) {
@@ -22,11 +24,13 @@ export async function Breadcrumbs({ items }: { items: { href?: string; label: st
 
 /** معلومات التوصيل والاسترجاع (قسم 8.2 و 8.4) تحت زرار الشراء */
 export async function PolicyDetails({ customizable }: { customizable: boolean }) {
-  const t = await getT();
+  const [t, sf] = await Promise.all([getT(), getStorefront()]);
   const rows = [
     {
       title: "التوصيل",
-      body: "بنوصّل جوه مدينة أسيوط بس دلوقتي، بمندوب خاص. بتختار يوم وفترة التوصيل لكل هدية في السلة، ورسوم التوصيل بتظهر قبل الدفع.",
+      // المناطق من اللوحة (نفس اللي في السلة)، والجملة متترجمة جاهزة
+      body: `${coverageText(sf.zones, t)} ${t("تختار يوم التوصيل وفترته في السلة، وتظهر رسوم التوصيل لمنطقتك قبل الدفع.")}`,
+      raw: true,
     },
     {
       title: "الصور",
@@ -47,7 +51,7 @@ export async function PolicyDetails({ customizable }: { customizable: boolean })
             {t(r.title)}
             <Icon name="plus" className="size-4 transition-transform group-open:rotate-45" />
           </summary>
-          <p className="pb-4 text-sm leading-7 text-ink-2">{t(r.body)}</p>
+          <p className="pb-4 text-sm leading-7 text-ink-2">{"raw" in r ? r.body : t(r.body)}</p>
         </details>
       ))}
     </div>

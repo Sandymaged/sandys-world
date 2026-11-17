@@ -12,7 +12,8 @@
   --color-line: #e3d8cb;
   --color-ink: #2e2421;
   --color-ink-2: #55473f;
-  --color-muted: #85776d;
+  /* أغمق شوية عشان الكلام الصغير يتقري (تباين 5.4:1 على الخلفية) */
+  --color-muted: #695a51;
   --color-brand: #a3212c;
   --color-brand-dark: #841a24;
   --color-brand-soft: #f6e0e0;

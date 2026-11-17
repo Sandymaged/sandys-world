@@ -7,6 +7,7 @@ import { PackageCard, Rail, SectionHeading } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
 import { Icon } from "@/components/icons";
 import { Breadcrumbs, PolicyDetails } from "@/components/product-info";
+import { ContactUs } from "@/components/contact-us";
 import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { egp, prepLabel } from "@/lib/format";
 import { ProductGallery } from "@/components/product-gallery";
@@ -81,6 +82,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
           )}
           <AddProduct product={product} />
           <PolicyDetails customizable={product.isCustomizable} />
+          <ContactUs className="mt-6" />
         </div>
       </div>
 

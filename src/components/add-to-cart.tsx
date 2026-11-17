@@ -15,7 +15,7 @@ import { OptionPicker } from "./option-picker";
 /**
  * المنتج المخصص: الكلام والصورة بيتملوا في صفحة الدفع، فهنا بنقوله ده بس قبل ما يضيف
  */
-function CustomizationNote({ products }: { products: Pick<Product, "name" | "customizationKind">[] }) {
+function CustomizationNote({ products, textHere = false }: { products: Pick<Product, "name" | "customizationKind">[]; textHere?: boolean }) {
   const t = useT();
   if (!products.length) return null;
   const image = products.some((p) => needsImage(p.customizationKind));
@@ -24,12 +24,14 @@ function CustomizationNote({ products }: { products: Pick<Product, "name" | "cus
     <p className="flex gap-2.5 rounded-2xl bg-lilac-soft p-3.5 text-sm leading-6 text-ink-2">
       <Icon name={image ? "camera" : "pen"} className="mt-0.5 size-5 shrink-0 text-lilac" />
       <span>
-        {image && text
-          ? t("هتكتب الكلام وترفع الصورة اللي هتتطبع في صفحة الدفع.")
+        {/* لو خانة الكلام موجودة فوق، مش محتاجين نقول «هتكتبه في الدفع» */}
+        {image && text && !textHere
+          ? `${t("هتكتب الكلام وترفع الصورة اللي هتتطبع في صفحة الدفع.")} ${t("وهنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}`
           : image
-            ? t("هترفع الصورة اللي هتتطبع في صفحة الدفع.")
-            : t("هتكتب الاسم أو الجملة اللي هتتكتب في صفحة الدفع.")}{" "}
-        {t("وهنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}
+            ? `${t("هترفع الصورة اللي هتتطبع في صفحة الدفع.")} ${t("وهنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}`
+            : text && !textHere
+              ? `${t("هتكتب الاسم أو الجملة اللي هتتكتب في صفحة الدفع.")} ${t("وهنبعتلك شكل التصميم توافق عليه قبل التنفيذ.")}`
+              : t("سنرسل لك شكل التصميم لتوافق عليه قبل التنفيذ.")}
       </span>
     </p>
   );
@@ -229,6 +231,10 @@ export function AddProduct({ product }: { product: Product }) {
   const addGift = useCart((s) => s.addGift);
   const [qty, setQty] = useState(1);
   const [choices, setChoices] = useState<OptionChoice[]>([]);
+  // الاسم أو الجملة: يقدر يكتبها هنا وهو شايف المنتج (اختياري)، وبتتملا لوحدها في صفحة الدفع
+  const [text, setText] = useState("");
+  const wantsText = product.isCustomizable && needsText(product.customizationKind);
+  const maxChars = product.customizationMaxChars ?? 40;
   const missing = missingOptions(product.options, choices);
   const unit = product.price + optionsPrice(product.options, choices);
 
@@ -250,7 +256,7 @@ export function AddProduct({ product }: { product: Product }) {
           customizable: product.isCustomizable,
           maxChars: product.customizationMaxChars,
           customKind: product.customizationKind,
-          customization: "",
+          customization: wantsText ? text.trim().slice(0, maxChars) : "",
           options: product.options?.length ? product.options : undefined,
           choices,
         },
@@ -258,13 +264,34 @@ export function AddProduct({ product }: { product: Product }) {
       addons: [],
       prepDays: product.prepDays,
     });
+    setText("");
     done();
   }
 
   return (
     <div className="space-y-6">
       {product.options?.length ? <OptionPicker options={product.options} choices={choices} onChange={setChoices} /> : null}
-      {product.isCustomizable && <CustomizationNote products={[product]} />}
+      {wantsText && (
+        <div className="space-y-1.5">
+          <label htmlFor="custom-text" className="flex items-center gap-2 text-sm font-semibold">
+            <Icon name="pen" className="size-4 text-brand" />
+            {t("الاسم أو الجملة المطلوب كتابتها")}
+          </label>
+          <input
+            id="custom-text"
+            className="field"
+            value={text}
+            maxLength={maxChars}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t("مثلاً: سلمى")}
+          />
+          <p className="flex justify-between gap-3 text-[13px] text-ink-2">
+            <span>{t("يمكنك كتابته الآن أو لاحقاً في صفحة الدفع.")}</span>
+            <span className="tabular shrink-0">{text.length}/{maxChars}</span>
+          </p>
+        </div>
+      )}
+      {product.isCustomizable && <CustomizationNote products={[product]} textHere={wantsText} />}
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold">{t("الكمية")}</span>
         <div className="flex items-center rounded-full border border-line">

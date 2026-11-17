@@ -7,6 +7,9 @@ import { getSiteSettings, linkVisible } from "@/lib/site-settings";
 import { getLocalizedStorefront } from "@/lib/catalog";
 import { Icon } from "./icons";
 import { Pill } from "./scrapbook";
+import { FooterContact } from "./contact-us";
+import { coverageText } from "@/lib/delivery";
+import { getContact } from "@/lib/contact";
 
 const shop = [
   { href: "/shop", label: "كل الهدايا" },
@@ -18,7 +21,7 @@ const shop = [
   { href: "/send-to-assiut", label: "ابعت لأهلك في أسيوط" },
 ];
 
-const delivery = ["التوصيل جوه مدينة أسيوط بمندوب خاص", "الدفع بإنستاباي، أو كاش لو إنت المستلم"];
+const payment = "الدفع بإنستاباي، أو كاش لو إنت المستلم";
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -36,7 +39,9 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
  * اللوجو وجملة عن المتجر، وعواميد اللينكات، وتحتهم سطر الحقوق.
  */
 export async function SiteFooter() {
-  const [t, site, sf] = await Promise.all([getT(), getSiteSettings(), getLocalizedStorefront()]);
+  const [t, site, sf, contact] = await Promise.all([getT(), getSiteSettings(), getLocalizedStorefront(), getContact()]);
+  // التوصيل من مناطق اللوحة (نفس اللي في السلة وصفحة المنتج)
+  const delivery = [coverageText(sf.zones, t), t(payment)];
   const name = t(STORE_NAME);
   // أول 4 مناسبات من اللي متضافة في اللوحة
   const occasions = sf.occasions
@@ -86,13 +91,13 @@ export async function SiteFooter() {
 
       <div className="bg-blue-deep text-white/80">
         <div aria-hidden className="ribbon h-2 !shadow-none" />
-        <div className="reveal-stagger container-x grid grid-cols-2 gap-x-6 gap-y-10 py-14 text-[15px] lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
+        <div className="reveal-stagger container-x grid grid-cols-2 gap-x-6 gap-y-10 py-14 text-[15px] lg:grid-cols-[1.4fr_1fr_1fr_1.3fr_1fr]">
           <div className="col-span-2 max-w-xs lg:col-span-1">
             <p className="text-lg text-white" aria-label={name}>
               <Logo accent="text-pink-mid" />
             </p>
             <p className="mt-3 font-script text-xl text-pink-mid">{t("هدية متغلفة بحب")}</p>
-            <p className="mt-2 leading-7">{t("هدايا مخصصة ومتغلفة، بنوصّلها لأي عنوان في أسيوط في اليوم والفترة اللي تختارها.")}</p>
+            <p className="mt-2 leading-7">{t("هدايا مخصصة ومغلّفة بعناية، نوصّلها في اليوم والفترة التي تختارها.")}</p>
           </div>
           <div>
             <p className="mb-4 font-heading text-lg text-white">{t("تسوّق")}</p>
@@ -122,11 +127,17 @@ export async function SiteFooter() {
               {delivery.map((d) => (
                 <li key={d} className="flex gap-2">
                   <Icon name="check" className="mt-1 size-4 shrink-0 text-pink-mid" />
-                  {t(d)}
+                  {d}
                 </li>
               ))}
             </ul>
           </div>
+          {contact.phone && (
+            <div className="col-span-2 lg:col-span-1">
+              <p className="mb-4 font-heading text-lg text-white">{t("تواصل معنا")}</p>
+              <FooterContact />
+            </div>
+          )}
         </div>
         <div className="border-t border-white/15">
           <div className="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-sm text-white/60">

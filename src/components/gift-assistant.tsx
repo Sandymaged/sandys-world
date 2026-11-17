@@ -237,7 +237,8 @@ export function GiftAssistant() {
             type="button"
             onClick={() => setOpen(true)}
             aria-label={t("مساعد الهدايا")}
-            className={`fixed start-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-40 items-center gap-2 rounded-full border-2 border-brand bg-bg py-2 ps-2 pe-4 md:bottom-6 md:flex ${busyBottom ? "hidden" : "flex"}`}
+            // في الموبايل دايرة صغيرة على الطرف فوق شريط التنقل (كانت بتغطي الأزرار والفلاتر)، والكلام بيظهر في الكمبيوتر بس
+            className={`fixed end-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] z-40 items-center gap-2 rounded-full border-2 border-brand bg-bg p-1 shadow-md md:start-4 md:end-auto md:bottom-6 md:flex md:py-2 md:ps-2 md:pe-4 md:shadow-none ${busyBottom ? "hidden" : "flex"}`}
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
             exit={{ scale: 0, rotate: 20 }}
@@ -248,7 +249,7 @@ export function GiftAssistant() {
             <span className="grid size-9 place-items-center rounded-full bg-brand-soft">
               <Bow className="w-7 animate-sway text-brand" />
             </span>
-            <span className="font-heading text-base text-brand">{t("محتارة؟ اسأليني")}</span>
+            <span className="hidden font-heading text-base text-brand md:inline">{t("محتارة؟ اسأليني")}</span>
           </motion.button>
         )}
       </AnimatePresence>

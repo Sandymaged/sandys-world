@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/i18n/client";
 import { orderPrepDays, type CartGift, type GiftRecipient, type OrderDelivery } from "@/lib/cart";
 import { addDays, cairoNow, earliestDeliveryDate, periodLabel, periodsForDate } from "@/lib/delivery";
-import { egp, formatDay } from "@/lib/format";
+import { dayCount, egp, formatDay } from "@/lib/format";
 import type { StoreSettings } from "@/lib/settings";
 import type { Zone } from "@/lib/types";
 import { normalizePhone, recipientErrors, toLatinDigits } from "@/lib/validate";
@@ -175,7 +175,7 @@ export function DeliveryEditor({
           <>
             {prepDays > 0 && earliest && (
               <p className="text-sm text-ink-2">
-                {t(prepDays === 1 ? "الهدايا دي بتتجهز في يوم، فأقرب يوم توصيل {date}." : "الهدايا دي بتتجهز في {n} أيام، فأقرب يوم توصيل {date}.", { n: prepDays, date: formatDay(earliest, t) })}
+                {t("تُجهَّز هذه الهدايا خلال {days}، لذلك أقرب يوم للتوصيل هو {date}.", { days: dayCount(prepDays, t), date: formatDay(earliest, t) })}
               </p>
             )}
             {dateTooEarly && <p className="rounded-xl bg-butter-soft p-3 text-sm text-butter">{t("اليوم اللي كان متختار بقى بدري على تجهيز الهدايا. اختار يوم من الأيام دي.")}</p>}

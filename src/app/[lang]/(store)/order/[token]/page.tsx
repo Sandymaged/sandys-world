@@ -15,7 +15,7 @@ import { repo } from "@/lib/db";
 import type { OrderStatus } from "@/lib/db/types";
 import { periodLabel } from "@/lib/delivery";
 import { waLink } from "@/lib/admin-format";
-import { egp, formatDay } from "@/lib/format";
+import { dayCount, egp, formatDay } from "@/lib/format";
 import { GIFT_CARD_VALID_DAYS, giftCardShareText, validityText } from "@/lib/gift-card";
 import { STORE_NAME } from "@/lib/settings";
 
@@ -122,7 +122,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                   </p>
                   <p className="text-xs leading-5 text-muted">
                     {t("الكود بيوصل لـ {name} بس، عشان يفضل مفاجأة ومحدش غيره يستخدمه.", { name: gc.toName })}{" "}
-                    {t("الكارت صالح {days} يوم بس من يوم ما يتبعت، فقول لـ {name} يستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS, name: gc.toName })}
+                    {t("البطاقة صالحة لمدة {days} فقط من يوم إرسالها، فاطلب من {name} استخدامها سريعاً.", { days: dayCount(GIFT_CARD_VALID_DAYS, t), name: gc.toName })}
                   </p>
                 </>
               )}
@@ -132,7 +132,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
                   {t("اتبعتلك على واتساب {when}", { when: sent })}
                 </p>
               )}
-              {!gc.asGift && !gc.code && <p className="text-xs leading-5 text-muted">{t("الكارت صالح {days} يوم بس من يوم ما يتبعت، ابعته واستخدمه بسرعة.", { days: GIFT_CARD_VALID_DAYS })}</p>}
+              {!gc.asGift && !gc.code && <p className="text-xs leading-5 text-muted">{t("البطاقة صالحة لمدة {days} فقط من يوم إرسالها، فأرسلها واستخدمها سريعاً.", { days: dayCount(GIFT_CARD_VALID_DAYS, t) })}</p>}
               {gc.code && !gc.asGift && (
                 <>
                   <div className="flex flex-wrap items-center gap-3">

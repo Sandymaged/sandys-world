@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Link, useT } from "@/i18n/client";
+import { dayCount } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
 import { GiftRibbon } from "./decor";
 import { Icon } from "./icons";
@@ -134,23 +135,13 @@ export function Hero({
               </Link>
             )}
           </div>
-          {/* الموقع بيعمل إيه في ٣ خطوات */}
-          <ol className="reveal-stagger mt-5 flex flex-wrap justify-center gap-x-2 gap-y-2 text-[15px] text-ink-2">
-            {["اختار الهدية", "نغلّفها ونكتب كارتك", "نوصّلها في ميعادها"].map((x, i) => (
-              <li key={x} className="flex items-center gap-2">
-                {i > 0 && <Icon name="chevron" className="size-4 text-muted" />}
-                <span className="tabular grid size-6 place-items-center rounded-full bg-brand text-xs font-semibold text-white">{i + 1}</span>
-                {t(x)}
-              </li>
-            ))}
-          </ol>
           {seasonName && (
             <Link
               href={seasonHref}
               className="mt-5 inline-flex -rotate-2 animate-pop-in items-center gap-3 rounded-2xl bg-brand px-4 py-2 text-maroon-ink shadow-lg transition-transform [animation-delay:1.2s] hover:rotate-0"
             >
               <span className="text-sm">{seasonName}</span>
-              {daysLeft !== null && <span className="tabular font-heading text-xl">{t("فاضل {n} يوم", { n: daysLeft })}</span>}
+              {daysLeft !== null && <span className="tabular font-heading text-xl">{t("يتبقى {days}", { days: dayCount(daysLeft, t) })}</span>}
             </Link>
           )}
         </div>

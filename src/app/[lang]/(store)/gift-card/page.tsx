@@ -5,12 +5,13 @@ import { GiftCardForm } from "@/components/gift-card-form";
 import { Breadcrumbs } from "@/components/product-info";
 import { getT } from "@/i18n/server";
 import { GIFT_CARD_VALID_DAYS } from "@/lib/gift-card";
+import { dayCount } from "@/lib/format";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
   return {
     title: t("كارت هدية"),
-    description: t("مش عارف تجيبله إيه؟ ابعتله كارت هدية يختار بيه اللي يعجبه، بيوصل على واتساب وصالح {days} يوم.", { days: GIFT_CARD_VALID_DAYS }),
+    description: t("لا تعرف ماذا تهديه؟ أرسل له بطاقة هدية يختار بها ما يعجبه، تصله على واتساب وصالحة لمدة {days}.", { days: dayCount(GIFT_CARD_VALID_DAYS, t) }),
   };
 }
 

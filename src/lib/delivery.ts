@@ -10,6 +10,22 @@ export interface CairoNow {
   hour: number;
 }
 
+/**
+ * بنوصّل فين، من مناطق التوصيل اللي في اللوحة (مش كلام ثابت):
+ * عشان صفحة المنتج والفوتر والسياسات والسلة يقولوا نفس الحاجة.
+ */
+export function coverageText(zones: Pick<Zone, "kind">[], t: T) {
+  const kinds = new Set(zones.map((z) => z.kind));
+  const city = kinds.has("city"), markaz = kinds.has("markaz"), gov = kinds.has("governorate");
+  if (city && markaz && gov) return t("نوصّل داخل مدينة أسيوط ومراكزها، وإلى محافظات أخرى.");
+  if (city && markaz) return t("نوصّل داخل مدينة أسيوط ومراكزها.");
+  if (city && gov) return t("نوصّل داخل مدينة أسيوط، وإلى محافظات أخرى.");
+  if (markaz && gov) return t("نوصّل إلى مراكز أسيوط، وإلى محافظات أخرى.");
+  if (city) return t("نوصّل داخل مدينة أسيوط.");
+  if (markaz) return t("نوصّل إلى مراكز أسيوط.");
+  return t("نوصّل إلى العنوان الذي تختاره.");
+}
+
 export function cairoNow(at: Date = new Date()): CairoNow {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TIMEZONE,

@@ -1,6 +1,6 @@
 import { getT } from "@/i18n/server";
 import { Link } from "@/i18n/client";
-import { egp, tierLabels } from "@/lib/format";
+import { dayCount, egp, tierLabels } from "@/lib/format";
 import { canPick, type ProductOption } from "@/lib/options";
 import type { PackageTier } from "@/lib/types";
 import type { PackageView, Product } from "@/lib/types";
@@ -8,6 +8,7 @@ import { Basket } from "./basket-reveal";
 import { GiftArt } from "./gift-art";
 import { Icon } from "./icons";
 import { Reveal, Tilt } from "./motion/reveal";
+import { ProductQuickAdd } from "./product-quick-add";
 import { QuickAdd } from "./quick-add";
 
 export const tierStyles: Record<PackageTier, string> = {
@@ -19,9 +20,9 @@ export const tierStyles: Record<PackageTier, string> = {
 async function DeliveryHint({ prepDays }: { prepDays: number }) {
   const t = await getT();
   return (
-    <span className="flex items-center gap-1 text-xs text-success">
-      <Icon name="truck" className="size-3.5" />
-      {prepDays === 0 ? t("يوصل النهارده") : prepDays === 1 ? t("يوصل بكرة") : prepDays === 2 ? t("يتجهز في يومين") : t("يتجهز في {n} أيام", { n: prepDays })}
+    <span className="flex items-center gap-1 text-[13px] font-medium text-success">
+      <Icon name="truck" className="size-4" />
+      {prepDays === 0 ? t("يوصل النهارده") : prepDays === 1 ? t("يوصل بكرة") : t("يُجهَّز خلال {days}", { days: dayCount(prepDays, t) })}
     </span>
   );
 }
@@ -46,7 +47,7 @@ export async function PackageCard({ pkg, priority }: { pkg: PackageView; priorit
           </div>
           <div className="px-1.5 pt-3">
             <h3 className="line-clamp-1 text-base font-semibold">{pkg.name}</h3>
-            {brands.length > 0 && <p className="line-clamp-1 text-xs text-muted">{t("من {brands}", { brands: brands.join(t("، ")) })}</p>}
+            {brands.length > 0 && <p className="line-clamp-1 text-[13px] text-ink-2">{t("من {brands}", { brands: brands.join(t("، ")) })}</p>}
             <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2">
               <p className="tabular font-heading text-xl text-brand">{egp(pkg.price, t)}</p>
               <DeliveryHint prepDays={pkg.prepDays} />
@@ -83,7 +84,7 @@ export async function ProductCard({ product }: { product: Product }) {
         <div className="flex-1 px-1.5">
           {/* البراند: لينك لصفحته (برا لينك المنتج) */}
           {product.brandSlug ? (
-            <Link href={`/brands/${product.brandSlug}`} className="line-clamp-1 text-xs text-muted underline-offset-2 hover:text-brand hover:underline">
+            <Link href={`/brands/${product.brandSlug}`} className="line-clamp-1 text-[13px] text-ink-2 underline-offset-2 hover:text-brand hover:underline">
               {t("من {brands}", { brands: product.brand ?? "" })}
             </Link>
           ) : (
@@ -93,6 +94,9 @@ export async function ProductCard({ product }: { product: Product }) {
         <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 px-1.5 pb-1">
           <p className="tabular font-heading text-xl text-brand">{egp(product.price, t)}</p>
           <DeliveryHint prepDays={product.prepDays} />
+        </div>
+        <div className="px-1.5 pt-2.5 pb-1">
+          <ProductQuickAdd product={product} />
         </div>
       </div>
     </Tilt>

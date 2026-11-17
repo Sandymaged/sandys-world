@@ -8,6 +8,7 @@ import { tierStyles } from "@/components/cards";
 import { GiftArt } from "@/components/gift-art";
 import { Icon } from "@/components/icons";
 import { Breadcrumbs, PolicyDetails } from "@/components/product-info";
+import { ContactUs } from "@/components/contact-us";
 import { atLeastOne, getLocalizedStorefront, getStorefront } from "@/lib/catalog";
 import { egp, prepLabel, tierLabels } from "@/lib/format";
 
@@ -118,6 +119,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
             <AddPackage pkg={pkg} addons={addons} boxes={sf.boxSizes.filter((b) => (sf.settings.packageBoxes?.[pkg.id] ?? []).includes(b.id))} />
           </div>
           <PolicyDetails customizable={customizable} />
+          <ContactUs className="mt-6" />
         </div>
       </div>
     </>
