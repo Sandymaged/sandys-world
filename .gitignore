@@ -46,3 +46,6 @@ next-env.d.ts
 
 # إعدادات Claude Code الشخصية
 .claude/settings.local.json
+
+# local data backups (never commit)
+/backups/
