@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { BottomNav } from "@/components/bottom-nav";
 import { CartDrawer } from "@/components/cart-drawer";
+import { CartPrune } from "@/components/cart-prune";
 import { GiftAssistant } from "@/components/gift-assistant";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -24,6 +25,9 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <BottomNav showBox={site.sections.box} />
       </Suspense>
       <CartDrawer />
+      <Suspense fallback={null}>
+        <CartPrune />
+      </Suspense>
       <Suspense fallback={null}>
         <GiftAssistant />
       </Suspense>

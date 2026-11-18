@@ -1013,4 +1013,6 @@ export const en: Record<string, string> = {
   "(كارت واحد للطلب كله، اختياري)": "(one card for the whole order, optional)",
   "التغليف العادي": "Standard wrapping",
   "العلامة المميزة": "Landmark",
+  "أزلنا من سلتك ما لم يعد متاحاً:": "We removed items that are no longer available from your cart:",
+  "إغلاق": "Close",
 };
