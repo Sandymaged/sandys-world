@@ -48,11 +48,10 @@ function fillContact(html) {
     .replace(/<span class="fill" data-contact="(\w+)">[^<]*<\/span>/g, (whole, k) => (shown[k] ? filled(k) : whole));
 }
 
-// الملفات: ملف البراندات بالعربي والإنجليزي، واتفاق الشغل وخطة المواسم بالعربي
+// الملفات: ملف البراندات (عربي + إنجليزي في نفس الـ HTML)، واتفاق التعاون بالعربي
 const docs = [
-  { name: "giftful-brands", langs: ["ar", "en"] },
+  { name: "giftful-brands-draft", langs: ["ar", "en"], out: { ar: "giftful-brands-draft.pdf", en: "giftful-brands-draft-en.pdf" } },
   { name: "giftful-agreement", langs: [null] },
-  { name: "giftful-plan", langs: [null] },
 ];
 
 const chrome = [
@@ -70,7 +69,7 @@ try {
     const page = join(tmp, `${doc.name}.html`);
     writeFileSync(page, fillContact(readFileSync(join(dir, `${doc.name}.html`), "utf8")));
     for (const lang of doc.langs) {
-      const out = join(dir, lang ? `${doc.name}-${lang}.pdf` : `${doc.name}.pdf`);
+      const out = join(dir, doc.out?.[lang] ?? (lang ? `${doc.name}-${lang}.pdf` : `${doc.name}.pdf`));
       execFileSync(chrome, [
         "--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=8000",
         `--user-data-dir=${join(tmp, "profile")}`, `--print-to-pdf=${out}`, pathToFileURL(page).href + (lang ? `?lang=${lang}` : ""),
