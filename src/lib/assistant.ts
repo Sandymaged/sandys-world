@@ -34,7 +34,7 @@ const AiOutput = z.object({
       }),
     )
     .max(3),
-  quick_replies: z.array(z.string()).max(3),
+  quick_replies: z.array(z.string()).max(5),
 });
 
 // ───────────── Claude ─────────────
@@ -56,6 +56,7 @@ function systemPrompt(sf: Storefront, products: Product[], packages: PackageView
     personalised: p.isCustomizable,
     can_go_in_box: p.boxEligible && !p.options?.length,
     has_colors_or_sizes: Boolean(p.options?.length),
+    choices: p.options?.length ? p.options.map((o) => `${o.name}: ${o.values.map((v) => v.label).join("/")}`) : undefined,
     prep_days: p.prepDays,
   }));
   const ready = packages.map((p) => ({
@@ -96,11 +97,12 @@ Mix the types when it makes sense (e.g. one ready package, one box you built, on
 
 How to answer:
 - Write "reply" in the customer's language: simple, friendly, professional Modern Standard Arabic (Arabic script) if they wrote Arabic or Franco — clear and warm like a good shop's staff, with no Egyptian colloquial words (no ده/دي/عايز/مش/إيه/هـ/بـ) and not stiff or overly formal; English if they wrote English. Short and warm.${locale === "en" ? " The site is in English mode." : ""} On your first reply, briefly introduce yourself as giftful.
-- If you don't know who the gift is for, ask one short question and return no suggestions. If only the budget is missing, you may suggest options at different prices and ask for the budget.
+- Get to know the gift first, like a good shop assistant: ask ONE short question per reply, with no suggestions, until you know who it's for, the occasion, something about the person (hobbies, daily habits, style or favourite colour) and the budget. Skip anything the customer already told you, ask each thing only once (if they say they don't know, move on), and suggest right away if they ask you to ("اقترح عليّ الآن" or similar). Offer the likely answers in "quick_replies", plus "اقترح عليّ الآن".
+- Use EVERY detail the customer gives (e.g. "mom loves blue": prefer products whose name, description or choices mention blue, and say so in the reason). If nothing in the catalog matches a detail, say that honestly in one short sentence and give the closest options — never ignore it or repeat your previous answer unchanged.
 - Each suggestion: a short catchy "title", the "ids", and a one-sentence "reason" tied to what the customer said.
 - Products with colors or sizes are chosen on their page, personalised text or photos are added at checkout. Prices are estimates until the bag. Never invent products, prices or discounts.
 - Put the budget you understood (a number in EGP) in "budget", or null.
-- "quick_replies": up to 3 very short follow-ups the customer might tap next, written from the customer's side in the same simple Modern Standard Arabic (e.g. "أريد خيارات أرخص", "اقتراحات مختلفة", "هدية يُكتب عليها الاسم", or budget options like "في حدود 500" when you asked for the budget), or in English if the customer writes English.
+- "quick_replies": up to 4 very short follow-ups the customer might tap next, written from the customer's side in the same simple Modern Standard Arabic (e.g. "أريد خيارات أرخص", "اقتراحات مختلفة", "هدية يُكتب عليها الاسم", or budget options like "في حدود 500" when you asked for the budget), or in English if the customer writes English.
 - If they ask for something cheaper, aim clearly lower than your last suggestions. If they ask for other ideas, don't repeat ids from ALREADY SHOWN.
 - If the customer asks about delivery, payment, gift cards, kits for groups or how ordering works, answer briefly from STORE INFO with no suggestions. Never make up policies; if something isn't in STORE INFO, say they can message giftful on WhatsApp.
 
@@ -157,7 +159,7 @@ async function aiSuggest(sf: Storefront, history: ChatTurn[], locale: Locale, sh
     })
     .filter((s): s is Suggestion => s !== null)
     .slice(0, 3);
-  return { mode: "ai", reply: out.reply, suggestions, quickReplies: out.quick_replies.map((q) => q.slice(0, 40)).slice(0, 3) };
+  return { mode: "ai", reply: out.reply, suggestions, quickReplies: out.quick_replies.map((q) => q.slice(0, 40)).slice(0, 5) };
 }
 
 export const aiEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);

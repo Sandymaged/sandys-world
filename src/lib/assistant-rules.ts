@@ -195,8 +195,8 @@ const recipientWords: [RecipientTag, RegExp][] = [
   ["dad", /بابا|ابويا|ابوي(?![ء-ي])|والدي|حمايا|baba|dad|father|abuya/],
   ["kid", /طفل|بيبي|مولود|عيل|ابني|بنتي|ابن (اختي|اخويا|عمي|خالي)|بنت (اختي|اخويا)|kid|baby|child|\bson\b|daughter|ebni|benti/],
   ["colleague", /زميل|زميلت|مديري|مديرتي|المدير|الشغل|زمايل|زملا|colleague|boss|coworker|manager|zmeel|zameel/],
-  ["her", /خطيبتي|مراتي|اختي|صاحبتي|صحبتي|حبيبتي|بنت (عمي|خالي)|عمتي|خالتي|تيتا|جدتي|\bher\b|wife|girlfriend|fiancee|sister|\bsis\b|bestie|okhti|o5ti|ukhti|sa7bti|sa7bty|7abibti|khatibti|merati/],
-  ["him", /خطيبي|جوزي|اخويا|اخوي(?![ء-ي])|اخي(?![ء-ي])|صاحبي|حبيبي|ابن (عمي|خالي)|عمي(?![ء-ي])|خالي(?![ء-ي])|جدو|\bhim\b|husband|boyfriend|fiance\b|brother|\bbro\b|a5oya|akhoya|5oya|akhuya|khatibi|khatebi|gozi|7abibi|sa7by|sa7bi/],
+  ["her", /خطيبتي|مراتي|زوجتي|اختي|صاحبتي|صحبتي|صديقتي|حبيبتي|بنت (عمي|خالي)|عمتي|خالتي|تيتا|جدتي|\bher\b|wife|girlfriend|fiancee|sister|\bsis\b|bestie|okhti|o5ti|ukhti|sa7bti|sa7bty|7abibti|khatibti|merati/],
+  ["him", /خطيبي|جوزي|زوجي|صديقي|اخويا|اخوي(?![ء-ي])|اخي(?![ء-ي])|صاحبي|حبيبي|ابن (عمي|خالي)|عمي(?![ء-ي])|خالي(?![ء-ي])|جدو|\bhim\b|husband|boyfriend|fiance\b|brother|\bbro\b|a5oya|akhoya|5oya|akhuya|khatibi|khatebi|gozi|7abibi|sa7by|sa7bi/],
 ];
 
 const occasionWords: [string, RegExp][] = [
@@ -301,6 +301,25 @@ const themes: Theme[] = [
   },
 ];
 
+// اللون المفضل: «ماما بتحب اللون الأزرق»، «bt7b al azra2». بيطابق اسم المنتج ووصفه وألوانه (الاختيارات)
+interface ColorWord {
+  id: string;
+  label: { ar: string; en: string };
+  re: RegExp;
+}
+const colorWords: ColorWord[] = [
+  { id: "blue", label: { ar: "الأزرق", en: "blue" }, re: /ازرق|زرقا|لبني|كحلي|تركواز|سماوي|\bblue|navy|turquoise|azra2|azra2a|zar2a|azrak/ },
+  { id: "pink", label: { ar: "الوردي", en: "pink" }, re: /بينك|وردي|بمبي|روز(?![ء-ي])|pink|\brose\b|bamby|bamba/ },
+  { id: "red", label: { ar: "الأحمر", en: "red" }, re: /احمر|حمرا|نبيتي|\bred\b|a7mar|7amra|nbeety/ },
+  { id: "green", label: { ar: "الأخضر", en: "green" }, re: /اخضر|خضرا|زيتي|green|olive|a5dar|akhdar|5adra/ },
+  { id: "purple", label: { ar: "البنفسجي", en: "purple" }, re: /موف|بنفسج|ليلك|لافندر|purple|lilac|lavender|mauve|\bmov\b|banafsegy/ },
+  { id: "yellow", label: { ar: "الأصفر", en: "yellow" }, re: /اصفر|صفرا|مستردي|yellow|mustard|asfar|safra/ },
+  { id: "white", label: { ar: "الأبيض", en: "white" }, re: /ابيض|بيضا|اوف وايت|white|off ?white|abyad/ },
+  { id: "black", label: { ar: "الأسود", en: "black" }, re: /اسود|سودا|black|eswed|iswed/ },
+  { id: "brown", label: { ar: "البيج والبني", en: "beige and brown" }, re: /بيج|(?<![ء-ي])بني(?![ء-ي])|كافيه|نود|beige|brown|nude|camel|beej|bonny/ },
+  { id: "gold", label: { ar: "الذهبي", en: "gold" }, re: /دهبي|ذهبي|gold|dahaby/ },
+];
+
 // قبل الكلمة: «مش بيحب الحلو»، «ميحبش القهوة»، «doesn't like sweets»
 const negation = /(مش|مبيحب|ميحبش|مابيحب|مبتحبش|متحبش|ماتحبش|بيكره|بتكره|بلاش|من غير|\bno\b|\bnot\b|don'?t|doesn'?t|hates?)\s*(بيحب|بتحب|يحب|تحب|like|likes|into)?\s*(ال)?\s*$/;
 
@@ -310,6 +329,7 @@ export interface Understood {
   occasion: string | null;
   likes: Theme[];
   dislikes: Theme[];
+  colors: ColorWord[];
 }
 
 export function understand(text: string): Understood {
@@ -333,8 +353,22 @@ export function understand(text: string): Understood {
     occasion: occasionWords.find(([, re]) => re.test(s))?.[0] ?? null,
     likes,
     dislikes,
+    colors: colorWords.filter((c) => c.re.test(s)),
   };
 }
+
+// المناسبات المعروفة (لو المتجر لسه مضافش مناسبات من اللوحة)
+const occasionLabels: Record<string, { ar: string; en: string }> = {
+  christmas: { ar: "الكريسماس", en: "Christmas" },
+  "mothers-day": { ar: "عيد الأم", en: "Mother's Day" },
+  birthday: { ar: "عيد الميلاد", en: "a birthday" },
+  success: { ar: "النجاح", en: "a graduation" },
+  newborn: { ar: "مولود جديد", en: "a new baby" },
+  "get-well": { ar: "التمني بالشفاء", en: "get well" },
+  engagement: { ar: "الخطوبة أو الزواج", en: "an engagement or wedding" },
+  thanks: { ar: "الشكر", en: "a thank-you" },
+  ramadan: { ar: "رمضان والعيد", en: "Ramadan and Eid" },
+};
 
 // ───────────── الكلام اللي بيرد بيه ─────────────
 
@@ -359,16 +393,33 @@ function joinList(items: string[], locale: Locale) {
 
 function summary(u: Understood, sf: Storefront, locale: Locale) {
   const en = locale === "en";
-  const occ = u.occasion ? sf.occasions.find((o) => o.slug === u.occasion)?.name : null;
+  const occ = u.occasion ? (sf.occasions.find((o) => o.slug === u.occasion)?.name ?? (en ? occasionLabels[u.occasion]?.en : occasionLabels[u.occasion]?.ar)) : null;
   const likes = joinList(
     u.likes.map((x) => (en ? x.label.en : x.label.ar)),
     locale,
   );
+  const colors = joinList(
+    u.colors.map((c) => (en ? c.label.en : c.label.ar)),
+    locale,
+  );
   if (en) {
-    const parts = ["a gift", u.recipient ? forWho[u.recipient].en : "", occ ? `for ${occ}` : "", likes ? `for someone who loves ${likes}` : ""];
+    const parts = [
+      "a gift",
+      u.recipient ? forWho[u.recipient].en : "",
+      occ ? `for ${occ}` : "",
+      likes ? `for someone who loves ${likes}` : "",
+      colors ? `${likes ? "and" : "for someone who loves"} the colour ${colors}` : "",
+    ];
     return `Got it: ${parts.filter(Boolean).join(" ")}.`;
   }
-  const parts = ["هدية", u.recipient ? forWho[u.recipient].ar : "", occ ? `في ${occ}` : "", likes ? `${u.recipient ? "" : "لشخص "}${loves(u.recipient)} ${likes}` : ""];
+  const who = u.recipient ? "" : "لشخص ";
+  const parts = [
+    "هدية",
+    u.recipient ? forWho[u.recipient].ar : "",
+    occ ? `في ${occ}` : "",
+    likes ? `${who}${loves(u.recipient)} ${likes}` : "",
+    colors ? `${likes ? "و" : `${who}${loves(u.recipient)} `}اللون ${colors}` : "",
+  ];
   return `فهمت: ${parts.filter(Boolean).join(" ")}.`;
 }
 
@@ -436,35 +487,92 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
   // «يتكتب عليها الاسم»: المنتجات المخصصة الأول
   const wantsName = /اسم|يتكتب|محفور|مطبوع|صوره|personali[sz]|custom|engrav|their name|\bname\b|esm/.test(s);
   const avoid = new Set(different ? shown : []);
-  const nothingYet = u.budget == null && !u.recipient && !u.occasion && u.likes.length === 0 && !searched;
+  const users = history.filter((m) => m.role === "user");
+  const lastSaid = norm(users.at(-1)?.text ?? "");
+  const nothingYet = u.budget == null && !u.recipient && !u.occasion && u.likes.length === 0 && u.colors.length === 0 && !searched;
   const quick = {
-    budget: en ? ["Around 500", "Around 800", "Around 1200"] : ["في حدود 500", "في حدود 800", "في حدود 1200"],
+    budget: en ? ["Around 300", "Around 500", "Around 800"] : ["في حدود 300", "في حدود 500", "في حدود 800"],
     after: en ? ["Something cheaper", "Other ideas", "With their name on it"] : ["أريد خيارات أرخص", "اقتراحات مختلفة", "هدية يُكتب عليها الاسم"],
-    start: en ? ["For mom", "For my friend", "For a colleague"] : ["هدية لأمي", "لصاحبتي", "لزميل في العمل"],
+    who: en ? ["For my mom", "For my friend (her)", "For my husband", "For a colleague"] : ["لأمي", "لصديقتي", "لزوجي", "لزميل في العمل"],
+    occasion: en ? ["Birthday", "Graduation", "No occasion"] : ["عيد ميلاد", "نجاح أو تخرج", "بدون مناسبة"],
+    likes: en ? ["Candles and scents", "Skincare", "Reading and writing", "Not sure"] : ["الشموع والروائح", "العناية بالبشرة", "القراءة والكتابة", "لا أعرف"],
+    now: en ? "Suggest now" : "اقترح عليّ الآن",
   };
 
-  if (nothingYet) {
-    return {
-      mode: "rules",
-      suggestions: [],
-      quickReplies: quick.start,
-      reply: en
-        ? "Hi, I'm giftful! I look through all our gifts: ready packages, single gifts, or a box I put together for you. Tell me who it's for, what they love, and roughly your budget — e.g. “my brother loves food, 600”."
-        : "أهلاً، أنا giftful! أبحث في كل هدايانا: باقات جاهزة، أو هدايا مفردة، أو صندوق أنسّقه لك. أخبرني لمن الهدية، وماذا يحب، وكم ميزانيتك تقريباً. مثلاً: «أخي يحب الطعام، في حدود 600».",
-    };
-  }
-  if (u.budget == null) {
-    return {
-      mode: "rules",
-      suggestions: [],
-      quickReplies: quick.budget,
-      reply: en
-        ? `${summary(u, sf, locale)} What's your budget, roughly? (e.g. 500 or 800)`
-        : `${summary(u, sf, locale)} كم ميزانيتك تقريباً؟ (مثلاً 500 أو 800)`,
-    };
+  /*
+   * قبل ما يقترح بيسأل زي البياع: لمين، المناسبة، بيحب إيه (هوايات أو لون)، والميزانية.
+   * كل سؤال بيتسأل مرة واحدة بس (لو ردّ بـ«مش عارف» بنكمّل)، و«اقترح عليّ الآن» بتتخطى الباقي.
+   */
+  const asked = {
+    who: /لمن الهدية|Who is the gift for/,
+    occasion: /ما المناسبة|What's the occasion/,
+    likes: /ماذا (يحب|تحب)|What do they love/,
+    budget: /كم ميزانيتك|your budget/,
+  };
+  const wasAsked = (k: keyof typeof asked) => history.some((m) => m.role === "assistant" && asked[k].test(m.text));
+  const skipAll = /اقترح.{0,6}(الان|مباشره)|suggest now|just suggest/.test(lastSaid);
+
+  // آخر رسالة فيها حاجة مفهمناهاش (زي «بتحب الرسم» ومفيش منتجات رسم): بنقول كده بصراحة بدل ما نرد نفس الرد
+  const lastU = understand(users.at(-1)?.text ?? "");
+  const lastWords = lastSaid.split(/[^a-z0-9ء-ي]+/).filter((w) => w.length >= 3 && !stopWords.has(w) && !/^\d+$/.test(w));
+  const lastSearched = sf.products.some((p) => {
+    const t = norm(`${p.name} ${p.category} ${p.en?.name ?? ""} ${p.brand ?? ""}`);
+    return lastWords.some((w) => t.includes(w) || (w.startsWith("ال") && w.length > 4 && t.includes(w.slice(2))));
+  });
+  const addsNothing =
+    users.length > 1 &&
+    lastU.budget == null &&
+    !lastU.recipient &&
+    !lastU.occasion &&
+    !lastU.likes.length &&
+    !lastU.dislikes.length &&
+    !lastU.colors.length &&
+    !lastSearched &&
+    !cheaperRe.test(lastSaid) &&
+    !different &&
+    !skipAll &&
+    !/لا اعرف|معرفش|مش عارف|مش مهم|مش متاكد|بدون|not sure|no idea|don'?t know|اسم|name|esm/.test(lastSaid);
+  const quoted = (users.at(-1)?.text ?? "").trim();
+  const unclear = (picked: boolean) =>
+    addsNothing
+      ? en
+        ? `I couldn't find anything matching “${quoted.length <= 40 ? quoted : "that"}” in our gifts specifically${picked ? ", so I picked the closest ones" : ""}. `
+        : `لم أجد في هدايانا ما يرتبط بـ«${quoted.length <= 40 ? quoted : "ما ذكرته"}» تحديداً${picked ? "، فاخترت لك الأقرب" : ""}. `
+      : "";
+
+  const ask = (text: string, quickReplies: string[]): AssistantReply => ({
+    mode: "rules",
+    suggestions: [],
+    quickReplies: [...quickReplies, ...(nothingYet ? [] : [quick.now])].slice(0, 5),
+    reply: nothingYet ? text : `${unclear(false)}${summary(u, sf, locale)} ${text}`,
+  });
+  const likesQ = en
+    ? "What do they love? Hobbies, things they use every day, or a favourite colour all help."
+    : `ماذا ${loves(u.recipient)}؟ هواية، أو شيء ${u.recipient === "her" || u.recipient === "mom" ? "تستخدمه" : "يستخدمه"} كل يوم، أو لون مفضل.`;
+
+  if (!skipAll) {
+    if (nothingYet && !wasAsked("who")) {
+      return ask(
+        en
+          ? "Hi, I'm giftful! I'll ask you a few quick questions to find the right gift. Who is the gift for?"
+          : "أهلاً، أنا giftful! سأسألك بضعة أسئلة سريعة لنجد الهدية المناسبة. لمن الهدية؟",
+        quick.who,
+      );
+    }
+    if (!u.recipient && !wasAsked("who")) return ask(en ? "Who is the gift for?" : "لمن الهدية؟", quick.who);
+    if (!u.occasion && !wasAsked("occasion")) return ask(en ? "What's the occasion?" : "ما المناسبة؟", quick.occasion);
+    // لو قال «بتحب كذا» حتى لو مش لاقيين له منتجات، مش بنرجع نسأله نفس السؤال
+    const toldLikes = users.some((m) => /بيحب|بتحب|يحب|تحب|bt7b|bt7eb|bi7eb|by7eb|by7b|loves?\b|likes?\b|\binto\b/.test(norm(m.text)));
+    if (!u.likes.length && !u.colors.length && !searched && !toldLikes && !wasAsked("likes")) return ask(likesQ, quick.likes);
+    if (u.budget == null && !wasAsked("budget")) return ask(en ? "Last question: what's your budget, roughly?" : "آخر سؤال: كم ميزانيتك تقريباً؟", quick.budget);
   }
 
-  const budget = u.budget;
+  // من غير ميزانية (قال «مش عارف» أو «اقترح الآن»): اقتراحات بأسعار مختلفة، والبوكس مش بيكبر عن حد معقول
+  const noBudget = u.budget == null;
+  const budget = u.budget ?? 700;
+  const colorText = (p: Product) =>
+    norm([p.name, p.description, p.en?.name ?? "", ...p.interests, ...(p.options ?? []).flatMap((o) => o.values.flatMap((v) => [v.label, v.en ?? ""]))].join(" "));
+  const colorHit = (p: Product) => u.colors.some((c) => c.re.test(colorText(p)));
   const textOf = (p: Product) => norm([p.name, p.category, ...p.interests, p.description, p.en?.name ?? ""].join(" "));
   const hits = (p: Product, list: Theme[]) => list.filter((th) => th.product.test(textOf(p))).length;
   // «حاجة تانية»: اللي ظهر قبل كده بيتشال (لو فاضل غيره)
@@ -476,6 +584,7 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
   const map = new Map(candidates.map((p) => [p.id, p]));
   const score = (p: Product) =>
     hits(p, u.likes) * 6 +
+    (colorHit(p) ? 6 : 0) +
     wordHits(norm(`${p.name} ${p.category} ${p.en?.name ?? ""}`)) * 5 +
     (brandHit(p) ? 8 : 0) +
     (wantsName && p.isCustomizable ? 8 : 0) +
@@ -483,13 +592,18 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
     (u.recipient && p.recipients.includes(u.recipient) ? 2 : 0) +
     p.price / 2000;
   const ranked = [...candidates].sort((a, b) => score(b) - score(a));
-  const matched = ranked.filter((p) => hits(p, u.likes) > 0);
-  const others = ranked.filter((p) => hits(p, u.likes) === 0);
-  const theme = u.likes[0] ?? null;
+  const isMatch = (p: Product) => hits(p, u.likes) > 0 || colorHit(p);
+  const matched = ranked.filter(isMatch);
+  const others = ranked.filter((p) => !isMatch(p));
+  const colorLabel = joinList(u.colors.map((c) => (en ? c.label.en : c.label.ar)), locale);
+  // اللون لوحده بيتعامل كأنه «اهتمام» (صندوق بلونها المفضل)
+  const theme: Pick<Theme, "title" | "label"> | null =
+    u.likes[0] ?? (u.colors.length ? { title: { ar: `بلونها المفضل`, en: "In their favourite colour" }, label: { ar: `اللون ${colorLabel}`, en: `the colour ${colorLabel}` } } : null);
+  if (theme && !u.likes.length && u.recipient !== "her" && u.recipient !== "mom") theme.title.ar = "بلونه المفضل";
   const name = (id: string) => map.get(id)!.name;
 
   const plans: { ids: string[]; title: string; reason: string }[] = [];
-  const liked = theme ? joinList(u.likes.map((x) => (en ? x.label.en : x.label.ar)), locale) : "";
+  const liked = joinList([...u.likes.map((x) => (en ? x.label.en : x.label.ar)), ...(u.colors.length ? [en ? `the colour ${colorLabel}` : `اللون ${colorLabel}`] : [])], locale);
 
   // ١) اللي بيحبه بالظبط
   if (matched.length) {
@@ -536,8 +650,10 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       ids,
       title: en ? "Our pick" : "اختيارنا لك",
       reason: en
-        ? `Picked for the occasion and who it's for, within ${egpText(budget, locale)}.`
-        : `مختارة بما يناسب المناسبة والمستلم، وفي حدود ${egpText(budget, locale)}.`,
+        ? `Picked for the occasion and who it's for${noBudget ? "" : `, within ${egpText(budget, locale)}`}.`
+        : noBudget
+          ? "مختارة بما يناسب المناسبة والمستلم."
+          : `مختارة بما يناسب المناسبة والمستلم، وفي حدود ${egpText(budget, locale)}.`,
     });
   }
 
@@ -582,7 +698,9 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
         single,
         budget,
         en ? "One special gift" : "هدية واحدة مميزة",
-        en ? `${single.name} on its own makes a lovely gift${single.isCustomizable ? ", and it can carry their name" : ""}.` : `${single.name} وحدها هدية جميلة${single.isCustomizable ? "، ويمكن كتابة الاسم عليها" : ""}.`,
+        en
+          ? `${single.name} on its own makes a lovely gift${single.isCustomizable ? ", and it can carry their name" : ""}.`
+          : `${single.name}: هدية جميلة بمفردها${single.isCustomizable ? "، ويمكن كتابة الاسم عليها" : ""}${colorHit(single) ? `، ومتوفرة باللون ${colorLabel}` : ""}.`,
       )
     : null;
 
@@ -595,25 +713,38 @@ export function ruleSuggest(sf: Storefront, history: ChatTurn[], locale: Locale,
       ? "I couldn't find a gift within that budget. Try a slightly higher budget."
       : "لم أجد هدية ضمن هذه الميزانية. جرّب ميزانية أعلى قليلاً.";
   } else {
-    const lastSaid = norm(history.filter((m) => m.role === "user").at(-1)?.text ?? "");
     const ack = cheaperRe.test(lastSaid) ? (en ? "Sure, cheaper ones. " : "بالتأكيد، إليك خيارات أوفر. ") : different ? (en ? "Here are some new ones. " : "إليك اقتراحات جديدة. ") : "";
-    const head = ack + summary(u, sf, locale);
-    const missing =
-      theme && !matched.length
+    const head = ack + unclear(true) + summary(u, sf, locale);
+    // اللون: لو مفيش منتج بلونها، بنقول بصراحة (وبعض المنتجات لونها بيتختار من صفحتها)
+    const colorMissing =
+      u.colors.length && !candidates.some(colorHit) && !singles.some(colorHit)
         ? en
-          ? ` I couldn't find ${liked} items within this budget, so here are close picks.`
-          : ` لم أجد منتجات من ${liked} ضمن هذه الميزانية، فإليك اقتراحات قريبة.`
+          ? ` I couldn't find gifts in ${colorLabel} specifically; some products let you pick the colour on their page.`
+          : ` لم أجد هدايا باللون ${colorLabel} تحديداً، وبعض المنتجات يُختار لونها من صفحتها.`
+        : "";
+    const missing =
+      u.likes.length && !candidates.some((p) => hits(p, u.likes) > 0)
+        ? en
+          ? ` I couldn't find ${joinList(u.likes.map((x) => x.label.en), locale)} items${noBudget ? "" : " within this budget"}, so here are close picks.`
+          : ` لم أجد منتجات من ${joinList(u.likes.map((x) => x.label.ar), locale)}${noBudget ? "" : " ضمن هذه الميزانية"}، فإليك اقتراحات قريبة.`
         : "";
     const n = suggestions.length;
     const count = en
       ? n === 1 ? "an idea" : `${n} ideas`
       : n === 1 ? "إليك اقتراحاً" : n === 2 ? "إليك اقتراحين" : `إليك ${n} اقتراحات`;
+    const where = noBudget ? (en ? "at different prices" : "بأسعار مختلفة") : en ? `within ${egpText(budget, locale)}` : `في حدود ${egpText(budget, locale)}`;
     const body = en
-      ? ` Here's ${count} within ${egpText(budget, locale)}. Prices are estimates; the final total is confirmed in the bag.`
-      : ` ${count} في حدود ${egpText(budget, locale)}. الأسعار تقديرية، ويُؤكَّد السعر النهائي في السلة.`;
-    const hint = !theme ? (en ? " Tell me what they love and I'll tailor it more." : ` أخبرني بما ${loves(u.recipient)} لأضبط الاقتراحات أكثر.`) : "";
-    reply = head + missing + body + hint;
+      ? ` Here's ${count} ${where}. Prices are estimates; the final total is confirmed in the bag.`
+      : ` ${count} ${where}. الأسعار تقديرية، ويُؤكَّد السعر النهائي في السلة.`;
+    const hint = !theme ? (en ? " Tell me what they love or their favourite colour and I'll tailor it more." : ` أخبرني بما ${loves(u.recipient)} أو باللون المفضل لأضبط الاقتراحات أكثر.`) : "";
+    reply = head + missing + colorMissing + body + hint;
   }
-  const quickReplies = suggestions.length ? quick.after : en ? [`Around ${budget + 300}`] : [`في حدود ${budget + 300}`];
+  const quickReplies = suggestions.length
+    ? noBudget
+      ? [quick.budget[1], ...quick.after.slice(1)]
+      : quick.after
+    : en
+      ? [`Around ${budget + 300}`]
+      : [`في حدود ${budget + 300}`];
   return { mode: "rules", suggestions, reply, quickReplies };
 }
