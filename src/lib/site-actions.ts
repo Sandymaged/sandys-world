@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "./admin-auth";
+import { modeById, modes } from "./modes";
 import { loadSiteSettingsFresh, sections, writeSiteSettings, type QuoteSlot, type SiteSettings } from "./site-settings";
 
 export type SiteSaveResult = { ok: true } | { ok: false; error: string };
@@ -37,6 +38,14 @@ export async function saveSiteSettings(form: FormData): Promise<SiteSaveResult> 
       message: str("m_message", 500) || current.maintenance.message,
       titleEn: str("m_titleEn", 120),
       messageEn: str("m_messageEn", 500),
+    },
+    mode: {
+      id: modeById(str("mode_id", 20)).id,
+      banners: Object.fromEntries(
+        modes.filter((m) => m.id !== "off").map((m) => [m.id, { ar: str(`mode_banner_${m.id}_ar`, 140), en: str(`mode_banner_${m.id}_en`, 140) }]),
+      ),
+      showBanner: form.get("mode_showBanner") === "on",
+      effects: form.get("mode_effects") === "on",
     },
   };
 

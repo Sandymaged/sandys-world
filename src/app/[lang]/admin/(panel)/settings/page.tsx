@@ -1,5 +1,6 @@
 import { Check, ChecksGroup, Field, Row, Section, TextArea } from "@/components/admin/form";
 import { SiteSettingsForm } from "@/components/admin/site-settings-form";
+import { ModePicker } from "@/components/admin/mode-picker";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAllOccasions } from "@/lib/catalog";
 import { loadCatalogData } from "@/lib/db/catalog-store";
@@ -36,6 +37,13 @@ export default async function SiteSettingsPage() {
       )}
 
       <SiteSettingsForm action={saveSiteSettings}>
+        <Section title="مود المناسبة">
+          <p className="-mt-2 text-sm text-muted">
+            يغيّر ألوان الموقع ويضيف شريطاً وتأثيراً خفيفاً يناسب المناسبة. اختر «بدون مود» واحفظ ليعود الموقع لشكله العادي. لا يتغير شكل لوحة التحكم.
+          </p>
+          <ModePicker value={site.mode} />
+        </Section>
+
         <Section title="إغلاق الموقع مؤقتاً">
           <Check label="إغلاق الموقع وعرض رسالة للزوار (تبقى لوحة التحكم متاحة)" name="m_enabled" defaultChecked={site.maintenance.enabled} />
           <Row>

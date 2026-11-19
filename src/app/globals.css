@@ -476,3 +476,26 @@ h3 {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .15 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
 }
+
+/* مود المناسبة: الحبيبات بتنزل بهدوء وتميل يمين وشمال، ولمبات الكريسماس بتنور وتطفي */
+.mode-flake {
+  animation-name: mode-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes mode-fall {
+  0% { transform: translate3d(0, -2vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate3d(var(--drift, 0px), 50vh, 0) rotate(160deg); }
+  90% { opacity: 1; }
+  100% { transform: translate3d(0, 104vh, 0) rotate(320deg); opacity: 0; }
+}
+.mode-bulb { animation: mode-twinkle 1.8s ease-in-out infinite; }
+@keyframes mode-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mode-effects { display: none; }
+  .mode-bulb { animation: none; }
+}

@@ -4,6 +4,7 @@ import path from "node:path";
 import { cacheLife, cacheTag } from "next/cache";
 import { adminClient } from "./supabase/admin";
 import { publicClient, supabaseConfigured } from "./supabase/public";
+import { DEFAULT_MODE, type ModeSettings } from "./modes";
 
 /*
  * إعدادات الموقع اللي صاحبة المتجر بتغيرها من اللوحة من غير مبرمج:
@@ -37,6 +38,8 @@ export interface SiteSettings {
   hiddenCategories: string[];
   sections: Record<SectionId, boolean>;
   maintenance: { enabled: boolean; title: string; message: string; titleEn: string; messageEn: string };
+  /** مود المناسبة (كريسماس، عيد الحب…) */
+  mode: ModeSettings;
 }
 
 export const DEFAULT_SITE: SiteSettings = {
@@ -70,6 +73,7 @@ export const DEFAULT_SITE: SiteSettings = {
     titleEn: "Something lovely is on its way",
     messageEn: "We're taking a short break to get new things ready. We'll be back very soon!",
   },
+  mode: DEFAULT_MODE,
 };
 
 const FILE = path.join(process.cwd(), ".data", "site.json");
@@ -90,6 +94,7 @@ function merge(saved: Partial<SiteSettings> | null | undefined): SiteSettings {
     hiddenCategories: s.hiddenCategories ?? d.hiddenCategories,
     sections: { ...d.sections, ...s.sections },
     maintenance: { ...d.maintenance, ...s.maintenance },
+    mode: { ...d.mode, ...s.mode, banners: { ...s.mode?.banners } },
   };
 }
 
